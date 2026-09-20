@@ -12,21 +12,113 @@ import "./PaymentCard.css";
 
 function PaymentCard() {
 
-    const [cardNumber, setCardNumber] =
-        useState("");
+    const [
+        cardNumber,
+        setCardNumber
+    ] = useState("");
 
-    const [cardName, setCardName] =
-        useState("");
 
-    const [expiry, setExpiry] =
-        useState("");
+    const [
+        cardName,
+        setCardName
+    ] = useState("");
 
-    const [cvv, setCvv] =
-        useState("");
 
-    const [showBack, setShowBack] =
-        useState(false);
+    const [
+        expiry,
+        setExpiry
+    ] = useState("");
 
+
+    const [
+        cvv,
+        setCvv
+    ] = useState("");
+
+
+    /*
+    ========================================================
+    CARD FLIP STATES
+    ========================================================
+
+    manualFlip:
+    User clicks/taps the card.
+
+    cvvFocused:
+    Automatically flips while typing CVV.
+    */
+
+    const [
+        manualFlip,
+        setManualFlip
+    ] = useState(false);
+
+
+    const [
+        cvvFocused,
+        setCvvFocused
+    ] = useState(false);
+
+
+    /*
+    Card shows the back when either:
+    - user manually flipped it
+    - CVV input is focused
+    */
+
+    const showBack =
+        manualFlip ||
+        cvvFocused;
+
+
+    /*
+    ========================================================
+    MANUAL CARD FLIP
+    ========================================================
+    */
+
+    const handleCardFlip =
+        () => {
+
+            setManualFlip(
+                current =>
+                    !current
+            );
+
+        };
+
+
+    /*
+    ========================================================
+    KEYBOARD CARD FLIP
+    ========================================================
+    */
+
+    const handleCardKeyDown =
+        event => {
+
+            if (
+                event.key ===
+                    "Enter" ||
+                event.key ===
+                    " "
+            ) {
+
+                event.preventDefault();
+
+
+                handleCardFlip();
+
+            }
+
+        };
+
+
+    /*
+    ========================================================
+    CARD NUMBER
+    ========================================================
+    */
 
     const formatCardNumber = (
         value
@@ -38,16 +130,21 @@ function PaymentCard() {
                 ""
             );
 
+
         const limited =
             numbersOnly.slice(
                 0,
                 16
             );
 
-        return limited.replace(
-            /(.{4})/g,
-            "$1 "
-        ).trim();
+
+        return limited
+            .replace(
+                /(.{4})/g,
+                "$1 "
+            )
+            .trim();
+
     };
 
 
@@ -60,8 +157,15 @@ function PaymentCard() {
                 event.target.value
             )
         );
+
     };
 
+
+    /*
+    ========================================================
+    EXPIRY
+    ========================================================
+    */
 
     const handleExpiry = (
         event
@@ -80,7 +184,8 @@ function PaymentCard() {
 
 
         if (
-            value.length >= 3
+            value.length >=
+            3
         ) {
 
             value =
@@ -90,12 +195,22 @@ function PaymentCard() {
                 )}/${value.slice(
                     2
                 )}`;
+
         }
 
 
-        setExpiry(value);
+        setExpiry(
+            value
+        );
+
     };
 
+
+    /*
+    ========================================================
+    CVV
+    ========================================================
+    */
 
     const handleCvv = (
         event
@@ -113,95 +228,172 @@ function PaymentCard() {
                 );
 
 
-        setCvv(value);
+        setCvv(
+            value
+        );
+
     };
 
 
-    const maskedCardNumber = () => {
+    /*
+    ========================================================
+    DISPLAY CARD NUMBER
+    ========================================================
+    */
 
-        if (!cardNumber) {
-            return (
-                "•••• •••• •••• ••••"
-            );
-        }
+    const maskedCardNumber =
+        () => {
 
+            if (
+                !cardNumber
+            ) {
 
-        return cardNumber;
-    };
+                return (
+                    "•••• •••• •••• ••••"
+                );
 
-
-    const detectCardType = () => {
-
-        const clean =
-            cardNumber.replace(
-                /\s/g,
-                ""
-            );
+            }
 
 
-        if (
-            clean.startsWith(
-                "4"
-            )
-        ) {
-            return "VISA";
-        }
+            return cardNumber;
+
+        };
 
 
-        if (
-            /^5[1-5]/.test(
-                clean
-            )
-        ) {
-            return "MASTERCARD";
-        }
+    /*
+    ========================================================
+    DETECT CARD TYPE
+    ========================================================
+    */
+
+    const detectCardType =
+        () => {
+
+            const clean =
+                cardNumber.replace(
+                    /\s/g,
+                    ""
+                );
 
 
-        return "CARD";
-    };
+            /*
+            VISA
+            */
+
+            if (
+                clean.startsWith(
+                    "4"
+                )
+            ) {
+
+                return "VISA";
+
+            }
+
+
+            /*
+            MASTERCARD
+            */
+
+            if (
+                /^5[1-5]/.test(
+                    clean
+                )
+            ) {
+
+                return "MASTERCARD";
+
+            }
+
+
+            return "CARD";
+
+        };
 
 
     return (
+
         <div className="payment-card-wrapper">
 
 
-            {/* ==============================
-                3D CARD
-            ============================== */}
+            {/* =========================================
+                3D INTERACTIVE CARD
+            ========================================= */}
 
             <div
+
                 className={
                     showBack
                         ? "payment-card-scene flipped"
                         : "payment-card-scene"
                 }
+
+                onClick={
+                    handleCardFlip
+                }
+
+                onKeyDown={
+                    handleCardKeyDown
+                }
+
+                role="button"
+
+                tabIndex={0}
+
+                aria-pressed={
+                    showBack
+                }
+
+                aria-label={
+                    showBack
+                        ? "Show front of payment card"
+                        : "Show back of payment card"
+                }
+
+                title="Click or tap the card to rotate it"
+
+                style={{
+                    cursor:
+                        "pointer"
+                }}
+
             >
 
                 <div className="payment-card-3d">
 
 
-                    {/* FRONT */}
+                    {/* =====================================
+                        FRONT
+                    ===================================== */}
 
                     <div className="payment-card-face payment-card-front">
+
 
                         <div className="payment-card-pattern">
                         </div>
 
 
+                        {/* =================================
+                            TOP BRAND
+                        ================================= */}
+
                         <div className="payment-card-top">
+
 
                             <div className="payment-card-brand">
 
                                 <img
                                     src="/nabil-logo.png"
-                                    alt=""
+                                    alt="Nabil Pharmacy"
                                 />
+
 
                                 <div>
 
                                     <strong>
                                         Nabil Pharmacy
                                     </strong>
+
 
                                     <span>
                                         Since 1975
@@ -213,13 +405,22 @@ function PaymentCard() {
 
 
                             <strong className="payment-card-network">
-                                {detectCardType()}
+
+                                {
+                                    detectCardType()
+                                }
+
                             </strong>
 
                         </div>
 
 
+                        {/* =================================
+                            CHIP
+                        ================================= */}
+
                         <div className="payment-card-chip-row">
+
 
                             <div className="payment-card-chip">
 
@@ -237,12 +438,16 @@ function PaymentCard() {
 
                             <div className="contactless-symbol">
 
-                                ))) 
+                                )))
 
                             </div>
 
                         </div>
 
+
+                        {/* =================================
+                            CARD NUMBER
+                        ================================= */}
 
                         <div className="payment-card-number">
 
@@ -253,13 +458,19 @@ function PaymentCard() {
                         </div>
 
 
+                        {/* =================================
+                            CARD BOTTOM
+                        ================================= */}
+
                         <div className="payment-card-bottom">
+
 
                             <div>
 
                                 <span>
                                     CARD HOLDER
                                 </span>
+
 
                                 <strong>
 
@@ -279,6 +490,7 @@ function PaymentCard() {
                                     EXPIRES
                                 </span>
 
+
                                 <strong>
 
                                     {
@@ -295,16 +507,19 @@ function PaymentCard() {
                     </div>
 
 
-
-                    {/* BACK */}
+                    {/* =====================================
+                        BACK
+                    ===================================== */}
 
                     <div className="payment-card-face payment-card-back">
+
 
                         <div className="payment-card-back-top">
 
                             <span>
                                 NABIL PHARMACY
                             </span>
+
 
                             <LockKeyhole
                                 size={17}
@@ -313,17 +528,27 @@ function PaymentCard() {
                         </div>
 
 
+                        {/* =================================
+                            MAGNETIC STRIP
+                        ================================= */}
+
                         <div className="payment-card-magnetic-strip">
                         </div>
 
 
+                        {/* =================================
+                            SIGNATURE + CVV
+                        ================================= */}
+
                         <div className="payment-card-signature">
+
 
                             <div>
 
                                 <span>
                                     AUTHORIZED SIGNATURE
                                 </span>
+
 
                                 <div className="signature-lines">
                                 </div>
@@ -344,13 +569,23 @@ function PaymentCard() {
                         </div>
 
 
+                        {/* =================================
+                            BACK TEXT
+                        ================================= */}
+
                         <div className="payment-card-back-text">
+
 
                             <p>
 
-                                Payment information
-                                is securely processed
-                                by the payment provider.
+                                Interactive payment
+                                preview for Nabil
+                                Pharmacy.
+
+                                <br />
+
+                                Card information is
+                                not saved anywhere.
 
                             </p>
 
@@ -360,6 +595,7 @@ function PaymentCard() {
                                 <CreditCard
                                     size={26}
                                 />
+
 
                                 <span>
                                     SECURE
@@ -376,15 +612,56 @@ function PaymentCard() {
             </div>
 
 
+            {/* =========================================
+                SMALL INTERACTION MESSAGE
+            ========================================= */}
 
-            {/* ==============================
+            <div
+                style={{
+                    textAlign:
+                        "center",
+
+                    margin:
+                        "-18px 0 25px",
+
+                    fontSize:
+                        "0.74rem",
+
+                    fontWeight:
+                        "700",
+
+                    color:
+                        "var(--muted)"
+                }}
+            >
+
+                <span
+                    style={{
+                        color:
+                            "var(--red)"
+                    }}
+                >
+                    Click or tap the card
+                </span>
+
+                {" "}to view the other side.
+
+            </div>
+
+
+            {/* =========================================
                 CARD FORM
-            ============================== */}
+            ========================================= */}
 
             <div className="payment-card-form">
 
 
+                {/* =====================================
+                    CARD NUMBER
+                ===================================== */}
+
                 <div className="payment-card-field payment-card-field-full">
+
 
                     <label htmlFor="cardNumber">
                         Card Number
@@ -393,29 +670,47 @@ function PaymentCard() {
 
                     <div className="payment-input-wrapper">
 
+
                         <CreditCard
                             size={18}
                         />
 
 
                         <input
+
                             id="cardNumber"
+
                             type="text"
+
                             inputMode="numeric"
+
                             autoComplete="cc-number"
+
                             placeholder="1234 5678 9012 3456"
+
                             value={
                                 cardNumber
                             }
+
                             onChange={
                                 handleCardNumber
                             }
-                            onFocus={() =>
-                                setShowBack(
+
+                            onFocus={() => {
+
+                                setCvvFocused(
                                     false
-                                )
-                            }
+                                );
+
+
+                                setManualFlip(
+                                    false
+                                );
+
+                            }}
+
                             maxLength={19}
+
                         />
 
                     </div>
@@ -423,8 +718,12 @@ function PaymentCard() {
                 </div>
 
 
+                {/* =====================================
+                    CARDHOLDER NAME
+                ===================================== */}
 
                 <div className="payment-card-field payment-card-field-full">
+
 
                     <label htmlFor="cardName">
                         Cardholder Name
@@ -432,16 +731,23 @@ function PaymentCard() {
 
 
                     <input
+
                         id="cardName"
+
                         type="text"
+
                         autoComplete="cc-name"
+
                         placeholder="Name on card"
+
                         value={
                             cardName
                         }
+
                         onChange={
                             event =>
                                 setCardName(
+
                                     event
                                         .target
                                         .value
@@ -450,22 +756,39 @@ function PaymentCard() {
                                             0,
                                             30
                                         )
+
                                 )
                         }
-                        onFocus={() =>
-                            setShowBack(
+
+                        onFocus={() => {
+
+                            setCvvFocused(
                                 false
-                            )
-                        }
+                            );
+
+
+                            setManualFlip(
+                                false
+                            );
+
+                        }}
+
                     />
 
                 </div>
 
 
+                {/* =====================================
+                    EXPIRY + CVV
+                ===================================== */}
 
                 <div className="payment-card-small-fields">
 
+
+                    {/* EXPIRY */}
+
                     <div className="payment-card-field">
+
 
                         <label htmlFor="cardExpiry">
                             Expiry Date
@@ -473,30 +796,49 @@ function PaymentCard() {
 
 
                         <input
+
                             id="cardExpiry"
+
                             type="text"
+
                             inputMode="numeric"
+
                             autoComplete="cc-exp"
+
                             placeholder="MM/YY"
+
                             value={
                                 expiry
                             }
+
                             onChange={
                                 handleExpiry
                             }
-                            onFocus={() =>
-                                setShowBack(
+
+                            onFocus={() => {
+
+                                setCvvFocused(
                                     false
-                                )
-                            }
+                                );
+
+
+                                setManualFlip(
+                                    false
+                                );
+
+                            }}
+
                             maxLength={5}
+
                         />
 
                     </div>
 
 
+                    {/* CVV */}
 
                     <div className="payment-card-field">
+
 
                         <label htmlFor="cardCvv">
                             CVV
@@ -505,34 +847,50 @@ function PaymentCard() {
 
                         <div className="payment-input-wrapper">
 
+
                             <LockKeyhole
                                 size={17}
                             />
 
 
                             <input
+
                                 id="cardCvv"
+
                                 type="password"
+
                                 inputMode="numeric"
+
                                 autoComplete="cc-csc"
+
                                 placeholder="•••"
+
                                 value={
                                     cvv
                                 }
+
                                 onChange={
                                     handleCvv
                                 }
-                                onFocus={() =>
-                                    setShowBack(
+
+                                onFocus={() => {
+
+                                    setCvvFocused(
                                         true
-                                    )
-                                }
-                                onBlur={() =>
-                                    setShowBack(
+                                    );
+
+                                }}
+
+                                onBlur={() => {
+
+                                    setCvvFocused(
                                         false
-                                    )
-                                }
+                                    );
+
+                                }}
+
                                 maxLength={4}
+
                             />
 
                         </div>
@@ -542,11 +900,17 @@ function PaymentCard() {
                 </div>
 
 
+                {/* =====================================
+                    SECURITY MESSAGE
+                ===================================== */}
+
                 <div className="payment-card-security-message">
+
 
                     <LockKeyhole
                         size={17}
                     />
+
 
                     <span>
 
@@ -562,7 +926,9 @@ function PaymentCard() {
             </div>
 
         </div>
+
     );
+
 }
 
 
