@@ -1,0 +1,669 @@
+/* ========================================
+   CONTACT PHONE LAYOUT
+======================================== */
+
+.contact-phone-section {
+    overflow: hidden;
+}
+
+
+.contact-phone-layout {
+    display: grid;
+
+    grid-template-columns:
+        minmax(290px, 390px)
+        minmax(0, 1fr);
+
+    align-items: center;
+
+    gap: 50px;
+}
+
+
+/* ========================================
+   PHONE DEVICE
+======================================== */
+
+.contact-phone-device {
+    display: flex;
+
+    justify-content: center;
+}
+
+
+.contact-phone-frame {
+    width: 100%;
+
+    max-width: 350px;
+
+    padding: 9px;
+
+    border-radius: 52px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #252529,
+            #050506
+        );
+
+    box-shadow:
+        0 30px 60px
+        rgba(20, 15, 15, 0.25),
+        inset
+        0 0 0 1px
+        rgba(255, 255, 255, 0.14);
+
+    position: relative;
+}
+
+
+.contact-phone-frame::before {
+    content: "";
+
+    position: absolute;
+
+    top: 120px;
+    left: -4px;
+
+    width: 4px;
+    height: 75px;
+
+    border-radius:
+        4px 0 0 4px;
+
+    background: #111;
+}
+
+
+.contact-phone-frame::after {
+    content: "";
+
+    position: absolute;
+
+    top: 145px;
+    right: -4px;
+
+    width: 4px;
+    height: 90px;
+
+    border-radius:
+        0 4px 4px 0;
+
+    background: #111;
+}
+
+
+.contact-phone-screen {
+    position: relative;
+
+    min-height: 690px;
+
+    padding:
+        18px 16px 24px;
+
+    overflow: hidden;
+
+    border-radius: 44px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fbf9f9 100%
+        );
+}
+
+
+/* ========================================
+   STATUS BAR
+======================================== */
+
+.contact-phone-status {
+    position: relative;
+
+    z-index: 5;
+
+    padding:
+        0 8px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    color: #111;
+
+    font-size: 0.65rem;
+
+    font-weight: 800;
+}
+
+
+.contact-phone-status-icons {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    font-size: 0.48rem;
+}
+
+
+.phone-signal {
+    letter-spacing: -2px;
+}
+
+
+.phone-battery {
+    width: 18px;
+    height: 9px;
+
+    border:
+        1px solid #111;
+
+    border-radius: 3px;
+
+    position: relative;
+}
+
+
+.phone-battery::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 2px;
+
+    border-radius: 1px;
+
+    background: #111;
+}
+
+
+.phone-battery::after {
+    content: "";
+
+    position: absolute;
+
+    top: 2px;
+    right: -3px;
+
+    width: 2px;
+    height: 4px;
+
+    border-radius:
+        0 1px 1px 0;
+
+    background: #111;
+}
+
+
+/* ========================================
+   DYNAMIC ISLAND
+======================================== */
+
+.contact-phone-island {
+    position: absolute;
+
+    z-index: 10;
+
+    top: 11px;
+    left: 50%;
+
+    width: 92px;
+    height: 27px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius: 20px;
+
+    background: #050505;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    padding-right: 8px;
+}
+
+
+.contact-phone-camera {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 35% 35%,
+            #224f75,
+            #07111b 65%
+        );
+}
+
+
+/* ========================================
+   APP HEADER
+======================================== */
+
+.contact-phone-app-header {
+    margin-top: 38px;
+
+    padding:
+        0 8px;
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.contact-phone-app-header span {
+    color: var(--red);
+
+    font-size: 0.55rem;
+
+    font-weight: 800;
+
+    letter-spacing: 0.12em;
+
+    text-transform: uppercase;
+}
+
+
+.contact-phone-app-header strong {
+    margin-top: 2px;
+
+    color: #111;
+
+    font-size: 1.45rem;
+
+    letter-spacing: -0.04em;
+}
+
+
+/* ========================================
+   PROFILE
+======================================== */
+
+.contact-phone-profile {
+    margin-top: 25px;
+
+    text-align: center;
+}
+
+
+.contact-phone-avatar {
+    width: 82px;
+    height: 82px;
+
+    margin-inline: auto;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--red),
+            var(--red-dark)
+        );
+
+    color: white;
+
+    font-size: 1.5rem;
+
+    font-weight: 900;
+
+    box-shadow:
+        0 12px 30px
+        rgba(170, 16, 24, 0.2);
+}
+
+
+.contact-phone-profile h3 {
+    margin-top: 12px;
+
+    color: #111;
+
+    font-size: 1.05rem;
+}
+
+
+.contact-phone-profile p {
+    margin-top: 2px;
+
+    color: #8a8a8e;
+
+    font-size: 0.68rem;
+}
+
+
+/* ========================================
+   PHONE ACTIONS
+======================================== */
+
+.contact-phone-actions {
+    margin-top: 17px;
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 25px;
+}
+
+
+.contact-phone-actions > div {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 4px;
+
+    color: var(--red);
+}
+
+
+.contact-phone-actions > div svg {
+    width: 34px;
+    height: 34px;
+
+    padding: 8px;
+
+    border-radius: 50%;
+
+    background:
+        var(--soft-red);
+}
+
+
+.contact-phone-actions span {
+    font-size: 0.52rem;
+
+    text-transform: lowercase;
+}
+
+
+/* ========================================
+   PHONE FORM
+======================================== */
+
+.contact-phone-form {
+    margin-top: 24px;
+
+    display: grid;
+
+    gap: 13px;
+}
+
+
+.contact-phone-field {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+.contact-phone-field label {
+    padding-left: 5px;
+
+    color: #707077;
+
+    font-size: 0.58rem;
+
+    font-weight: 700;
+}
+
+
+.contact-phone-input {
+    position: relative;
+}
+
+
+.contact-phone-input > svg {
+    position: absolute;
+
+    left: 13px;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    color: var(--red);
+
+    pointer-events: none;
+}
+
+
+.contact-phone-input input {
+    width: 100%;
+
+    min-height: 48px;
+
+    padding:
+        0 13px 0 42px;
+
+    border:
+        1px solid
+        #e8e8ea;
+
+    border-radius: 14px;
+
+    outline: none;
+
+    background:
+        #f5f5f7;
+
+    color: #111;
+
+    font-size: 16px;
+
+    transition:
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+
+.contact-phone-input input:focus {
+    border-color:
+        rgba(170, 16, 24, 0.35);
+
+    background: white;
+
+    box-shadow:
+        0 0 0 4px
+        rgba(170, 16, 24, 0.06);
+
+    transform:
+        scale(1.015);
+}
+
+
+/* ========================================
+   HOME INDICATOR
+======================================== */
+
+.contact-phone-home-indicator {
+    position: absolute;
+
+    left: 50%;
+    bottom: 8px;
+
+    width: 100px;
+    height: 4px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius: 10px;
+
+    background: #111;
+}
+
+
+/* ========================================
+   RIGHT SIDE
+======================================== */
+
+.contact-phone-side {
+    max-width: 420px;
+}
+
+
+.contact-phone-side h3 {
+    margin-top: 8px;
+
+    max-width: 350px;
+
+    font-size:
+        clamp(
+            2rem,
+            4vw,
+            3.2rem
+        );
+
+    line-height: 1;
+
+    letter-spacing: -0.05em;
+}
+
+
+.contact-phone-side > p {
+    margin:
+        17px 0 27px;
+
+    color: var(--muted);
+
+    line-height: 1.75;
+}
+
+
+.contact-phone-side-card {
+    margin-top: 11px;
+
+    padding: 14px 16px;
+
+    display: grid;
+
+    grid-template-columns:
+        auto minmax(0, 1fr);
+
+    align-items: center;
+
+    gap: 12px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 16px;
+
+    background: white;
+}
+
+
+.contact-phone-side-card > svg {
+    width: 38px;
+    height: 38px;
+
+    padding: 9px;
+
+    border-radius: 12px;
+
+    background:
+        var(--soft-red);
+
+    color: var(--red);
+}
+
+
+.contact-phone-side-card div {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.contact-phone-side-card span {
+    color: var(--muted);
+
+    font-size: 0.65rem;
+}
+
+
+.contact-phone-side-card strong {
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 0.8rem;
+}
+
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 900px) {
+
+    .contact-phone-layout {
+        grid-template-columns: 1fr;
+
+        gap: 35px;
+    }
+
+
+    .contact-phone-side {
+        max-width: 100%;
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .contact-phone-frame {
+        max-width: 320px;
+
+        border-radius: 47px;
+    }
+
+
+    .contact-phone-screen {
+        min-height: 650px;
+
+        border-radius: 39px;
+    }
+
+
+    .contact-phone-layout {
+        gap: 28px;
+    }
+
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    .contact-phone-input input {
+        transition: none;
+    }
+
+}

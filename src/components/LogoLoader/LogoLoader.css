@@ -1,0 +1,656 @@
+/* =========================================================
+   NABIL PHARMACY
+   REUSABLE SMALL LOADER
+========================================================= */
+
+.logo-loader {
+    position: relative;
+
+    width: 100%;
+
+    min-height: 230px;
+
+    padding: 34px 20px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   ANIMATION AREA
+========================================================= */
+
+.logo-loader-animation {
+    position: relative;
+
+    width: 112px;
+    height: 112px;
+
+    display: grid;
+    place-items: center;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.logo-loader-logo-box {
+    position: relative;
+
+    z-index: 6;
+
+    width: 70px;
+    height: 70px;
+
+    display: grid;
+    place-items: center;
+
+    overflow: hidden;
+
+    border-radius: 50%;
+
+    background:
+        #ffffff;
+
+    border:
+        1px solid
+        rgba(180, 20, 30, 0.13);
+
+    box-shadow:
+        0 12px 30px
+        rgba(119, 15, 22, 0.16),
+        0 0 0 5px
+        rgba(255, 255, 255, 0.72);
+
+    animation:
+        logoLoaderPulse
+        1.65s
+        ease-in-out
+        infinite;
+}
+
+
+.logo-loader-logo {
+    width: 54px;
+    height: 54px;
+
+    display: block;
+
+    object-fit: contain;
+}
+
+
+
+/* =========================================================
+   PULSE
+========================================================= */
+
+@keyframes logoLoaderPulse {
+
+    0%,
+    100% {
+        transform:
+            scale(1);
+
+        box-shadow:
+            0 12px 30px
+            rgba(119, 15, 22, 0.16),
+            0 0 0 5px
+            rgba(255, 255, 255, 0.72);
+    }
+
+
+    50% {
+        transform:
+            scale(1.065);
+
+        box-shadow:
+            0 16px 36px
+            rgba(119, 15, 22, 0.24),
+            0 0 0 9px
+            rgba(181, 22, 32, 0.07);
+    }
+
+}
+
+
+
+/* =========================================================
+   ROTATING RINGS
+========================================================= */
+
+.logo-loader-ring {
+    position: absolute;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+.logo-loader-ring-one {
+    inset: 3px;
+
+    border:
+        3px solid
+        rgba(177, 20, 30, 0.08);
+
+    border-top-color:
+        #b5161f;
+
+    border-right-color:
+        #b5161f;
+
+    animation:
+        logoLoaderRotate
+        1.25s
+        linear
+        infinite;
+}
+
+
+.logo-loader-ring-two {
+    inset: 14px;
+
+    border:
+        2px solid
+        rgba(201, 159, 99, 0.11);
+
+    border-bottom-color:
+        #c89558;
+
+    border-left-color:
+        #d3a76a;
+
+    animation:
+        logoLoaderRotateReverse
+        1.8s
+        linear
+        infinite;
+}
+
+
+@keyframes logoLoaderRotate {
+
+    to {
+        transform:
+            rotate(360deg);
+    }
+
+}
+
+
+@keyframes logoLoaderRotateReverse {
+
+    to {
+        transform:
+            rotate(-360deg);
+    }
+
+}
+
+
+
+/* =========================================================
+   GLOW
+========================================================= */
+
+.logo-loader-glow {
+    position: absolute;
+
+    z-index: 1;
+
+    width: 82px;
+    height: 82px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(181, 22, 31, 0.17) 0%,
+            rgba(181, 22, 31, 0.055) 48%,
+            transparent 72%
+        );
+
+    animation:
+        logoLoaderGlow
+        1.5s
+        ease-in-out
+        infinite;
+}
+
+
+@keyframes logoLoaderGlow {
+
+    0%,
+    100% {
+        opacity: 0.7;
+
+        transform:
+            scale(0.95);
+    }
+
+
+    50% {
+        opacity: 1;
+
+        transform:
+            scale(1.35);
+    }
+
+}
+
+
+
+/* =========================================================
+   MEDICAL PLUS PARTICLES
+========================================================= */
+
+.logo-loader-cross {
+    position: absolute;
+
+    z-index: 8;
+
+    display: grid;
+    place-items: center;
+
+    color:
+        #b5161f;
+
+    font-weight: 900;
+
+    line-height: 1;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+.logo-loader-cross-one {
+    top: 5px;
+    right: 1px;
+
+    font-size: 17px;
+
+    animation:
+        logoLoaderCrossFloat
+        2.2s
+        ease-in-out
+        infinite;
+}
+
+
+.logo-loader-cross-two {
+    left: -2px;
+    top: 49px;
+
+    color:
+        #c28e50;
+
+    font-size: 13px;
+
+    animation:
+        logoLoaderCrossFloat
+        2.2s
+        0.55s
+        ease-in-out
+        infinite;
+}
+
+
+.logo-loader-cross-three {
+    right: 12px;
+    bottom: 1px;
+
+    font-size: 11px;
+
+    animation:
+        logoLoaderCrossFloat
+        2.2s
+        1.05s
+        ease-in-out
+        infinite;
+}
+
+
+@keyframes logoLoaderCrossFloat {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            translateY(7px)
+            scale(0.45)
+            rotate(0deg);
+    }
+
+
+    30% {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1)
+            rotate(45deg);
+    }
+
+
+    65% {
+        opacity: 0.85;
+
+        transform:
+            translateY(-7px)
+            scale(0.9)
+            rotate(90deg);
+    }
+
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translateY(-15px)
+            scale(0.45)
+            rotate(140deg);
+    }
+
+}
+
+
+
+/* =========================================================
+   LOADING TEXT
+========================================================= */
+
+.logo-loader-text {
+    margin-top: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    color:
+        #761017;
+}
+
+
+.logo-loader-text strong {
+    font-size: 0.9rem;
+
+    font-weight: 800;
+
+    letter-spacing:
+        -0.01em;
+}
+
+
+
+/* =========================================================
+   DOTS
+========================================================= */
+
+.logo-loader-dots {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 4px;
+}
+
+
+.logo-loader-dots span {
+    width: 5px;
+    height: 5px;
+
+    display: block;
+
+    border-radius: 50%;
+
+    background:
+        #b5161f;
+
+    animation:
+        logoLoaderDotBounce
+        1.15s
+        ease-in-out
+        infinite;
+}
+
+
+.logo-loader-dots span:nth-child(2) {
+    animation-delay:
+        0.14s;
+}
+
+
+.logo-loader-dots span:nth-child(3) {
+    animation-delay:
+        0.28s;
+}
+
+
+@keyframes logoLoaderDotBounce {
+
+    0%,
+    60%,
+    100% {
+        opacity: 0.3;
+
+        transform:
+            translateY(0);
+    }
+
+
+    30% {
+        opacity: 1;
+
+        transform:
+            translateY(-5px);
+    }
+
+}
+
+
+
+/* =========================================================
+   MINI BRAND
+========================================================= */
+
+.logo-loader-brand {
+    margin-top: 8px;
+
+    color:
+        rgba(83, 29, 33, 0.48);
+
+    font-size: 0.57rem;
+
+    font-weight: 900;
+
+    letter-spacing:
+        0.17em;
+
+    text-transform:
+        uppercase;
+}
+
+
+
+/* =========================================================
+   SMALL VERSION
+========================================================= */
+
+.logo-loader-small {
+    min-height: 150px;
+
+    padding:
+        22px 14px;
+}
+
+
+.logo-loader-small
+.logo-loader-animation {
+    width: 82px;
+    height: 82px;
+}
+
+
+.logo-loader-small
+.logo-loader-logo-box {
+    width: 52px;
+    height: 52px;
+}
+
+
+.logo-loader-small
+.logo-loader-logo {
+    width: 39px;
+    height: 39px;
+}
+
+
+.logo-loader-small
+.logo-loader-text {
+    margin-top: 13px;
+}
+
+
+.logo-loader-small
+.logo-loader-text strong {
+    font-size: 0.78rem;
+}
+
+
+.logo-loader-small
+.logo-loader-cross-one {
+    font-size: 14px;
+}
+
+
+.logo-loader-small
+.logo-loader-cross-two {
+    top: 34px;
+
+    font-size: 11px;
+}
+
+
+.logo-loader-small
+.logo-loader-cross-three {
+    font-size: 10px;
+}
+
+
+
+/* =========================================================
+   ENTRANCE
+========================================================= */
+
+.logo-loader {
+    animation:
+        logoLoaderEntrance
+        0.35s
+        ease
+        both;
+}
+
+
+@keyframes logoLoaderEntrance {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(5px)
+            scale(0.97);
+    }
+
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .logo-loader {
+        min-height: 190px;
+
+        padding:
+            28px 16px;
+    }
+
+
+    .logo-loader-animation {
+        width: 100px;
+        height: 100px;
+    }
+
+
+    .logo-loader-logo-box {
+        width: 64px;
+        height: 64px;
+    }
+
+
+    .logo-loader-logo {
+        width: 48px;
+        height: 48px;
+    }
+
+
+    .logo-loader-text strong {
+        font-size: 0.84rem;
+    }
+
+
+    .logo-loader-small {
+        min-height: 135px;
+    }
+
+}
+
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .logo-loader,
+    .logo-loader-logo-box,
+    .logo-loader-ring,
+    .logo-loader-glow,
+    .logo-loader-cross,
+    .logo-loader-dots span {
+        animation: none !important;
+    }
+
+
+    .logo-loader-cross {
+        display: none;
+    }
+
+}

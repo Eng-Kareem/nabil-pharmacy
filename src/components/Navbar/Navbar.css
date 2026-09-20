@@ -1,0 +1,1017 @@
+/* =========================================================
+   NABIL PHARMACY NAVBAR
+========================================================= */
+
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+
+    width: 100%;
+
+    border-bottom:
+        1px solid rgba(25, 25, 30, 0.07);
+
+    background:
+        rgba(255, 255, 255, 0.97);
+
+    backdrop-filter:
+        blur(18px);
+
+    -webkit-backdrop-filter:
+        blur(18px);
+}
+
+
+/* =========================================================
+   INNER
+========================================================= */
+
+.navbar-inner {
+    min-height: 82px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 25px;
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.navbar-brand {
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    color: var(--text);
+
+    text-decoration: none;
+}
+
+
+/* VERY IMPORTANT:
+   stops the logo becoming gigantic
+*/
+
+.navbar-brand img {
+    width: 58px;
+    height: 58px;
+
+    max-width: 58px;
+    max-height: 58px;
+
+    flex-shrink: 0;
+
+    display: block;
+
+    object-fit: contain;
+}
+
+
+.navbar-brand > div {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.navbar-brand strong {
+    color: var(--text);
+
+    font-size: 0.9rem;
+
+    font-weight: 900;
+
+    line-height: 1.15;
+
+    white-space: nowrap;
+}
+
+
+.navbar-brand span {
+    margin-top: 3px;
+
+    color: var(--red);
+
+    font-size: 0.58rem;
+
+    font-weight: 900;
+
+    letter-spacing: 0.14em;
+
+    text-transform: uppercase;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   NORMAL DESKTOP NAVIGATION
+========================================================= */
+
+.navbar-links {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    margin-left: auto;
+}
+
+
+.navbar-links > a {
+    min-height: 42px;
+
+    padding:
+        0 11px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 11px;
+
+    color: var(--text);
+
+    font-size: 0.7rem;
+
+    font-weight: 750;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.navbar-links > a:hover {
+    color: var(--red);
+
+    background:
+        var(--soft-red, #fff1f2);
+}
+
+
+/* =========================================================
+   NAVBAR ACTIONS
+========================================================= */
+
+.navbar-actions {
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+}
+
+
+/* =========================================================
+   CART
+========================================================= */
+
+.navbar-cart {
+    position: relative;
+
+    width: 46px;
+    height: 46px;
+
+    flex-shrink: 0;
+
+    display: grid;
+
+    place-items: center;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 14px;
+
+    background:
+        #ffffff;
+
+    color:
+        var(--text);
+
+    text-decoration: none;
+
+    transition:
+        color 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.navbar-cart:hover {
+    transform:
+        translateY(-2px);
+
+    border-color:
+        rgba(170, 16, 24, 0.18);
+
+    background:
+        var(--soft-red, #fff1f2);
+
+    color:
+        var(--red);
+}
+
+
+.navbar-cart > span {
+    position: absolute;
+
+    top: -5px;
+    right: -5px;
+
+    min-width: 20px;
+    height: 20px;
+
+    padding:
+        0 5px;
+
+    display: grid;
+
+    place-items: center;
+
+    border:
+        2px solid #ffffff;
+
+    border-radius: 999px;
+
+    background:
+        var(--red);
+
+    color:
+        #ffffff;
+
+    font-size: 0.52rem;
+
+    font-weight: 900;
+}
+
+
+/* =========================================================
+   PRESCRIPTION BUTTON
+========================================================= */
+
+.navbar-prescription {
+    min-height: 48px;
+
+    padding:
+        0 19px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--red),
+            var(--red-dark)
+        );
+
+    color: #ffffff;
+
+    font-size: 0.7rem;
+
+    font-weight: 900;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    box-shadow:
+        0 13px 28px
+        rgba(170, 16, 24, 0.2);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.navbar-prescription:hover {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 17px 34px
+        rgba(170, 16, 24, 0.27);
+}
+
+
+/* =========================================================
+   MOBILE MENU BUTTON
+========================================================= */
+
+.navbar-menu-button {
+    width: 44px;
+    height: 44px;
+
+    display: none;
+
+    place-items: center;
+
+    flex-shrink: 0;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 12px;
+
+    background:
+        #ffffff;
+
+    color:
+        var(--text);
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+.navbar-mobile-menu {
+    display: none;
+}
+
+
+/* =========================================================
+   ADMIN NAVBAR
+========================================================= */
+
+.navbar-admin {
+    border-bottom:
+        1px solid
+        rgba(170, 16, 24, 0.12);
+
+    box-shadow:
+        0 8px 30px
+        rgba(20, 20, 25, 0.045);
+}
+
+
+.navbar-admin .navbar-inner {
+    min-height: 86px;
+}
+
+
+/* =========================================================
+   ADMIN BRAND
+========================================================= */
+
+.navbar-admin-brand img {
+    width: 56px;
+    height: 56px;
+
+    max-width: 56px;
+    max-height: 56px;
+}
+
+
+.navbar-admin-brand span {
+    color:
+        var(--red);
+
+    font-size: 0.57rem;
+
+    font-weight: 900;
+
+    letter-spacing:
+        0.13em;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   ADMIN NAV LINKS
+========================================================= */
+
+.navbar-admin-links {
+    margin:
+        0 auto;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+}
+
+
+.navbar-admin-links > a {
+    min-height: 44px;
+
+    padding:
+        0 14px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    border-radius: 12px;
+
+    color:
+        var(--muted);
+
+    font-size: 0.68rem;
+
+    font-weight: 800;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.navbar-admin-links > a svg {
+    flex-shrink: 0;
+}
+
+
+.navbar-admin-links > a:hover {
+    color:
+        var(--red);
+
+    background:
+        var(--soft-red, #fff1f2);
+}
+
+
+.navbar-admin-links > a.active {
+    color:
+        var(--red);
+
+    background:
+        var(--soft-red, #fff1f2);
+}
+
+
+/* =========================================================
+   ADMIN ACTIONS
+========================================================= */
+
+.navbar-admin-actions {
+    margin-left: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+/* =========================================================
+   VIEW WEBSITE
+========================================================= */
+
+.navbar-view-site {
+    min-height: 44px;
+
+    padding:
+        0 14px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 12px;
+
+    background:
+        #ffffff;
+
+    color:
+        var(--text);
+
+    font-size: 0.66rem;
+
+    font-weight: 800;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.navbar-view-site:hover {
+    border-color:
+        rgba(170, 16, 24, 0.18);
+
+    background:
+        var(--soft-red, #fff1f2);
+
+    color:
+        var(--red);
+}
+
+
+/* =========================================================
+   ADMIN LOGOUT BUTTON
+========================================================= */
+
+.navbar-admin-logout {
+    min-height: 44px;
+
+    padding:
+        0 15px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    border: 0;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--red),
+            var(--red-dark)
+        );
+
+    color: #ffffff;
+
+    font-size: 0.66rem;
+
+    font-weight: 900;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 11px 25px
+        rgba(170, 16, 24, 0.2);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.navbar-admin-logout:hover {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 15px 31px
+        rgba(170, 16, 24, 0.27);
+}
+
+
+/* =========================================================
+   ADMIN MOBILE MENU
+========================================================= */
+
+.navbar-admin-mobile-menu a,
+.navbar-admin-mobile-menu button {
+    width: 100%;
+
+    min-height: 48px;
+
+    padding:
+        0 14px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    border: 0;
+
+    border-radius: 11px;
+
+    background:
+        transparent;
+
+    color:
+        var(--text);
+
+    font: inherit;
+
+    font-size: 0.71rem;
+
+    font-weight: 800;
+
+    text-align: left;
+
+    text-decoration: none;
+
+    cursor: pointer;
+}
+
+
+.navbar-admin-mobile-menu a:hover,
+.navbar-admin-mobile-menu button:hover {
+    background:
+        var(--soft-red, #fff1f2);
+
+    color:
+        var(--red);
+}
+
+
+/* =========================================================
+   MEDIUM DESKTOP
+========================================================= */
+
+@media (max-width: 1180px) {
+
+    .navbar-inner {
+        gap: 14px;
+    }
+
+
+    .navbar-links {
+        gap: 2px;
+    }
+
+
+    .navbar-links > a {
+        padding:
+            0 8px;
+
+        font-size: 0.65rem;
+    }
+
+
+    .navbar-prescription {
+        padding:
+            0 14px;
+    }
+
+
+    .navbar-admin-links > a {
+        padding:
+            0 9px;
+    }
+
+}
+
+
+/* =========================================================
+   TABLET / ADMIN MOBILE START
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .navbar-links,
+    .navbar-admin-links {
+        display: none;
+    }
+
+
+    .navbar-menu-button {
+        display: grid;
+    }
+
+
+    .navbar-view-site,
+    .navbar-admin-logout {
+        display: none;
+    }
+
+
+    .navbar-mobile-menu {
+        position: absolute;
+
+        top: 100%;
+        right: 20px;
+        left: 20px;
+
+        padding: 14px;
+
+        display: grid;
+
+        gap: 5px;
+
+        border:
+            1px solid var(--border);
+
+        border-radius:
+            0 0 18px 18px;
+
+        background:
+            rgba(255, 255, 255, 0.99);
+
+        box-shadow:
+            0 25px 60px
+            rgba(20, 20, 25, 0.13);
+
+        backdrop-filter:
+            blur(18px);
+    }
+
+
+    .navbar-mobile-menu > a {
+        min-height: 46px;
+
+        padding:
+            0 14px;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+        border-radius: 11px;
+
+        color:
+            var(--text);
+
+        font-size: 0.72rem;
+
+        font-weight: 800;
+
+        text-decoration: none;
+    }
+
+
+    .navbar-mobile-menu > a:hover {
+        background:
+            var(--soft-red, #fff1f2);
+
+        color:
+            var(--red);
+    }
+
+
+    .navbar-mobile-prescription {
+        margin-top: 4px;
+
+        background:
+            var(--red) !important;
+
+        color:
+            #ffffff !important;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .navbar-inner {
+        min-height: 72px;
+    }
+
+
+    .navbar-admin .navbar-inner {
+        min-height: 72px;
+    }
+
+
+    .navbar-brand {
+        gap: 8px;
+    }
+
+
+    .navbar-brand img,
+    .navbar-admin-brand img {
+        width: 48px;
+        height: 48px;
+
+        max-width: 48px;
+        max-height: 48px;
+    }
+
+
+    .navbar-brand strong {
+        font-size: 0.78rem;
+    }
+
+
+    .navbar-brand span {
+        font-size: 0.51rem;
+    }
+
+
+    .navbar-prescription {
+        display: none;
+    }
+
+
+    .navbar-cart {
+        width: 42px;
+        height: 42px;
+    }
+
+
+    .navbar-menu-button {
+        width: 42px;
+        height: 42px;
+    }
+
+
+    .navbar-mobile-menu {
+        right: 12px;
+        left: 12px;
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 400px) {
+
+    .navbar-brand strong {
+        font-size: 0.72rem;
+    }
+
+
+    .navbar-brand span {
+        font-size: 0.48rem;
+    }
+
+
+    .navbar-brand img,
+    .navbar-admin-brand img {
+        width: 44px;
+        height: 44px;
+
+        max-width: 44px;
+        max-height: 44px;
+    }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .navbar a,
+    .navbar button {
+        transition: none !important;
+    }
+
+}
+/* =========================================================
+   CUSTOMER ACCOUNT BUTTON
+========================================================= */
+
+.navbar-account {
+    min-height: 42px;
+
+    padding:
+        0 13px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    border:
+        1px solid
+        var(--border, #e4e4e7);
+
+    border-radius: 11px;
+
+    background:
+        #ffffff;
+
+    color:
+        var(--text, #19191d);
+
+    font-size: 0.58rem;
+    font-weight: 900;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.navbar-account:hover {
+    border-color:
+        rgba(170, 16, 24, 0.2);
+
+    background:
+        var(--soft-red, #fff2f3);
+
+    color:
+        var(--red, #aa1018);
+}
+
+
+.navbar-account svg {
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   MOBILE ACCOUNT
+========================================================= */
+
+.navbar-mobile-account {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 1050px) {
+
+    .navbar-account span {
+        display: none;
+    }
+
+
+    .navbar-account {
+        width: 42px;
+
+        padding: 0;
+    }
+
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    .navbar-account {
+        transition: none;
+    }
+
+}

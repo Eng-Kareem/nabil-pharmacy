@@ -1,0 +1,745 @@
+/* =========================================================
+   GLOBAL WEBSITE LOADER
+========================================================= */
+
+.website-loader {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 999999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 20% 20%,
+            rgba(255, 255, 255, 0.08),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 80% 75%,
+            rgba(218, 171, 105, 0.12),
+            transparent 32%
+        ),
+        linear-gradient(
+            145deg,
+            #b4141e 0%,
+            #930f18 47%,
+            #66070c 100%
+        );
+
+    opacity: 1;
+
+    visibility: visible;
+
+    transition:
+        opacity 0.55s ease,
+        visibility 0.55s ease;
+}
+
+
+/* =========================================================
+   LOADER FADE OUT
+========================================================= */
+
+.website-loader-leaving {
+    opacity: 0;
+
+    visibility: hidden;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   BACKGROUND ORBS
+========================================================= */
+
+.website-loader-orb {
+    position: absolute;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+.loader-orb-one {
+    width: 420px;
+    height: 420px;
+
+    top: -180px;
+    right: -130px;
+
+    border:
+        55px solid
+        rgba(255, 255, 255, 0.025);
+
+    animation:
+        websiteOrbFloatOne
+        8s
+        ease-in-out
+        infinite;
+}
+
+
+.loader-orb-two {
+    width: 310px;
+    height: 310px;
+
+    left: -130px;
+    bottom: -140px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+
+    animation:
+        websiteOrbFloatTwo
+        9s
+        ease-in-out
+        infinite;
+}
+
+
+@keyframes websiteOrbFloatOne {
+
+    0%,
+    100% {
+        transform:
+            translate(
+                0,
+                0
+            );
+    }
+
+
+    50% {
+        transform:
+            translate(
+                -20px,
+                22px
+            );
+    }
+
+}
+
+
+@keyframes websiteOrbFloatTwo {
+
+    0%,
+    100% {
+        transform:
+            translate(
+                0,
+                0
+            )
+            scale(1);
+    }
+
+
+    50% {
+        transform:
+            translate(
+                22px,
+                -18px
+            )
+            scale(1.05);
+    }
+
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.website-loader-content {
+    position: relative;
+
+    z-index: 5;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    text-align: center;
+
+    animation:
+        websiteLoaderEntrance
+        0.65s
+        ease
+        both;
+}
+
+
+@keyframes websiteLoaderEntrance {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(14px)
+            scale(0.96);
+    }
+
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   LOGO AREA
+========================================================= */
+
+.website-loader-logo-area {
+    position: relative;
+
+    width: 165px;
+    height: 165px;
+
+    display: grid;
+    place-items: center;
+
+    margin-bottom: 31px;
+}
+
+
+/* =========================================================
+   LOGO CONTAINER
+========================================================= */
+
+.website-loader-logo-container {
+    position: relative;
+
+    z-index: 5;
+
+    width: 112px;
+    height: 112px;
+
+    display: grid;
+    place-items: center;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.55);
+
+    border-radius: 50%;
+
+    background:
+        #ffffff;
+
+    box-shadow:
+        0 18px 45px
+        rgba(0, 0, 0, 0.24),
+        0 0 0 7px
+        rgba(255, 255, 255, 0.08);
+
+    animation:
+        websiteLogoPulse
+        1.65s
+        ease-in-out
+        infinite;
+}
+
+
+.website-loader-logo {
+    width: 88px;
+    height: 88px;
+
+    display: block;
+
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   LOGO PULSE
+========================================================= */
+
+@keyframes websiteLogoPulse {
+
+    0%,
+    100% {
+        transform:
+            scale(1);
+    }
+
+
+    50% {
+        transform:
+            scale(1.055);
+    }
+
+}
+
+
+/* =========================================================
+   ROTATING RINGS
+========================================================= */
+
+.website-loader-ring {
+    position: absolute;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+.website-loader-ring-outer {
+    inset: 0;
+
+    border:
+        3px solid
+        rgba(255, 255, 255, 0.12);
+
+    border-top-color:
+        #ffffff;
+
+    border-right-color:
+        #e9bd83;
+
+    animation:
+        websiteLoaderSpin
+        1.55s
+        linear
+        infinite;
+}
+
+
+.website-loader-ring-inner {
+    inset: 15px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.18);
+
+    border-left-color:
+        rgba(255, 255, 255, 0.8);
+
+    animation:
+        websiteLoaderSpinReverse
+        2.3s
+        linear
+        infinite;
+}
+
+
+@keyframes websiteLoaderSpin {
+
+    to {
+        transform:
+            rotate(360deg);
+    }
+
+}
+
+
+@keyframes websiteLoaderSpinReverse {
+
+    to {
+        transform:
+            rotate(-360deg);
+    }
+
+}
+
+
+/* =========================================================
+   PULSE RING
+========================================================= */
+
+.website-loader-pulse {
+    position: absolute;
+
+    z-index: 1;
+
+    width: 125px;
+    height: 125px;
+
+    border:
+        2px solid
+        rgba(255, 255, 255, 0.34);
+
+    border-radius: 50%;
+
+    animation:
+        websiteLoaderPulse
+        1.7s
+        ease-out
+        infinite;
+}
+
+
+@keyframes websiteLoaderPulse {
+
+    0% {
+        opacity: 0.7;
+
+        transform:
+            scale(0.85);
+    }
+
+
+    100% {
+        opacity: 0;
+
+        transform:
+            scale(1.45);
+    }
+
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.website-loader-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.website-loader-small-title {
+    margin-bottom: 6px;
+
+    color:
+        rgba(255, 255, 255, 0.67);
+
+    font-size: 0.67rem;
+    font-weight: 800;
+
+    letter-spacing: 0.18em;
+
+    text-transform: uppercase;
+}
+
+
+.website-loader-brand h1 {
+    margin: 0;
+
+    color:
+        #ffffff;
+
+    font-size:
+        clamp(
+            2rem,
+            4vw,
+            3.15rem
+        );
+
+    line-height: 1;
+
+    font-weight: 800;
+
+    letter-spacing: -0.045em;
+}
+
+
+/* =========================================================
+   SINCE
+========================================================= */
+
+.website-loader-since {
+    margin-top: 12px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+}
+
+
+.website-loader-since span {
+    width: 34px;
+    height: 1px;
+
+    display: block;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #e9bd83
+        );
+}
+
+
+.website-loader-since span:last-child {
+    background:
+        linear-gradient(
+            90deg,
+            #e9bd83,
+            transparent
+        );
+}
+
+
+.website-loader-since strong {
+    color:
+        #efc895;
+
+    font-size: 0.57rem;
+    font-weight: 900;
+
+    letter-spacing: 0.18em;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   LOADING STATUS
+========================================================= */
+
+.website-loader-status {
+    margin-top: 28px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    color:
+        rgba(255, 255, 255, 0.68);
+
+    font-size: 0.64rem;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   DOTS
+========================================================= */
+
+.website-loader-dots {
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+}
+
+
+.website-loader-dots i {
+    width: 5px;
+    height: 5px;
+
+    display: block;
+
+    border-radius: 50%;
+
+    background:
+        #ffffff;
+
+    animation:
+        websiteLoadingDot
+        1.25s
+        ease-in-out
+        infinite;
+}
+
+
+.website-loader-dots i:nth-child(2) {
+    animation-delay:
+        0.15s;
+}
+
+
+.website-loader-dots i:nth-child(3) {
+    animation-delay:
+        0.3s;
+}
+
+
+@keyframes websiteLoadingDot {
+
+    0%,
+    60%,
+    100% {
+        opacity: 0.3;
+
+        transform:
+            translateY(0);
+    }
+
+
+    30% {
+        opacity: 1;
+
+        transform:
+            translateY(-4px);
+    }
+
+}
+
+
+/* =========================================================
+   BOTTOM BRANDING
+========================================================= */
+
+.website-loader-bottom {
+    position: absolute;
+
+    z-index: 5;
+
+    left: 50%;
+    bottom: 26px;
+
+    transform:
+        translateX(-50%);
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    white-space: nowrap;
+
+    color:
+        rgba(255, 255, 255, 0.44);
+
+    font-size: 0.49rem;
+    font-weight: 800;
+
+    letter-spacing: 0.14em;
+}
+
+
+.website-loader-bottom-dot {
+    width: 4px;
+    height: 4px;
+
+    border-radius: 50%;
+
+    background:
+        #e9bd83;
+}
+
+
+/* =========================================================
+   WEBSITE CONTENT
+========================================================= */
+
+.website-app-loading {
+    opacity: 0;
+
+    visibility: hidden;
+}
+
+
+.website-app-ready {
+    opacity: 1;
+
+    visibility: visible;
+
+    animation:
+        websiteContentReveal
+        0.5s
+        ease
+        both;
+}
+
+
+@keyframes websiteContentReveal {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(5px);
+    }
+
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .website-loader-logo-area {
+        width: 145px;
+        height: 145px;
+
+        margin-bottom: 27px;
+    }
+
+
+    .website-loader-logo-container {
+        width: 98px;
+        height: 98px;
+    }
+
+
+    .website-loader-logo {
+        width: 76px;
+        height: 76px;
+    }
+
+
+    .website-loader-brand h1 {
+        font-size: 2.15rem;
+    }
+
+
+    .website-loader-status {
+        margin-top: 23px;
+
+        font-size: 0.6rem;
+    }
+
+
+    .website-loader-bottom {
+        bottom: 20px;
+
+        font-size: 0.43rem;
+    }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .website-loader,
+    .website-loader-content,
+    .website-loader-logo-container,
+    .website-loader-ring,
+    .website-loader-pulse,
+    .website-loader-orb,
+    .website-loader-dots i,
+    .website-app-ready {
+        animation: none !important;
+
+        transition: none !important;
+    }
+
+}

@@ -1,0 +1,46 @@
+:root {
+    /* BRAND */
+    --red: #aa1018;
+    --red-dark: #760b10;
+    --red-light: #d3222c;
+
+    --copper: #be6c3c;
+    --copper-light: #d79a73;
+
+    --gold: #c99b52;
+
+    /* TEXT */
+    --text: #222226;
+    --muted: #707077;
+
+    /* SURFACES */
+    --white: #ffffff;
+    --soft: #f8f6f4;
+    --soft-red: #fff7f7;
+
+    /* BORDERS */
+    --border: rgba(25, 25, 28, 0.09);
+
+    /* SHADOWS */
+    --shadow-sm:
+        0 10px 30px rgba(30, 20, 20, 0.06);
+
+    --shadow-md:
+        0 20px 50px rgba(30, 20, 20, 0.09);
+
+    --shadow-lg:
+        0 30px 80px rgba(35, 24, 24, 0.12);
+
+    /* LAYOUT */
+    --container: 1180px;
+
+    /* RADII */
+    --radius-sm: 12px;
+    --radius-md: 20px;
+    --radius-lg: 28px;
+    --radius-pill: 999px;
+
+    /* TRANSITIONS */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+}

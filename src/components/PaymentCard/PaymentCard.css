@@ -1,0 +1,759 @@
+.payment-card-wrapper {
+    margin-top: 25px;
+}
+
+
+/* ========================================
+   CARD 3D
+======================================== */
+
+.payment-card-scene {
+    width: 100%;
+
+    max-width: 460px;
+
+    aspect-ratio: 1.586 / 1;
+
+    margin:
+        0 auto 35px;
+
+    perspective: 1200px;
+}
+
+
+.payment-card-3d {
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+
+    transform-style:
+        preserve-3d;
+
+    transition:
+        transform 0.75s
+        cubic-bezier(
+            0.2,
+            0.8,
+            0.2,
+            1
+        );
+}
+
+
+.payment-card-scene.flipped
+.payment-card-3d {
+    transform:
+        rotateY(180deg);
+}
+
+
+.payment-card-face {
+    position: absolute;
+
+    inset: 0;
+
+    overflow: hidden;
+
+    padding: 28px;
+
+    border-radius: 26px;
+
+    backface-visibility:
+        hidden;
+
+    -webkit-backface-visibility:
+        hidden;
+
+    box-shadow:
+        0 30px 60px
+        rgba(70, 20, 25, 0.22);
+}
+
+
+
+/* ========================================
+   FRONT
+======================================== */
+
+.payment-card-front {
+    color: white;
+
+    background:
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(255, 255, 255, 0.16),
+            transparent 25%
+        ),
+
+        linear-gradient(
+            135deg,
+            #8d0b12,
+            #b61620 50%,
+            #67080d
+        );
+}
+
+
+.payment-card-pattern {
+    position: absolute;
+
+    inset: 0;
+
+    opacity: 0.1;
+
+    pointer-events: none;
+
+    background-image:
+        linear-gradient(
+            45deg,
+            transparent 42%,
+            white 43%,
+            white 44%,
+            transparent 45%
+        ),
+        linear-gradient(
+            -45deg,
+            transparent 42%,
+            white 43%,
+            white 44%,
+            transparent 45%
+        );
+
+    background-size:
+        60px 60px;
+}
+
+
+.payment-card-top {
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
+.payment-card-brand {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.payment-card-brand img {
+    width: 48px;
+    height: 48px;
+
+    object-fit: cover;
+
+    border-radius: 12px;
+
+    background: white;
+}
+
+
+.payment-card-brand div {
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.payment-card-brand strong {
+    font-size: 0.84rem;
+}
+
+
+.payment-card-brand span {
+    color:
+        rgba(255, 255, 255, 0.65);
+
+    font-size: 0.6rem;
+
+    letter-spacing: 0.1em;
+}
+
+
+.payment-card-network {
+    font-size: 0.82rem;
+
+    font-style: italic;
+
+    letter-spacing: 0.07em;
+}
+
+
+
+/* ========================================
+   CHIP
+======================================== */
+
+.payment-card-chip-row {
+    position: relative;
+
+    z-index: 2;
+
+    margin-top: 38px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+
+.payment-card-chip {
+    position: relative;
+
+    width: 52px;
+    height: 39px;
+
+    overflow: hidden;
+
+    border-radius: 8px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e4b85c,
+            #a87721
+        );
+}
+
+
+.payment-card-chip::before,
+.payment-card-chip::after {
+    content: "";
+
+    position: absolute;
+
+    background:
+        rgba(70, 45, 10, 0.25);
+}
+
+
+.payment-card-chip::before {
+    width: 100%;
+    height: 1px;
+
+    top: 50%;
+}
+
+
+.payment-card-chip::after {
+    width: 1px;
+    height: 100%;
+
+    left: 50%;
+}
+
+
+.payment-card-chip span {
+    position: absolute;
+
+    border:
+        1px solid
+        rgba(60, 40, 10, 0.25);
+
+    border-radius: 4px;
+}
+
+
+.payment-card-chip
+span:nth-child(1) {
+    inset:
+        7px 28px 7px 5px;
+}
+
+
+.payment-card-chip
+span:nth-child(2) {
+    inset:
+        7px 5px 7px 28px;
+}
+
+
+.payment-card-chip
+span:nth-child(3) {
+    inset:
+        14px 18px;
+}
+
+
+.contactless-symbol {
+    transform:
+        rotate(90deg);
+
+    color:
+        rgba(255, 255, 255, 0.72);
+
+    font-size: 1rem;
+
+    letter-spacing: -0.2em;
+}
+
+
+
+/* ========================================
+   CARD NUMBER
+======================================== */
+
+.payment-card-number {
+    position: relative;
+
+    z-index: 2;
+
+    margin-top: 30px;
+
+    font-size:
+        clamp(
+            1.15rem,
+            4vw,
+            1.65rem
+        );
+
+    font-weight: 700;
+
+    letter-spacing: 0.11em;
+
+    white-space: nowrap;
+}
+
+
+
+/* ========================================
+   CARD BOTTOM
+======================================== */
+
+.payment-card-bottom {
+    position: absolute;
+
+    z-index: 2;
+
+    left: 28px;
+    right: 28px;
+    bottom: 25px;
+
+    display: flex;
+
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
+.payment-card-bottom > div {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.payment-card-bottom span {
+    color:
+        rgba(255, 255, 255, 0.55);
+
+    font-size: 0.55rem;
+
+    letter-spacing: 0.12em;
+}
+
+
+.payment-card-bottom strong {
+    max-width: 270px;
+
+    margin-top: 3px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 0.75rem;
+
+    letter-spacing: 0.07em;
+}
+
+
+
+/* ========================================
+   BACK
+======================================== */
+
+.payment-card-back {
+    transform:
+        rotateY(180deg);
+
+    padding:
+        22px 0;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #65080d,
+            #9c1018
+        );
+}
+
+
+.payment-card-back-top {
+    padding:
+        0 26px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    color:
+        rgba(255, 255, 255, 0.65);
+
+    font-size: 0.6rem;
+
+    letter-spacing: 0.15em;
+}
+
+
+.payment-card-magnetic-strip {
+    width: 100%;
+    height: 58px;
+
+    margin-top: 23px;
+
+    background:
+        #171719;
+}
+
+
+.payment-card-signature {
+    margin:
+        24px 28px 0;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 70px;
+
+    align-items: center;
+}
+
+
+.payment-card-signature > div {
+    height: 47px;
+
+    padding:
+        5px 10px;
+
+    background:
+        repeating-linear-gradient(
+            -8deg,
+            #ffffff,
+            #ffffff 5px,
+            #eeeeee 6px,
+            #eeeeee 9px
+        );
+}
+
+
+.payment-card-signature span {
+    color: #777;
+
+    font-size: 0.42rem;
+}
+
+
+.payment-card-signature > strong {
+    height: 47px;
+
+    display: grid;
+
+    place-items: center;
+
+    background: white;
+
+    color: #222;
+
+    font-size: 0.83rem;
+
+    font-style: italic;
+}
+
+
+.payment-card-back-text {
+    margin:
+        23px 28px 0;
+
+    display: flex;
+
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
+.payment-card-back-text p {
+    max-width: 270px;
+
+    color:
+        rgba(255, 255, 255, 0.55);
+
+    font-size: 0.55rem;
+
+    line-height: 1.5;
+}
+
+
+.payment-card-back-logo {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 3px;
+
+    color:
+        rgba(255, 255, 255, 0.75);
+}
+
+
+.payment-card-back-logo span {
+    font-size: 0.46rem;
+
+    letter-spacing: 0.12em;
+}
+
+
+
+/* ========================================
+   FORM
+======================================== */
+
+.payment-card-form {
+    display: grid;
+
+    gap: 18px;
+}
+
+
+.payment-card-field {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+
+.payment-card-field label {
+    font-size: 0.78rem;
+
+    font-weight: 800;
+}
+
+
+.payment-card-field input {
+    width: 100%;
+
+    min-height: 53px;
+
+    padding:
+        0 15px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 14px;
+
+    outline: none;
+
+    background: white;
+
+    color: var(--text);
+
+    font-size: 16px;
+
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+
+.payment-card-field input:focus {
+    border-color:
+        rgba(170, 16, 24, 0.48);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(170, 16, 24, 0.06);
+}
+
+
+.payment-input-wrapper {
+    position: relative;
+}
+
+
+.payment-input-wrapper > svg {
+    position: absolute;
+
+    z-index: 2;
+
+    left: 15px;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    color: var(--red);
+
+    pointer-events: none;
+}
+
+
+.payment-input-wrapper input {
+    padding-left: 46px;
+}
+
+
+.payment-card-small-fields {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 18px;
+}
+
+
+
+/* ========================================
+   SECURITY
+======================================== */
+
+.payment-card-security-message {
+    padding: 14px;
+
+    display: grid;
+
+    grid-template-columns:
+        auto 1fr;
+
+    gap: 9px;
+
+    border-radius: 14px;
+
+    background:
+        var(--soft-red);
+
+    color: var(--muted);
+
+    font-size: 0.68rem;
+
+    line-height: 1.6;
+}
+
+
+.payment-card-security-message svg {
+    color: var(--red);
+}
+
+
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 560px) {
+
+    .payment-card-face {
+        padding: 20px;
+    }
+
+
+    .payment-card-brand img {
+        width: 39px;
+        height: 39px;
+    }
+
+
+    .payment-card-brand strong {
+        font-size: 0.68rem;
+    }
+
+
+    .payment-card-chip-row {
+        margin-top: 22px;
+    }
+
+
+    .payment-card-number {
+        margin-top: 20px;
+
+        font-size: 1rem;
+    }
+
+
+    .payment-card-bottom {
+        left: 20px;
+        right: 20px;
+        bottom: 17px;
+    }
+
+
+    .payment-card-bottom strong {
+        font-size: 0.62rem;
+    }
+
+
+    .payment-card-small-fields {
+        grid-template-columns: 1fr 1fr;
+    }
+
+
+    .payment-card-magnetic-strip {
+        margin-top: 15px;
+
+        height: 45px;
+    }
+
+
+    .payment-card-signature {
+        margin:
+            17px 20px 0;
+    }
+
+
+    .payment-card-back-text {
+        margin:
+            16px 20px 0;
+    }
+
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    .payment-card-3d {
+        transition:
+            none;
+    }
+
+}

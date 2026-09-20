@@ -1,0 +1,387 @@
+.order-success-button-wrap {
+    width: 100%;
+}
+
+.order-success-button {
+    position: relative;
+    width: 100%;
+    min-height: 68px;
+    border: none;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #c70f1a 0%, #98070f 100%);
+    color: #ffffff;
+    font-size: 1.08rem;
+    font-weight: 800;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 18px 34px rgba(183, 20, 33, 0.25);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+    padding: 0 20px;
+}
+
+.order-success-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 42px rgba(183, 20, 33, 0.35);
+}
+
+.order-success-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.96;
+}
+
+.order-success-button__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 68px;
+    letter-spacing: 0.01em;
+}
+
+.order-success-button__loading {
+    font-weight: 700;
+}
+
+.order-success-spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: orderSpin 0.8s linear infinite;
+}
+
+@keyframes orderSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.order-scene {
+    position: relative;
+    width: 100%;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* =========================
+   DOCTOR STAGE
+========================= */
+
+.order-scene--doctor {
+    background: linear-gradient(135deg, #d41722 0%, #ac0e17 100%);
+}
+
+.doctor-character {
+    position: relative;
+    width: 74px;
+    height: 64px;
+    animation: doctorPopIn 0.45s ease;
+}
+
+@keyframes doctorPopIn {
+    0% {
+        transform: scale(0.6) translateY(12px);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.doctor-face {
+    position: absolute;
+    top: 3px;
+    left: 22px;
+    width: 30px;
+    height: 30px;
+    background: #ffd7b3;
+    border-radius: 50%;
+    z-index: 3;
+}
+
+.doctor-eye {
+    position: absolute;
+    top: 10px;
+    width: 3px;
+    height: 3px;
+    background: #222;
+    border-radius: 50%;
+}
+
+.doctor-eye.left {
+    left: 8px;
+}
+
+.doctor-eye.right {
+    right: 8px;
+}
+
+.doctor-smile {
+    position: absolute;
+    left: 9px;
+    bottom: 6px;
+    width: 12px;
+    height: 6px;
+    border-bottom: 2px solid #222;
+    border-radius: 0 0 12px 12px;
+}
+
+.doctor-hair {
+    position: absolute;
+    top: 0;
+    left: 21px;
+    width: 32px;
+    height: 16px;
+    background: #2a2a2a;
+    border-radius: 18px 18px 8px 8px;
+    z-index: 4;
+}
+
+.doctor-body {
+    position: absolute;
+    bottom: 2px;
+    left: 18px;
+    width: 38px;
+    height: 34px;
+}
+
+.doctor-coat {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    border-radius: 14px 14px 10px 10px;
+}
+
+.doctor-stethoscope {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    width: 14px;
+    height: 12px;
+    border: 2px solid #444;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+}
+
+.doctor-arm {
+    position: absolute;
+    top: 34px;
+    width: 20px;
+    height: 8px;
+    background: #ffd7b3;
+    border-radius: 999px;
+}
+
+.doctor-arm-left {
+    left: 8px;
+    transform: rotate(22deg);
+}
+
+.doctor-arm-right {
+    right: 2px;
+    transform-origin: left center;
+}
+
+.thumbs-up-arm {
+    animation: thumbLift 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes thumbLift {
+    0% {
+        transform: rotate(-12deg);
+    }
+    100% {
+        transform: rotate(-42deg) translateY(-4px);
+    }
+}
+
+.thumb-shape {
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    width: 11px;
+    height: 14px;
+    background: #ffd7b3;
+    border-radius: 8px;
+}
+
+.thumb-shape::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 1px;
+    width: 6px;
+    height: 10px;
+    background: #ffd7b3;
+    border-radius: 6px 6px 2px 2px;
+    transform: rotate(-10deg);
+}
+
+.doctor-message {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+}
+
+/* =========================
+   CAR STAGE
+========================= */
+
+.order-scene--car {
+    background: linear-gradient(135deg, #d41722 0%, #ac0e17 100%);
+}
+
+.road-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.delivery-car {
+    position: absolute;
+    left: -95px;
+    bottom: 18px;
+    width: 88px;
+    height: 36px;
+    animation: driveCar 2s ease-in-out forwards;
+}
+
+@keyframes driveCar {
+    0% {
+        left: -95px;
+        transform: translateY(0);
+    }
+    15% {
+        transform: translateY(-1px);
+    }
+    30% {
+        transform: translateY(1px);
+    }
+    45% {
+        transform: translateY(-1px);
+    }
+    60% {
+        transform: translateY(1px);
+    }
+    100% {
+        left: calc(100% + 16px);
+        transform: translateY(0);
+    }
+}
+
+.delivery-car__top {
+    position: absolute;
+    top: 0;
+    left: 14px;
+    width: 34px;
+    height: 15px;
+    background: #ffffff;
+    border-radius: 10px 10px 2px 2px;
+}
+
+.delivery-car__body {
+    position: absolute;
+    bottom: 6px;
+    left: 0;
+    width: 72px;
+    height: 22px;
+    background: #ffffff;
+    border-radius: 8px;
+}
+
+.delivery-car__window {
+    position: absolute;
+    top: 3px;
+    left: 18px;
+    width: 14px;
+    height: 9px;
+    background: #d7e9ff;
+    border-radius: 3px;
+}
+
+.delivery-car__cross {
+    position: absolute;
+    top: 0;
+    right: 12px;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #c70f1a;
+    line-height: 22px;
+}
+
+.delivery-wheel {
+    position: absolute;
+    bottom: 0;
+    width: 13px;
+    height: 13px;
+    background: #1d1d1d;
+    border-radius: 50%;
+}
+
+.delivery-wheel::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    background: #8d8d8d;
+    border-radius: 50%;
+}
+
+.wheel-left {
+    left: 12px;
+}
+
+.wheel-right {
+    right: 10px;
+}
+
+.car-message {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    animation: fadeCarText 0.35s ease;
+}
+
+@keyframes fadeCarText {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) translateX(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+/* =========================
+   DONE STAGE
+========================= */
+
+.show-done {
+    background: linear-gradient(135deg, #0f8a3a 0%, #0a6d2d 100%);
+}
+
+.order-success-button__error {
+    margin: 12px 6px 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #b5121b;
+}
