@@ -232,17 +232,7 @@ function Navbar() {
 
     /*
     ========================================================
-    LOAD CURRENT USER PROFILE
-    ========================================================
-
-    This gives the navbar:
-
-    - role
-    - profile picture
-    - full name
-    - username
-
-    The auth metadata is also used as a backup.
+    LOAD PROFILE + DATABASE ROLE
     ========================================================
     */
 
@@ -323,19 +313,18 @@ function Navbar() {
                         ) {
 
                             setProfile(
-                                data ||
-                                null
+                                data || null
                             );
 
                         }
 
                     } catch (
-                        error
+                        loadError
                     ) {
 
                         console.error(
                             "Navbar profile error:",
-                            error
+                            loadError
                         );
 
 
@@ -385,7 +374,7 @@ function Navbar() {
 
     /*
     ========================================================
-    CLOSE MENU AFTER NAVIGATION
+    CLOSE MOBILE MENU AFTER NAVIGATION
     ========================================================
     */
 
@@ -428,8 +417,7 @@ function Navbar() {
             () => {
 
                 return String(
-                    displayName ||
-                    "NP"
+                    displayName || "NP"
                 )
                     .trim()
                     .split(/\s+/)
@@ -452,12 +440,41 @@ function Navbar() {
         );
 
 
+    /*
+    ========================================================
+    ADMIN ROLE
+    ========================================================
+    */
+
     const isAdmin =
         profile?.role ===
             "admin" ||
         profile?.role ===
             "super_admin";
 
+
+    /*
+    ========================================================
+    ADMIN EXPERIENCE
+    ========================================================
+
+    IMPORTANT FIX:
+
+    Admin navbar remains visible when an admin opens:
+
+    /admin
+    /admin/products
+    /admin/inventory
+    /admin/orders
+    /account
+
+    So opening the profile does NOT visually switch the
+    administrator into customer mode.
+
+    If the administrator presses "View Website", they go
+    to "/" and intentionally see the normal public navbar.
+    ========================================================
+    */
 
     const onAdminPage =
         location.pathname ===
@@ -466,6 +483,22 @@ function Navbar() {
             .startsWith(
                 "/admin/"
             );
+
+
+    const onProfilePage =
+        location.pathname ===
+        "/account";
+
+
+    const useAdminNavbar =
+        !authLoading &&
+        !roleLoading &&
+        Boolean(user) &&
+        isAdmin &&
+        (
+            onAdminPage ||
+            onProfilePage
+        );
 
 
     /*
@@ -501,12 +534,12 @@ function Navbar() {
                 );
 
             } catch (
-                error
+                logoutError
             ) {
 
                 console.error(
                     "Logout error:",
-                    error
+                    logoutError
                 );
 
             }
@@ -568,21 +601,10 @@ function Navbar() {
     ========================================================
     ADMIN NAVBAR
     ========================================================
-
-    Admin navbar appears only while the user is actually
-    inside /admin.
-
-    When an admin views the public website, they still get
-    the normal customer navbar and their profile picture.
-    ========================================================
     */
 
     if (
-        !authLoading &&
-        !roleLoading &&
-        user &&
-        isAdmin &&
-        onAdminPage
+        useAdminNavbar
     ) {
 
         return (
@@ -738,6 +760,9 @@ function Navbar() {
 
                     <div className="navbar-actions navbar-admin-actions">
 
+
+                        {/* LANGUAGE */}
+
                         <button
                             type="button"
                             className="navbar-language"
@@ -747,8 +772,11 @@ function Navbar() {
                         >
 
                             <span className="navbar-language-symbol">
+
                                 A
+
                             </span>
+
 
                             {
                                 isArabic
@@ -758,6 +786,8 @@ function Navbar() {
 
                         </button>
 
+
+                        {/* VIEW PUBLIC WEBSITE */}
 
                         <Link
                             to="/"
@@ -775,7 +805,7 @@ function Navbar() {
                         </Link>
 
 
-                        {/* ADMIN PROFILE PHOTO */}
+                        {/* ADMIN PROFILE */}
 
                         <Link
                             to="/account"
@@ -792,6 +822,8 @@ function Navbar() {
 
                         </Link>
 
+
+                        {/* SIGN OUT */}
 
                         <button
                             type="button"
@@ -812,6 +844,8 @@ function Navbar() {
                         </button>
 
 
+                        {/* MOBILE MENU BUTTON */}
+
                         <button
                             type="button"
                             className="navbar-menu-button"
@@ -829,14 +863,18 @@ function Navbar() {
                             {
                                 menuOpen
                                     ? (
+
                                         <X
                                             size={22}
                                         />
+
                                     )
                                     : (
+
                                         <Menu
                                             size={22}
                                         />
+
                                     )
                             }
 
@@ -847,7 +885,9 @@ function Navbar() {
                 </div>
 
 
-                {/* ADMIN MOBILE MENU */}
+                {/* =========================================
+                    ADMIN MOBILE MENU
+                ========================================= */}
 
                 {
                     menuOpen && (
@@ -888,7 +928,9 @@ function Navbar() {
                             </Link>
 
 
-                            <Link to="/admin">
+                            <Link
+                                to="/admin"
+                            >
 
                                 <LayoutDashboard
                                     size={18}
@@ -901,7 +943,9 @@ function Navbar() {
                             </Link>
 
 
-                            <Link to="/admin/products">
+                            <Link
+                                to="/admin/products"
+                            >
 
                                 <Package
                                     size={18}
@@ -914,7 +958,9 @@ function Navbar() {
                             </Link>
 
 
-                            <Link to="/admin/inventory">
+                            <Link
+                                to="/admin/inventory"
+                            >
 
                                 <Boxes
                                     size={18}
@@ -927,7 +973,9 @@ function Navbar() {
                             </Link>
 
 
-                            <Link to="/admin/orders">
+                            <Link
+                                to="/admin/orders"
+                            >
 
                                 <ShoppingBag
                                     size={18}
@@ -940,7 +988,9 @@ function Navbar() {
                             </Link>
 
 
-                            <Link to="/">
+                            <Link
+                                to="/"
+                            >
 
                                 <Store
                                     size={18}
@@ -984,7 +1034,13 @@ function Navbar() {
 
     /*
     ========================================================
-    CUSTOMER NAVBAR
+    CUSTOMER / PUBLIC NAVBAR
+    ========================================================
+
+    Admins will also see this navbar after intentionally
+    clicking "View Website".
+
+    Their database role DOES NOT change.
     ========================================================
     */
 
@@ -1041,11 +1097,13 @@ function Navbar() {
                 </Link>
 
 
-                {/* CUSTOMER LINKS */}
+                {/* PUBLIC LINKS */}
 
                 <nav className="navbar-links">
 
-                    <Link to="/">
+                    <Link
+                        to="/"
+                    >
 
                         {
                             text.home
@@ -1054,7 +1112,9 @@ function Navbar() {
                     </Link>
 
 
-                    <Link to="/products">
+                    <Link
+                        to="/products"
+                    >
 
                         {
                             text.products
@@ -1063,7 +1123,9 @@ function Navbar() {
                     </Link>
 
 
-                    <a href="/#services">
+                    <a
+                        href="/#services"
+                    >
 
                         {
                             text.services
@@ -1072,7 +1134,9 @@ function Navbar() {
                     </a>
 
 
-                    <a href="/#story">
+                    <a
+                        href="/#story"
+                    >
 
                         {
                             text.story
@@ -1081,7 +1145,9 @@ function Navbar() {
                     </a>
 
 
-                    <a href="/#contact">
+                    <a
+                        href="/#contact"
+                    >
 
                         {
                             text.contact
@@ -1092,7 +1158,7 @@ function Navbar() {
                 </nav>
 
 
-                {/* CUSTOMER ACTIONS */}
+                {/* PUBLIC ACTIONS */}
 
                 <div className="navbar-actions">
 
@@ -1108,7 +1174,9 @@ function Navbar() {
                     >
 
                         <span className="navbar-language-symbol">
+
                             A
+
                         </span>
 
 
@@ -1121,15 +1189,7 @@ function Navbar() {
                     </button>
 
 
-                    {/* =====================================
-                        ACCOUNT
-
-                        Logged in:
-                        Show profile picture only.
-
-                        Logged out:
-                        Show login/account button.
-                    ===================================== */}
+                    {/* ACCOUNT */}
 
                     {
                         user
@@ -1228,7 +1288,7 @@ function Navbar() {
                     </Link>
 
 
-                    {/* MOBILE MENU */}
+                    {/* MOBILE MENU BUTTON */}
 
                     <button
                         type="button"
@@ -1247,14 +1307,18 @@ function Navbar() {
                         {
                             menuOpen
                                 ? (
+
                                     <X
                                         size={22}
                                     />
+
                                 )
                                 : (
+
                                     <Menu
                                         size={22}
                                     />
+
                                 )
                         }
 
@@ -1265,13 +1329,14 @@ function Navbar() {
             </div>
 
 
-            {/* CUSTOMER MOBILE MENU */}
+            {/* =========================================
+                PUBLIC MOBILE MENU
+            ========================================= */}
 
             {
                 menuOpen && (
 
                     <div className="navbar-mobile-menu">
-
 
                         {
                             user && (
@@ -1313,7 +1378,9 @@ function Navbar() {
                         }
 
 
-                        <Link to="/">
+                        <Link
+                            to="/"
+                        >
 
                             {
                                 text.home
@@ -1322,7 +1389,9 @@ function Navbar() {
                         </Link>
 
 
-                        <Link to="/products">
+                        <Link
+                            to="/products"
+                        >
 
                             {
                                 text.products
@@ -1331,7 +1400,9 @@ function Navbar() {
                         </Link>
 
 
-                        <a href="/#services">
+                        <a
+                            href="/#services"
+                        >
 
                             {
                                 text.services
@@ -1340,7 +1411,9 @@ function Navbar() {
                         </a>
 
 
-                        <a href="/#story">
+                        <a
+                            href="/#story"
+                        >
 
                             {
                                 text.story
@@ -1349,7 +1422,9 @@ function Navbar() {
                         </a>
 
 
-                        <a href="/#contact">
+                        <a
+                            href="/#contact"
+                        >
 
                             {
                                 text.contact
@@ -1380,7 +1455,9 @@ function Navbar() {
                         }
 
 
-                        <Link to="/cart">
+                        <Link
+                            to="/cart"
+                        >
 
                             <ShoppingBag
                                 size={17}
@@ -1393,7 +1470,7 @@ function Navbar() {
 
                             {
                                 cartCount >
-                                    0
+                                0
                                     ? ` (${cartCount})`
                                     : ""
                             }
