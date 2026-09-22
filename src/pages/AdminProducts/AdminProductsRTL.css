@@ -1,0 +1,228 @@
+/* =========================================================
+   ADMIN PRODUCTS RTL + LANGUAGE SECTIONS
+========================================================= */
+
+html[dir="rtl"] .admin-products-page {
+    direction: rtl;
+
+    font-family:
+        "Cairo",
+        "Manrope",
+        Arial,
+        sans-serif;
+}
+
+
+/* =========================================================
+   HEADINGS
+========================================================= */
+
+html[dir="rtl"]
+.admin-products-header > div > span,
+html[dir="rtl"]
+.admin-product-modal-header span {
+    letter-spacing: 0;
+
+    text-transform: none;
+}
+
+
+html[dir="rtl"]
+.admin-products-header h1,
+html[dir="rtl"]
+.admin-product-modal-header h2 {
+    letter-spacing: 0;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+html[dir="rtl"]
+.admin-products-search svg {
+    left: auto;
+
+    right: 15px;
+}
+
+
+html[dir="rtl"]
+.admin-products-search input {
+    padding:
+        0 44px
+        0 15px;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+html[dir="rtl"]
+.admin-products-table th {
+    text-align: right;
+
+    text-transform: none;
+
+    letter-spacing: 0;
+}
+
+
+html[dir="rtl"]
+.admin-products-table td {
+    text-align: right;
+}
+
+
+/* =========================================================
+   PRODUCT
+========================================================= */
+
+html[dir="rtl"]
+.admin-product-name,
+html[dir="rtl"]
+.admin-product-actions {
+    direction: rtl;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+html[dir="rtl"]
+.admin-product-modal {
+    direction: rtl;
+}
+
+
+html[dir="rtl"]
+.admin-product-image-controls {
+    align-items: flex-start;
+}
+
+
+/* =========================================================
+   LANGUAGE SECTIONS
+========================================================= */
+
+.admin-product-language-heading {
+    padding:
+        14px 16px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    border:
+        1px solid
+        #e3e3e6;
+
+    border-radius: 12px;
+
+    background:
+        #f7f7f8;
+}
+
+
+.admin-product-language-heading strong {
+    color:
+        #19191d;
+
+    font-size: 0.72rem;
+
+    font-weight: 900;
+}
+
+
+.admin-product-language-heading span {
+    color:
+        #74747c;
+
+    font-size: 0.57rem;
+
+    line-height: 1.6;
+}
+
+
+.admin-product-language-heading.arabic {
+    border-color:
+        rgba(
+            170,
+            16,
+            24,
+            0.14
+        );
+
+    background:
+        rgba(
+            170,
+            16,
+            24,
+            0.045
+        );
+}
+
+
+.admin-product-language-heading.arabic strong {
+    color:
+        #aa1018;
+}
+
+
+/* =========================================================
+   RTL INPUTS
+========================================================= */
+
+html[dir="rtl"]
+.admin-product-field > label {
+    text-align: right;
+}
+
+
+html[dir="rtl"]
+.admin-product-field > select {
+    text-align: right;
+}
+
+
+/* =========================================================
+   SWITCHES
+========================================================= */
+
+html[dir="rtl"]
+.admin-product-switches label {
+    direction: rtl;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+html[dir="rtl"]
+.admin-product-modal-actions {
+    justify-content: flex-start;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+    max-width: 650px
+) {
+
+    html[dir="rtl"]
+    .admin-product-modal-actions {
+        flex-direction:
+            column-reverse;
+    }
+
+}

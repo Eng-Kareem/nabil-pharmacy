@@ -33,40 +33,46 @@ import {
     supabase
 } from "../../lib/supabase.js";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import adminOrdersTranslations
+    from "../../i18n/adminOrdersTranslations.js";
+
 import "./AdminOrders.css";
+import "./AdminOrdersRTL.css";
 
 
-const ORDER_STATUSES = [
+const ORDER_STATUS_VALUES = [
 
-    {
-        value: "pending",
-        label: "Pending"
-    },
+    "pending",
 
-    {
-        value: "preparing",
-        label: "Preparing"
-    },
+    "preparing",
 
-    {
-        value: "ready",
-        label: "Ready"
-    },
+    "ready",
 
-    {
-        value: "delivered",
-        label: "Delivered"
-    },
+    "delivered",
 
-    {
-        value: "cancelled",
-        label: "Cancelled"
-    }
+    "cancelled"
 
 ];
 
 
 function AdminOrders() {
+
+    const {
+        language,
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        adminOrdersTranslations[
+            language
+        ] ||
+        adminOrdersTranslations.en;
+
 
     const [
         orders,
@@ -128,6 +134,124 @@ function AdminOrders() {
     ] = useState(false);
 
 
+    /*
+    ========================================================
+    TEXT REPLACEMENT
+    ========================================================
+    */
+
+    const replaceText = (
+        value,
+        replacements = {}
+    ) => {
+
+        let result =
+            value;
+
+
+        Object.entries(
+            replacements
+        ).forEach(
+            ([
+                key,
+                replacement
+            ]) => {
+
+                result =
+                    result.replaceAll(
+                        `{${key}}`,
+                        String(
+                            replacement
+                        )
+                    );
+
+            }
+        );
+
+
+        return result;
+
+    };
+
+
+    /*
+    ========================================================
+    STATUS LABEL
+    ========================================================
+    */
+
+    const getStatusLabel = (
+        status
+    ) => {
+
+        const map = {
+
+            pending:
+                text.pending,
+
+            preparing:
+                text.preparing,
+
+            ready:
+                text.ready,
+
+            delivered:
+                text.delivered,
+
+            cancelled:
+                text.cancelled
+
+        };
+
+
+        return (
+            map[
+                status
+            ] ||
+            status ||
+            "-"
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    PAYMENT STATUS
+    ========================================================
+    */
+
+    const getPaymentStatusLabel = (
+        status
+    ) => {
+
+        const map = {
+
+            pending:
+                text.paymentPending,
+
+            paid:
+                text.paid,
+
+            failed:
+                text.failed,
+
+            refunded:
+                text.refunded
+
+        };
+
+
+        return (
+            map[
+                status
+            ] ||
+            status ||
+            "-"
+        );
+
+    };
+
 
     /*
     ========================================================
@@ -144,47 +268,65 @@ function AdminOrders() {
                 showLoading
             ) {
 
-                setLoading(true);
+                setLoading(
+                    true
+                );
+
             }
 
 
-            setError("");
+            setError(
+                ""
+            );
 
 
             try {
 
                 const {
                     data,
-                    error
+                    error:
+                        ordersError
                 } =
                     await supabase
-                        .from("orders")
+                        .from(
+                            "orders"
+                        )
                         .select(`
                             id,
                             customer_id,
                             full_name,
                             phone,
                             email,
+
                             delivery_method,
                             payment_method,
+
                             branch_id,
+
                             address,
                             area,
                             city,
+
                             latitude,
                             longitude,
+
                             notes,
+
                             subtotal,
                             delivery_fee,
                             total,
+
                             status,
                             payment_status,
+
                             created_at,
                             updated_at,
+
                             branches (
                                 id,
                                 name
                             ),
+
                             order_items (
                                 id,
                                 product_id,
@@ -197,31 +339,163 @@ function AdminOrders() {
                         .order(
                             "created_at",
                             {
-                                ascending: false
+                                ascending:
+                                    false
                             }
                         );
 
 
-                if (error) {
-                    throw error;
+                if (
+                    ordersError
+                ) {
+
+                    throw ordersError;
+
+                }
+
+
+                let loadedOrders =
+                    data ||
+                    [];
+
+
+                /*
+                ================================================
+                ARABIC PRODUCT NAMES
+
+                Order items contain a product-name snapshot.
+                We keep that snapshot untouched and only replace
+                the displayed name in Arabic mode.
+                ================================================
+                */
+
+                if (
+                    isArabic
+                ) {
+
+                    const productIds =
+                        [
+                            ...new Set(
+
+                                loadedOrders
+                                    .flatMap(
+                                        order =>
+                                            order.order_items ||
+                                            []
+                                    )
+                                    .map(
+                                        item =>
+                                            item.product_id
+                                    )
+                                    .filter(
+                                        Boolean
+                                    )
+
+                            )
+                        ];
+
+
+                    if (
+                        productIds.length >
+                        0
+                    ) {
+
+                        const {
+                            data:
+                                productsData,
+                            error:
+                                productsError
+                        } =
+                            await supabase
+                                .from(
+                                    "products"
+                                )
+                                .select(`
+                                    id,
+                                    name_ar
+                                `)
+                                .in(
+                                    "id",
+                                    productIds
+                                );
+
+
+                        if (
+                            !productsError
+                        ) {
+
+                            const arabicNameMap =
+                                new Map(
+                                    (
+                                        productsData ||
+                                        []
+                                    ).map(
+                                        product => [
+
+                                            product.id,
+
+                                            product.name_ar
+
+                                        ]
+                                    )
+                                );
+
+
+                            loadedOrders =
+                                loadedOrders.map(
+                                    order => ({
+
+                                        ...order,
+
+                                        order_items:
+                                            (
+                                                order.order_items ||
+                                                []
+                                            ).map(
+                                                item => ({
+
+                                                    ...item,
+
+                                                    product_name_display:
+                                                        arabicNameMap.get(
+                                                            item.product_id
+                                                        ) ||
+                                                        item.product_name
+
+                                                })
+                                            )
+
+                                    })
+                                );
+
+                        }
+
+                    }
+
                 }
 
 
                 setOrders(
-                    data || []
+                    loadedOrders
                 );
 
-            } catch (error) {
+            } catch (
+                loadError
+            ) {
 
                 console.error(
                     "Admin orders load error:",
-                    error
+                    loadError
                 );
 
 
                 setError(
-                    error?.message ||
-                    "Could not load pharmacy orders."
+                    isArabic
+                        ? text.loadError
+                        : (
+                            loadError?.message ||
+                            text.loadError
+                        )
                 );
 
             } finally {
@@ -230,25 +504,33 @@ function AdminOrders() {
                     showLoading
                 ) {
 
-                    setLoading(false);
-                }
-            }
-        };
+                    setLoading(
+                        false
+                    );
 
+                }
+
+            }
+
+        };
 
 
     /*
     ========================================================
-    INITIAL LOAD
+    INITIAL LOAD / LANGUAGE CHANGE
     ========================================================
     */
 
-    useEffect(() => {
+    useEffect(
+        () => {
 
-        loadOrders();
+            loadOrders();
 
-    }, []);
-
+        },
+        [
+            language
+        ]
+    );
 
 
     /*
@@ -257,60 +539,66 @@ function AdminOrders() {
     ========================================================
     */
 
-    useEffect(() => {
+    useEffect(
+        () => {
 
-        const channel =
-            supabase
-                .channel(
-                    "admin-orders-live"
-                )
-                .on(
-                    "postgres_changes",
-                    {
+            const channel =
+                supabase
+                    .channel(
+                        "admin-orders-live"
+                    )
+                    .on(
+                        "postgres_changes",
+                        {
 
-                        event:
-                            "*",
+                            event:
+                                "*",
 
-                        schema:
-                            "public",
+                            schema:
+                                "public",
 
-                        table:
-                            "orders"
+                            table:
+                                "orders"
 
-                    },
-                    () => {
+                        },
+                        () => {
 
-                        loadOrders(
-                            false
-                        );
+                            loadOrders(
+                                false
+                            );
 
-                    }
-                )
-                .subscribe(
-                    status => {
+                        }
+                    )
+                    .subscribe(
+                        status => {
 
-                        setRealtimeConnected(
-                            status ===
-                            "SUBSCRIBED"
-                        );
-                    }
+                            setRealtimeConnected(
+                                status ===
+                                "SUBSCRIBED"
+                            );
+
+                        }
+                    );
+
+
+            return () => {
+
+                supabase.removeChannel(
+                    channel
                 );
 
+            };
 
-        return () => {
-
-            supabase.removeChannel(
-                channel
-            );
-        };
-
-    }, []);
-
+        },
+        [
+            language
+        ]
+    );
 
 
     /*
     ========================================================
-    FORMAT PRICE
+    PRICE
     ========================================================
     */
 
@@ -318,18 +606,56 @@ function AdminOrders() {
         value
     ) => {
 
-        return (
-            `EGP ${Number(
-                value || 0
-            ).toLocaleString()}`
-        );
-    };
+        const formatted =
+            Number(
+                value ||
+                0
+            ).toLocaleString(
+                isArabic
+                    ? "ar-EG"
+                    : "en-US",
+                {
+                    minimumFractionDigits:
+                        2,
 
+                    maximumFractionDigits:
+                        2
+                }
+            );
+
+
+        return isArabic
+            ? `${formatted} ج.م`
+            : `EGP ${formatted}`;
+
+    };
 
 
     /*
     ========================================================
-    FORMAT DATE
+    NUMBER
+    ========================================================
+    */
+
+    const formatNumber = (
+        value
+    ) => {
+
+        return Number(
+            value ||
+            0
+        ).toLocaleString(
+            isArabic
+                ? "ar-EG"
+                : "en-US"
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    DATE
     ========================================================
     */
 
@@ -337,15 +663,21 @@ function AdminOrders() {
         value
     ) => {
 
-        if (!value) {
+        if (
+            !value
+        ) {
+
             return "-";
+
         }
 
 
         return new Date(
             value
         ).toLocaleString(
-            undefined,
+            isArabic
+                ? "ar-EG"
+                : "en-US",
             {
 
                 year:
@@ -365,8 +697,8 @@ function AdminOrders() {
 
             }
         );
-    };
 
+    };
 
 
     /*
@@ -384,6 +716,7 @@ function AdminOrders() {
         ) {
 
             return "NAB-ORDER";
+
         }
 
 
@@ -399,31 +732,8 @@ function AdminOrders() {
                 )
                 .toUpperCase()}`
         );
+
     };
-
-
-
-    /*
-    ========================================================
-    STATUS LABEL
-    ========================================================
-    */
-
-    const getStatusLabel = (
-        status
-    ) => {
-
-        return (
-            ORDER_STATUSES.find(
-                item =>
-                    item.value ===
-                    status
-            )?.label ||
-            status ||
-            "Unknown"
-        );
-    };
-
 
 
     /*
@@ -444,6 +754,7 @@ function AdminOrders() {
             ) {
 
                 return;
+
             }
 
 
@@ -454,7 +765,15 @@ function AdminOrders() {
 
                 const confirmed =
                     window.confirm(
-                        `Cancel ${getOrderNumber(order)}?\n\nThe sold quantities will automatically be returned to inventory.`
+                        replaceText(
+                            text.cancelConfirmation,
+                            {
+                                order:
+                                    getOrderNumber(
+                                        order
+                                    )
+                            }
+                        )
                     );
 
 
@@ -463,7 +782,9 @@ function AdminOrders() {
                 ) {
 
                     return;
+
                 }
+
             }
 
 
@@ -472,18 +793,26 @@ function AdminOrders() {
             );
 
 
-            setError("");
+            setError(
+                ""
+            );
 
-            setSuccess("");
+
+            setSuccess(
+                ""
+            );
 
 
             try {
 
                 const {
-                    error
+                    error:
+                        updateError
                 } =
                     await supabase
-                        .from("orders")
+                        .from(
+                            "orders"
+                        )
                         .update({
 
                             status:
@@ -500,8 +829,12 @@ function AdminOrders() {
                         );
 
 
-                if (error) {
-                    throw error;
+                if (
+                    updateError
+                ) {
+
+                    throw updateError;
+
                 }
 
 
@@ -511,14 +844,38 @@ function AdminOrders() {
                 ) {
 
                     setSuccess(
-                        `${getOrderNumber(order)} cancelled. Inventory restored automatically.`
+                        replaceText(
+                            text.cancelledSuccess,
+                            {
+                                order:
+                                    getOrderNumber(
+                                        order
+                                    )
+                            }
+                        )
                     );
 
                 } else {
 
                     setSuccess(
-                        `${getOrderNumber(order)} changed to ${getStatusLabel(newStatus)}.`
+                        replaceText(
+                            text.statusChanged,
+                            {
+
+                                order:
+                                    getOrderNumber(
+                                        order
+                                    ),
+
+                                status:
+                                    getStatusLabel(
+                                        newStatus
+                                    )
+
+                            }
+                        )
                     );
+
                 }
 
 
@@ -530,23 +887,31 @@ function AdminOrders() {
                 window.setTimeout(
                     () => {
 
-                        setSuccess("");
+                        setSuccess(
+                            ""
+                        );
 
                     },
                     3000
                 );
 
-            } catch (error) {
+            } catch (
+                updateError
+            ) {
 
                 console.error(
                     "Order update error:",
-                    error
+                    updateError
                 );
 
 
                 setError(
-                    error?.message ||
-                    "Could not update order status."
+                    isArabic
+                        ? text.updateError
+                        : (
+                            updateError?.message ||
+                            text.updateError
+                        )
                 );
 
             } finally {
@@ -554,9 +919,10 @@ function AdminOrders() {
                 setUpdatingOrderId(
                     null
                 );
-            }
-        };
 
+            }
+
+        };
 
 
     /*
@@ -581,21 +947,36 @@ function AdminOrders() {
                         const matchesSearch =
                             !term ||
                             [
+
                                 order.id,
+
                                 getOrderNumber(
                                     order
                                 ),
+
                                 order.full_name,
+
                                 order.phone,
+
                                 order.email,
+
                                 order.address,
+
                                 order.area,
+
                                 order.city
+
                             ]
-                                .filter(Boolean)
-                                .join(" ")
+                                .filter(
+                                    Boolean
+                                )
+                                .join(
+                                    " "
+                                )
                                 .toLowerCase()
-                                .includes(term);
+                                .includes(
+                                    term
+                                );
 
 
                         const matchesStatus =
@@ -617,6 +998,7 @@ function AdminOrders() {
                             matchesStatus &&
                             matchesPayment
                         );
+
                     }
                 );
 
@@ -628,7 +1010,6 @@ function AdminOrders() {
                 paymentFilter
             ]
         );
-
 
 
     /*
@@ -710,36 +1091,57 @@ function AdminOrders() {
         );
 
 
+    /*
+    ========================================================
+    PAGE
+    ========================================================
+    */
 
     return (
 
-        <main className="admin-orders-page">
+        <main
+            className="admin-orders-page"
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
+            }
+        >
 
             <div className="container">
 
 
-                {/* HEADER */}
+                {/* =========================================
+                    HEADER
+                ========================================= */}
 
                 <header className="admin-orders-header">
 
                     <div>
 
                         <span>
-                            Order Management
+
+                            {
+                                text.orderManagement
+                            }
+
                         </span>
 
 
                         <h1>
-                            Pharmacy Orders
+
+                            {
+                                text.pharmacyOrders
+                            }
+
                         </h1>
 
 
                         <p>
 
-                            Review customer orders,
-                            update preparation status,
-                            print receipts and manage
-                            pharmacy fulfilment.
+                            {
+                                text.pageDescription
+                            }
 
                         </p>
 
@@ -747,7 +1149,6 @@ function AdminOrders() {
 
 
                     <div className="admin-orders-header-actions">
-
 
                         <div
                             className={
@@ -763,8 +1164,8 @@ function AdminOrders() {
 
                             {
                                 realtimeConnected
-                                    ? "Live Orders"
-                                    : "Connecting..."
+                                    ? text.liveOrders
+                                    : text.connecting
                             }
 
                         </div>
@@ -782,7 +1183,9 @@ function AdminOrders() {
                                 size={17}
                             />
 
-                            Refresh
+                            {
+                                text.refresh
+                            }
 
                         </button>
 
@@ -791,6 +1194,9 @@ function AdminOrders() {
                 </header>
 
 
+                {/* =========================================
+                    MESSAGES
+                ========================================= */}
 
                 {
                     success && (
@@ -801,7 +1207,9 @@ function AdminOrders() {
                                 size={17}
                             />
 
-                            {success}
+                            {
+                                success
+                            }
 
                         </div>
 
@@ -818,7 +1226,9 @@ function AdminOrders() {
                                 size={17}
                             />
 
-                            {error}
+                            {
+                                error
+                            }
 
                         </div>
 
@@ -826,19 +1236,23 @@ function AdminOrders() {
                 }
 
 
-
-                {/* SUMMARY */}
+                {/* =========================================
+                    SUMMARY
+                ========================================= */}
 
                 <section className="admin-orders-summary">
-
 
                     <SummaryCard
                         icon={
                             <ShoppingBag />
                         }
-                        label="Total Orders"
+                        label={
+                            text.totalOrders
+                        }
                         value={
-                            summary.total
+                            formatNumber(
+                                summary.total
+                            )
                         }
                     />
 
@@ -847,9 +1261,13 @@ function AdminOrders() {
                         icon={
                             <Clock3 />
                         }
-                        label="Pending"
+                        label={
+                            text.pending
+                        }
                         value={
-                            summary.pending
+                            formatNumber(
+                                summary.pending
+                            )
                         }
                         className="pending"
                     />
@@ -859,9 +1277,13 @@ function AdminOrders() {
                         icon={
                             <Package />
                         }
-                        label="Preparing"
+                        label={
+                            text.preparing
+                        }
                         value={
-                            summary.preparing
+                            formatNumber(
+                                summary.preparing
+                            )
                         }
                         className="preparing"
                     />
@@ -871,9 +1293,13 @@ function AdminOrders() {
                         icon={
                             <Truck />
                         }
-                        label="Ready"
+                        label={
+                            text.ready
+                        }
                         value={
-                            summary.ready
+                            formatNumber(
+                                summary.ready
+                            )
                         }
                         className="ready"
                     />
@@ -883,7 +1309,9 @@ function AdminOrders() {
                         icon={
                             <CircleDollarSign />
                         }
-                        label="Delivered Sales"
+                        label={
+                            text.deliveredSales
+                        }
                         value={
                             formatPrice(
                                 summary.deliveredRevenue
@@ -895,11 +1323,11 @@ function AdminOrders() {
                 </section>
 
 
-
-                {/* FILTERS */}
+                {/* =========================================
+                    FILTERS
+                ========================================= */}
 
                 <section className="admin-orders-toolbar">
-
 
                     <div className="admin-orders-search">
 
@@ -910,7 +1338,9 @@ function AdminOrders() {
 
                         <input
                             type="search"
-                            placeholder="Search order, customer, phone or address..."
+                            placeholder={
+                                text.searchPlaceholder
+                            }
                             value={
                                 searchTerm
                             }
@@ -938,25 +1368,31 @@ function AdminOrders() {
                     >
 
                         <option value="all">
-                            All Statuses
+
+                            {
+                                text.allStatuses
+                            }
+
                         </option>
 
 
                         {
-                            ORDER_STATUSES.map(
+                            ORDER_STATUS_VALUES.map(
                                 status => (
 
                                     <option
                                         key={
-                                            status.value
+                                            status
                                         }
                                         value={
-                                            status.value
+                                            status
                                         }
                                     >
 
                                         {
-                                            status.label
+                                            getStatusLabel(
+                                                status
+                                            )
                                         }
 
                                     </option>
@@ -981,15 +1417,23 @@ function AdminOrders() {
                     >
 
                         <option value="all">
-                            All Payments
+                            {text.allPayments}
                         </option>
 
                         <option value="pending">
-                            Payment Pending
+                            {text.paymentPending}
                         </option>
 
                         <option value="paid">
-                            Paid
+                            {text.paid}
+                        </option>
+
+                        <option value="failed">
+                            {text.failed}
+                        </option>
+
+                        <option value="refunded">
+                            {text.refunded}
                         </option>
 
                     </select>
@@ -997,8 +1441,9 @@ function AdminOrders() {
                 </section>
 
 
-
-                {/* ORDERS */}
+                {/* =========================================
+                    ORDERS
+                ========================================= */}
 
                 {
                     loading
@@ -1011,7 +1456,9 @@ function AdminOrders() {
                                     className="admin-orders-spinner"
                                 />
 
-                                Loading orders...
+                                {
+                                    text.loadingOrders
+                                }
 
                             </div>
 
@@ -1028,15 +1475,19 @@ function AdminOrders() {
 
 
                                     <h2>
-                                        No orders found
+
+                                        {
+                                            text.noOrdersFound
+                                        }
+
                                     </h2>
 
 
                                     <p>
 
-                                        Orders will appear here
-                                        when customers complete
-                                        checkout.
+                                        {
+                                            text.ordersAppear
+                                        }
 
                                     </p>
 
@@ -1052,27 +1503,58 @@ function AdminOrders() {
                                             order => (
 
                                                 <OrderCard
+
                                                     key={
                                                         order.id
                                                     }
+
                                                     order={
                                                         order
                                                     }
+
                                                     orderNumber={
                                                         getOrderNumber(
                                                             order
                                                         )
                                                     }
+
+                                                    text={
+                                                        text
+                                                    }
+
+                                                    isArabic={
+                                                        isArabic
+                                                    }
+
+                                                    statusValues={
+                                                        ORDER_STATUS_VALUES
+                                                    }
+
+                                                    getStatusLabel={
+                                                        getStatusLabel
+                                                    }
+
+                                                    getPaymentStatusLabel={
+                                                        getPaymentStatusLabel
+                                                    }
+
                                                     formatPrice={
                                                         formatPrice
                                                     }
+
+                                                    formatNumber={
+                                                        formatNumber
+                                                    }
+
                                                     formatDate={
                                                         formatDate
                                                     }
+
                                                     expanded={
                                                         expandedOrderId ===
                                                         order.id
                                                     }
+
                                                     toggleExpanded={() =>
                                                         setExpandedOrderId(
                                                             current =>
@@ -1082,10 +1564,12 @@ function AdminOrders() {
                                                                     : order.id
                                                         )
                                                     }
+
                                                     updating={
                                                         updatingOrderId ===
                                                         order.id
                                                     }
+
                                                     updateStatus={
                                                         newStatus =>
                                                             updateOrderStatus(
@@ -1093,6 +1577,7 @@ function AdminOrders() {
                                                                 newStatus
                                                             )
                                                     }
+
                                                 />
 
                                             )
@@ -1107,19 +1592,23 @@ function AdminOrders() {
             </div>
 
         </main>
+
     );
+
 }
 
 
+/*
+========================================================
+SUMMARY CARD
+========================================================
+*/
 
 function SummaryCard({
 
     icon,
-
     label,
-
     value,
-
     className = ""
 
 }) {
@@ -1155,9 +1644,15 @@ function SummaryCard({
         </div>
 
     );
+
 }
 
 
+/*
+========================================================
+ORDER CARD
+========================================================
+*/
 
 function OrderCard({
 
@@ -1165,7 +1660,19 @@ function OrderCard({
 
     orderNumber,
 
+    text,
+
+    isArabic,
+
+    statusValues,
+
+    getStatusLabel,
+
+    getPaymentStatusLabel,
+
     formatPrice,
+
+    formatNumber,
 
     formatDate,
 
@@ -1179,13 +1686,25 @@ function OrderCard({
 
 }) {
 
+    const paymentStatus =
+        getPaymentStatusLabel(
+            order.payment_status
+        );
+
+
     return (
 
         <article className="admin-order-card">
 
 
+            {/* =============================================
+                MAIN ROW
+            ============================================= */}
+
             <div className="admin-order-main">
 
+
+                {/* ORDER */}
 
                 <div className="admin-order-number">
 
@@ -1201,12 +1720,22 @@ function OrderCard({
                     <div>
 
                         <span>
-                            Order
+
+                            {
+                                text.order
+                            }
+
                         </span>
 
 
-                        <strong>
-                            {orderNumber}
+                        <strong
+                            dir="ltr"
+                        >
+
+                            {
+                                orderNumber
+                            }
+
                         </strong>
 
 
@@ -1225,11 +1754,16 @@ function OrderCard({
                 </div>
 
 
+                {/* CUSTOMER */}
 
                 <div className="admin-order-customer">
 
                     <span>
-                        Customer
+
+                        {
+                            text.customer
+                        }
+
                     </span>
 
 
@@ -1237,17 +1771,19 @@ function OrderCard({
 
                         {
                             order.full_name ||
-                            "Guest Customer"
+                            text.guestCustomer
                         }
 
                     </strong>
 
 
-                    <small>
+                    <small
+                        dir="ltr"
+                    >
 
                         {
                             order.phone ||
-                            "No phone"
+                            text.noPhone
                         }
 
                     </small>
@@ -1255,11 +1791,16 @@ function OrderCard({
                 </div>
 
 
+                {/* TOTAL */}
 
                 <div className="admin-order-total">
 
                     <span>
-                        Total
+
+                        {
+                            text.total
+                        }
+
                     </span>
 
 
@@ -1276,11 +1817,16 @@ function OrderCard({
                 </div>
 
 
+                {/* PAYMENT */}
 
                 <div className="admin-order-payment">
 
                     <span>
-                        Payment
+
+                        {
+                            text.payment
+                        }
+
                     </span>
 
 
@@ -1294,10 +1840,7 @@ function OrderCard({
                     >
 
                         {
-                            order.payment_status ===
-                                "paid"
-                                ? "Paid"
-                                : "Pending"
+                            paymentStatus
                         }
 
                     </strong>
@@ -1308,8 +1851,8 @@ function OrderCard({
                         {
                             order.payment_method ===
                                 "card"
-                                ? "Card"
-                                : "Cash"
+                                ? text.card
+                                : text.cash
                         }
 
                     </small>
@@ -1317,11 +1860,16 @@ function OrderCard({
                 </div>
 
 
+                {/* STATUS */}
 
                 <div className="admin-order-status-control">
 
                     <span>
-                        Status
+
+                        {
+                            text.status
+                        }
+
                     </span>
 
 
@@ -1347,20 +1895,22 @@ function OrderCard({
                     >
 
                         {
-                            ORDER_STATUSES.map(
+                            statusValues.map(
                                 status => (
 
                                     <option
                                         key={
-                                            status.value
+                                            status
                                         }
                                         value={
-                                            status.value
+                                            status
                                         }
                                     >
 
                                         {
-                                            status.label
+                                            getStatusLabel(
+                                                status
+                                            )
                                         }
 
                                     </option>
@@ -1376,7 +1926,11 @@ function OrderCard({
                         updating && (
 
                             <small>
-                                Updating...
+
+                                {
+                                    text.updating
+                                }
+
                             </small>
 
                         )
@@ -1385,12 +1939,18 @@ function OrderCard({
                 </div>
 
 
+                {/* EXPAND */}
 
                 <button
                     type="button"
                     className="admin-order-expand"
                     onClick={
                         toggleExpanded
+                    }
+                    aria-label={
+                        expanded
+                            ? text.collapseOrder
+                            : text.expandOrder
                     }
                 >
 
@@ -1409,6 +1969,9 @@ function OrderCard({
             </div>
 
 
+            {/* =============================================
+                DETAILS
+            ============================================= */}
 
             {
                 expanded && (
@@ -1416,10 +1979,16 @@ function OrderCard({
                     <div className="admin-order-details">
 
 
+                        {/* CUSTOMER DETAILS */}
+
                         <section className="admin-order-details-section">
 
                             <h3>
-                                Customer Details
+
+                                {
+                                    text.customerDetails
+                                }
+
                             </h3>
 
 
@@ -1427,7 +1996,9 @@ function OrderCard({
                                 icon={
                                     <User />
                                 }
-                                label="Name"
+                                label={
+                                    text.name
+                                }
                                 value={
                                     order.full_name ||
                                     "-"
@@ -1439,11 +2010,14 @@ function OrderCard({
                                 icon={
                                     <Phone />
                                 }
-                                label="Phone"
+                                label={
+                                    text.phone
+                                }
                                 value={
                                     order.phone ||
                                     "-"
                                 }
+                                ltr
                             />
 
 
@@ -1451,21 +2025,33 @@ function OrderCard({
                                 icon={
                                     <Mail />
                                 }
-                                label="Email"
+                                label={
+                                    text.email
+                                }
                                 value={
                                     order.email ||
-                                    "Not provided"
+                                    text.notProvided
+                                }
+                                ltr={
+                                    Boolean(
+                                        order.email
+                                    )
                                 }
                             />
 
                         </section>
 
 
+                        {/* DELIVERY */}
 
                         <section className="admin-order-details-section">
 
                             <h3>
-                                Delivery
+
+                                {
+                                    text.delivery
+                                }
+
                             </h3>
 
 
@@ -1473,12 +2059,14 @@ function OrderCard({
                                 icon={
                                     <Truck />
                                 }
-                                label="Method"
+                                label={
+                                    text.method
+                                }
                                 value={
                                     order.delivery_method ===
                                         "pickup"
-                                        ? "Pharmacy Pickup"
-                                        : "Home Delivery"
+                                        ? text.pharmacyPickup
+                                        : text.homeDelivery
                                 }
                             />
 
@@ -1487,22 +2075,34 @@ function OrderCard({
                                 icon={
                                     <MapPin />
                                 }
-                                label="Address"
+                                label={
+                                    text.address
+                                }
                                 value={
                                     order.delivery_method ===
                                         "pickup"
                                         ? (
                                             order.branches?.name ||
-                                            "Pharmacy Branch"
+                                            text.pharmacyBranch
                                         )
                                         : (
                                             [
+
                                                 order.address,
+
                                                 order.area,
+
                                                 order.city
+
                                             ]
-                                                .filter(Boolean)
-                                                .join(", ") ||
+                                                .filter(
+                                                    Boolean
+                                                )
+                                                .join(
+                                                    isArabic
+                                                        ? "، "
+                                                        : ", "
+                                                ) ||
                                             "-"
                                         )
                                 }
@@ -1515,12 +2115,20 @@ function OrderCard({
                                     <div className="admin-order-notes">
 
                                         <span>
-                                            Customer Notes
+
+                                            {
+                                                text.customerNotes
+                                            }
+
                                         </span>
 
 
                                         <p>
-                                            {order.notes}
+
+                                            {
+                                                order.notes
+                                            }
+
                                         </p>
 
                                     </div>
@@ -1531,11 +2139,16 @@ function OrderCard({
                         </section>
 
 
+                        {/* PAYMENT */}
 
                         <section className="admin-order-details-section">
 
                             <h3>
-                                Payment
+
+                                {
+                                    text.payment
+                                }
+
                             </h3>
 
 
@@ -1543,12 +2156,14 @@ function OrderCard({
                                 icon={
                                     <Banknote />
                                 }
-                                label="Method"
+                                label={
+                                    text.method
+                                }
                                 value={
                                     order.payment_method ===
                                         "card"
-                                        ? "Card Payment"
-                                        : "Cash on Delivery"
+                                        ? text.cardPayment
+                                        : text.cashOnDelivery
                                 }
                             />
 
@@ -1557,26 +2172,34 @@ function OrderCard({
                                 icon={
                                     order.payment_status ===
                                         "paid"
-                                        ? <Check />
-                                        : <Clock3 />
+                                        ? (
+                                            <Check />
+                                        )
+                                        : (
+                                            <Clock3 />
+                                        )
                                 }
-                                label="Payment Status"
+                                label={
+                                    text.paymentStatus
+                                }
                                 value={
-                                    order.payment_status ===
-                                        "paid"
-                                        ? "Paid"
-                                        : "Pending"
+                                    paymentStatus
                                 }
                             />
 
                         </section>
 
 
+                        {/* PRODUCTS */}
 
                         <section className="admin-order-products">
 
                             <h3>
-                                Ordered Products
+
+                                {
+                                    text.orderedProducts
+                                }
+
                             </h3>
 
 
@@ -1610,8 +2233,9 @@ function OrderCard({
                                                     <strong>
 
                                                         {
+                                                            item.product_name_display ||
                                                             item.product_name ||
-                                                            "Product"
+                                                            text.product
                                                         }
 
                                                     </strong>
@@ -1619,10 +2243,16 @@ function OrderCard({
 
                                                     <span>
 
-                                                        Qty{" "}
+                                                        {
+                                                            text.quantityShort
+                                                        }
+
+                                                        {" "}
 
                                                         {
-                                                            item.quantity
+                                                            formatNumber(
+                                                                item.quantity
+                                                            )
                                                         }
 
                                                         {" × "}
@@ -1657,14 +2287,18 @@ function OrderCard({
                             </div>
 
 
+                            {/* MONEY */}
 
                             <div className="admin-order-money">
-
 
                                 <div>
 
                                     <span>
-                                        Subtotal
+
+                                        {
+                                            text.subtotal
+                                        }
+
                                     </span>
 
 
@@ -1684,7 +2318,11 @@ function OrderCard({
                                 <div>
 
                                     <span>
-                                        Delivery
+
+                                        {
+                                            text.deliveryFee
+                                        }
+
                                     </span>
 
 
@@ -1704,7 +2342,11 @@ function OrderCard({
                                 <div className="total">
 
                                     <span>
-                                        Total
+
+                                        {
+                                            text.total
+                                        }
+
                                     </span>
 
 
@@ -1725,6 +2367,7 @@ function OrderCard({
                         </section>
 
 
+                        {/* RECEIPT */}
 
                         <Link
                             to={
@@ -1737,11 +2380,14 @@ function OrderCard({
                                 size={17}
                             />
 
-                            View / Print Receipt
+                            {
+                                text.viewPrintReceipt
+                            }
 
                         </Link>
 
 
+                        {/* CANCELLED */}
 
                         {
                             order.status ===
@@ -1757,15 +2403,19 @@ function OrderCard({
                                     <div>
 
                                         <strong>
-                                            Order Cancelled
+
+                                            {
+                                                text.orderCancelled
+                                            }
+
                                         </strong>
 
 
                                         <span>
 
-                                            Product quantities were
-                                            automatically returned
-                                            to inventory.
+                                            {
+                                                text.cancelledInventory
+                                            }
 
                                         </span>
 
@@ -1776,6 +2426,8 @@ function OrderCard({
                             )
                         }
 
+
+                        {/* DELIVERED */}
 
                         {
                             order.status ===
@@ -1791,15 +2443,19 @@ function OrderCard({
                                     <div>
 
                                         <strong>
-                                            Order Delivered
+
+                                            {
+                                                text.orderDelivered
+                                            }
+
                                         </strong>
 
 
                                         <span>
 
-                                            This order has completed
-                                            the pharmacy fulfilment
-                                            process.
+                                            {
+                                                text.deliveredDescription
+                                            }
 
                                         </span>
 
@@ -1818,17 +2474,22 @@ function OrderCard({
         </article>
 
     );
+
 }
 
 
+/*
+========================================================
+DETAIL ROW
+========================================================
+*/
 
 function DetailRow({
 
     icon,
-
     label,
-
-    value
+    value,
+    ltr = false
 
 }) {
 
@@ -1846,12 +2507,26 @@ function DetailRow({
             <div>
 
                 <span>
-                    {label}
+
+                    {
+                        label
+                    }
+
                 </span>
 
 
-                <strong>
-                    {value}
+                <strong
+                    dir={
+                        ltr
+                            ? "ltr"
+                            : undefined
+                    }
+                >
+
+                    {
+                        value
+                    }
+
                 </strong>
 
             </div>
@@ -1859,6 +2534,7 @@ function DetailRow({
         </div>
 
     );
+
 }
 
 

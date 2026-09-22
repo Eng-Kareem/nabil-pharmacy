@@ -1,10 +1,40 @@
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
 import "./LogoLoader.css";
 
 
 function LogoLoader({
-    text = "Loading...",
+
+    text = "",
+    arabicText = "",
     small = false
+
 }) {
+
+    const {
+        isArabic
+    } = useLanguage();
+
+
+    const loadingText =
+        isArabic
+            ? (
+                arabicText ||
+                "جاري التحميل..."
+            )
+            : (
+                text ||
+                "Loading..."
+            );
+
+
+    const pharmacyName =
+        isArabic
+            ? "صيدلية نبيل"
+            : "Nabil Pharmacy";
+
 
     return (
 
@@ -16,6 +46,11 @@ function LogoLoader({
             }
             role="status"
             aria-live="polite"
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
+            }
         >
 
             <div className="logo-loader-animation">
@@ -29,7 +64,6 @@ function LogoLoader({
                 </div>
 
 
-
                 {/* =====================================
                     INNER RING
                 ===================================== */}
@@ -38,14 +72,12 @@ function LogoLoader({
                 </div>
 
 
-
                 {/* =====================================
                     GLOW
                 ===================================== */}
 
                 <div className="logo-loader-glow">
                 </div>
-
 
 
                 {/* =====================================
@@ -61,7 +93,6 @@ function LogoLoader({
                     />
 
                 </div>
-
 
 
                 {/* =====================================
@@ -94,7 +125,6 @@ function LogoLoader({
             </div>
 
 
-
             {/* =====================================
                 TEXT
             ===================================== */}
@@ -102,7 +132,11 @@ function LogoLoader({
             <div className="logo-loader-text">
 
                 <strong>
-                    {text}
+
+                    {
+                        loadingText
+                    }
+
                 </strong>
 
 
@@ -126,11 +160,17 @@ function LogoLoader({
 
 
             <span className="logo-loader-brand">
-                Nabil Pharmacy
+
+                {
+                    pharmacyName
+                }
+
             </span>
 
         </div>
+
     );
+
 }
 
 

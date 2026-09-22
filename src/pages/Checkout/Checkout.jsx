@@ -13,6 +13,7 @@ import PaymentCard
 
 import {
     ArrowLeft,
+    ArrowRight,
     Check,
     CreditCard,
     Edit3,
@@ -47,6 +48,15 @@ import {
 
 
 import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+
+import checkoutTranslations
+    from "../../i18n/checkoutTranslations.js";
+
+
+import {
     supabase
 } from "../../lib/supabase.js";
 
@@ -68,6 +78,7 @@ function createCheckoutToken() {
 
         return globalThis.crypto
             .randomUUID();
+
     }
 
 
@@ -124,6 +135,7 @@ function createCheckoutToken() {
             `${hex.slice(8, 10).join("")}-` +
             `${hex.slice(10, 16).join("")}`
         );
+
     }
 
 
@@ -151,10 +163,18 @@ function createCheckoutToken() {
 
                 return value
                     .toString(16);
+
             }
         );
+
 }
 
+
+/*
+========================================================
+CHECKOUT
+========================================================
+*/
 
 function Checkout() {
 
@@ -167,12 +187,33 @@ function Checkout() {
         cartCount,
         subtotal,
         clearCart
-    } = useCart();
+    } =
+        useCart();
+
+
+    const {
+        language,
+        isArabic
+    } =
+        useLanguage();
+
+
+    const text =
+        checkoutTranslations[
+            language
+        ] ||
+        checkoutTranslations.en;
+
+
+    const BackIcon =
+        isArabic
+            ? ArrowRight
+            : ArrowLeft;
 
 
     /*
     ========================================================
-    CHECKOUT STEP
+    STATE
     ========================================================
     */
 
@@ -184,12 +225,6 @@ function Checkout() {
     );
 
 
-    /*
-    ========================================================
-    DELIVERY METHOD
-    ========================================================
-    */
-
     const [
         deliveryMethod,
         setDeliveryMethod
@@ -198,12 +233,6 @@ function Checkout() {
     );
 
 
-    /*
-    ========================================================
-    PAYMENT METHOD
-    ========================================================
-    */
-
     const [
         paymentMethod,
         setPaymentMethod
@@ -211,12 +240,6 @@ function Checkout() {
         "cash"
     );
 
-
-    /*
-    ========================================================
-    ORDER STATES
-    ========================================================
-    */
 
     const [
         isSubmitting,
@@ -250,12 +273,6 @@ function Checkout() {
     );
 
 
-    /*
-    ========================================================
-    CHECKOUT TOKEN
-    ========================================================
-    */
-
     const [
         checkoutToken
     ] = useState(
@@ -263,12 +280,6 @@ function Checkout() {
             createCheckoutToken()
     );
 
-
-    /*
-    ========================================================
-    CUSTOMER FORM
-    ========================================================
-    */
 
     const [
         formData,
@@ -298,7 +309,29 @@ function Checkout() {
 
     /*
     ========================================================
-    PRICE FORMATTER
+    NUMBER FORMAT
+    ========================================================
+    */
+
+    const formatNumber = (
+        value
+    ) => {
+
+        return Number(
+            value ||
+            0
+        ).toLocaleString(
+            isArabic
+                ? "ar-EG"
+                : "en-US"
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    PRICE FORMAT
     ========================================================
     */
 
@@ -306,16 +339,21 @@ function Checkout() {
         price
     ) => {
 
-        const safePrice =
+        const value =
             Number(
                 price ||
                 0
+            ).toLocaleString(
+                isArabic
+                    ? "ar-EG"
+                    : "en-US"
             );
 
 
-        return (
-            `EGP ${safePrice.toLocaleString()}`
-        );
+        return isArabic
+            ? `${value} ج.م`
+            : `EGP ${value}`;
+
     };
 
 
@@ -346,12 +384,13 @@ function Checkout() {
 
             })
         );
+
     };
 
 
     /*
     ========================================================
-    PAYMENT METHOD CHANGE
+    PAYMENT METHOD
     ========================================================
     */
 
@@ -367,6 +406,7 @@ function Checkout() {
         setSubmitError(
             ""
         );
+
     };
 
 
@@ -388,10 +428,6 @@ function Checkout() {
         );
 
 
-        /*
-        Required contact fields
-        */
-
         if (
             !formData
                 .fullName
@@ -399,11 +435,11 @@ function Checkout() {
         ) {
 
             setSubmitError(
-                "Please enter your full name."
+                text.enterFullName
             );
 
-
             return;
+
         }
 
 
@@ -414,18 +450,13 @@ function Checkout() {
         ) {
 
             setSubmitError(
-                "Please enter your phone number."
+                text.enterPhone
             );
 
-
             return;
+
         }
 
-
-        /*
-        Address required only
-        for home delivery.
-        */
 
         if (
             deliveryMethod ===
@@ -436,11 +467,11 @@ function Checkout() {
         ) {
 
             setSubmitError(
-                "Please enter your delivery address."
+                text.enterDeliveryAddress
             );
 
-
             return;
+
         }
 
 
@@ -457,6 +488,7 @@ function Checkout() {
                 "smooth"
 
         });
+
     };
 
 
@@ -475,6 +507,7 @@ function Checkout() {
             ) {
 
                 return;
+
             }
 
 
@@ -496,6 +529,7 @@ function Checkout() {
                     "smooth"
 
             });
+
         };
 
 
@@ -514,6 +548,7 @@ function Checkout() {
             ) {
 
                 return;
+
             }
 
 
@@ -523,9 +558,9 @@ function Checkout() {
 
 
             /*
-            =================================================
-            CART VALIDATION
-            =================================================
+            ================================================
+            CART
+            ================================================
             */
 
             if (
@@ -534,25 +569,18 @@ function Checkout() {
             ) {
 
                 setSubmitError(
-                    "Your cart is empty."
+                    text.cartEmpty
                 );
 
-
                 return;
+
             }
 
 
             /*
-            =================================================
-            CARD PAYMENT PROTECTION
-            =================================================
-
-            The interactive card is intentionally
-            visual only until a real payment
-            provider is connected.
-
-            Card number / expiry / CVV are never
-            sent to Supabase.
+            ================================================
+            CARD IS PREVIEW ONLY
+            ================================================
             */
 
             if (
@@ -561,7 +589,7 @@ function Checkout() {
             ) {
 
                 setSubmitError(
-                    "The interactive card is currently a payment preview only. Real card charging is not connected yet. Please choose Cash on Delivery to place this order."
+                    text.cardPreviewOnlyError
                 );
 
 
@@ -576,13 +604,14 @@ function Checkout() {
 
 
                 return;
+
             }
 
 
             /*
-            =================================================
-            DELIVERY VALIDATION
-            =================================================
+            ================================================
+            ADDRESS
+            ================================================
             */
 
             if (
@@ -594,11 +623,11 @@ function Checkout() {
             ) {
 
                 setSubmitError(
-                    "Delivery address is required."
+                    text.deliveryAddressRequired
                 );
 
-
                 return;
+
             }
 
 
@@ -610,14 +639,11 @@ function Checkout() {
             try {
 
                 /*
-                =================================================
-                SEND ONLY PRODUCT ID + QUANTITY
-                =================================================
+                ============================================
+                ONLY SEND PRODUCT ID + QUANTITY
 
-                Browser prices are not trusted.
-
-                Supabase reads the real price
-                directly from products.price.
+                Product prices are verified by Supabase.
+                ============================================
                 */
 
                 const orderItems =
@@ -637,13 +663,9 @@ function Checkout() {
 
 
                 /*
-                =================================================
-                SECURE ORDER RPC
-                =================================================
-
-                Because card payments are blocked
-                above, only genuine cash orders
-                reach the database.
+                ============================================
+                PLACE ORDER RPC
+                ============================================
                 */
 
                 const {
@@ -743,25 +765,14 @@ function Checkout() {
                         );
 
 
-                /*
-                =================================================
-                SUPABASE ERROR
-                =================================================
-                */
-
                 if (
                     error
                 ) {
 
                     throw error;
+
                 }
 
-
-                /*
-                =================================================
-                NORMALIZE RESPONSE
-                =================================================
-                */
 
                 const result =
                     Array.isArray(
@@ -783,16 +794,11 @@ function Checkout() {
                 ) {
 
                     throw new Error(
-                        "Order was processed but no order ID was returned."
+                        text.noOrderId
                     );
+
                 }
 
-
-                /*
-                =================================================
-                ORDER SUCCESS
-                =================================================
-                */
 
                 setCompletedOrder({
 
@@ -815,9 +821,9 @@ function Checkout() {
 
 
                 /*
-                =================================================
-                WAIT FOR SUCCESS ANIMATION
-                =================================================
+                ============================================
+                SUCCESS ANIMATION
+                ============================================
                 */
 
                 await new Promise(
@@ -835,20 +841,8 @@ function Checkout() {
                 );
 
 
-                /*
-                =================================================
-                CLEAR CART
-                =================================================
-                */
-
                 clearCart();
 
-
-                /*
-                =================================================
-                OPEN RECEIPT
-                =================================================
-                */
 
                 navigate(
 
@@ -863,14 +857,13 @@ function Checkout() {
 
                 );
 
-            } catch (error) {
+            } catch (
+                error
+            ) {
 
                 console.error(
-
                     "Order placement error:",
-
                     error
-
                 );
 
 
@@ -884,10 +877,19 @@ function Checkout() {
                 );
 
 
+                /*
+                Never show untranslated backend errors
+                in Arabic mode.
+                */
+
                 setSubmitError(
 
-                    error?.message ||
-                    "Unable to place your order. Please try again."
+                    isArabic
+                        ? text.orderFailed
+                        : (
+                            error?.message ||
+                            text.orderFailed
+                        )
 
                 );
 
@@ -895,7 +897,9 @@ function Checkout() {
                 setIsSubmitting(
                     false
                 );
+
             }
+
         };
 
 
@@ -925,15 +929,19 @@ function Checkout() {
 
 
                         <h1>
-                            Your cart is empty
+
+                            {
+                                text.emptyCart
+                            }
+
                         </h1>
 
 
                         <p>
 
-                            Add products to your
-                            cart before proceeding
-                            to checkout.
+                            {
+                                text.emptyCartDescription
+                            }
 
                         </p>
 
@@ -943,7 +951,9 @@ function Checkout() {
                             className="primary-button"
                         >
 
-                            Browse Products
+                            {
+                                text.exploreProducts
+                            }
 
                         </Link>
 
@@ -952,13 +962,15 @@ function Checkout() {
                 </div>
 
             </main>
+
         );
+
     }
 
 
     /*
     ========================================================
-    MAIN CHECKOUT
+    PAGE
     ========================================================
     */
 
@@ -981,26 +993,40 @@ function Checkout() {
                         className="checkout-back-link"
                     >
 
-                        <ArrowLeft
+                        <BackIcon
                             size={18}
                         />
 
-                        Back to Cart
+                        {
+                            text.backToCart
+                        }
 
                     </Link>
 
 
                     <span className="section-label">
-                        Secure Checkout
+
+                        {
+                            text.secureCheckout
+                        }
+
                     </span>
 
 
                     <h1>
 
-                        Complete your
+                        {
+                            text.completeOrder
+                        }
 
                         <span>
-                            {" "}order.
+
+                            {" "}
+
+                            {
+                                text.completeOrderAccent
+                            }
+
                         </span>
 
                     </h1>
@@ -1008,10 +1034,9 @@ function Checkout() {
 
                     <p>
 
-                        Review your information,
-                        delivery method and pharmacy
-                        items before submitting your
-                        final order.
+                        {
+                            text.checkoutDescription
+                        }
 
                     </p>
 
@@ -1024,7 +1049,9 @@ function Checkout() {
                                 role="alert"
                             >
 
-                                {submitError}
+                                {
+                                    submitError
+                                }
 
                             </div>
 
@@ -1058,14 +1085,20 @@ function Checkout() {
                                                 size={16}
                                             />
                                         )
-                                        : "1"
+                                        : formatNumber(
+                                            1
+                                        )
                                 }
 
                             </span>
 
 
                             <strong>
-                                Details
+
+                                {
+                                    text.details
+                                }
+
                             </strong>
 
                         </div>
@@ -1085,12 +1118,22 @@ function Checkout() {
                         >
 
                             <span>
-                                2
+
+                                {
+                                    formatNumber(
+                                        2
+                                    )
+                                }
+
                             </span>
 
 
                             <strong>
-                                Review
+
+                                {
+                                    text.review
+                                }
+
                             </strong>
 
                         </div>
@@ -1101,10 +1144,6 @@ function Checkout() {
 
             </section>
 
-
-            {/* =================================================
-                CHECKOUT STEPS
-            ================================================= */}
 
             <AnimatePresence
                 mode="wait"
@@ -1117,7 +1156,7 @@ function Checkout() {
 
                             /*
                             =================================================
-                            STEP 1 - DETAILS
+                            DETAILS STEP
                             =================================================
                             */
 
@@ -1159,10 +1198,6 @@ function Checkout() {
                                 >
 
 
-                                    {/* =====================================
-                                        LEFT SIDE
-                                    ===================================== */}
-
                                     <div className="checkout-form-area">
 
 
@@ -1193,22 +1228,32 @@ function Checkout() {
                                             <div className="checkout-card-heading">
 
                                                 <span>
-                                                    02
+
+                                                    {
+                                                        formatNumber(
+                                                            2
+                                                        )
+                                                    }
+
                                                 </span>
 
 
                                                 <div>
 
                                                     <h2>
-                                                        Delivery Method
+
+                                                        {
+                                                            text.deliveryMethod
+                                                        }
+
                                                     </h2>
 
 
                                                     <p>
 
-                                                        Choose how you
-                                                        want to receive
-                                                        your order.
+                                                        {
+                                                            text.chooseReceiveMethod
+                                                        }
 
                                                     </p>
 
@@ -1219,8 +1264,6 @@ function Checkout() {
 
                                             <div className="checkout-option-grid">
 
-
-                                                {/* HOME DELIVERY */}
 
                                                 <button
 
@@ -1247,15 +1290,19 @@ function Checkout() {
                                                     <div>
 
                                                         <strong>
-                                                            Home Delivery
+
+                                                            {
+                                                                text.homeDelivery
+                                                            }
+
                                                         </strong>
 
 
                                                         <span>
 
-                                                            Choose your
-                                                            location on
-                                                            the map
+                                                            {
+                                                                text.chooseLocationMap
+                                                            }
 
                                                         </span>
 
@@ -1263,8 +1310,6 @@ function Checkout() {
 
                                                 </button>
 
-
-                                                {/* PICKUP */}
 
                                                 <button
 
@@ -1291,12 +1336,20 @@ function Checkout() {
                                                     <div>
 
                                                         <strong>
-                                                            Pharmacy Pickup
+
+                                                            {
+                                                                text.pharmacyPickup
+                                                            }
+
                                                         </strong>
 
 
                                                         <span>
-                                                            Collect from Nabil Pharmacy
+
+                                                            {
+                                                                text.collectFromPharmacy
+                                                            }
+
                                                         </span>
 
                                                     </div>
@@ -1306,9 +1359,7 @@ function Checkout() {
                                             </div>
 
 
-                                            {/* =====================================
-                                                MAP
-                                            ===================================== */}
+                                            {/* MAP */}
 
                                             <AnimatePresence>
 
@@ -1368,9 +1419,7 @@ function Checkout() {
                                             </AnimatePresence>
 
 
-                                            {/* =====================================
-                                                PICKUP MESSAGE
-                                            ===================================== */}
+                                            {/* PICKUP */}
 
                                             <AnimatePresence>
 
@@ -1399,10 +1448,6 @@ function Checkout() {
                                                                 y: 10
                                                             }}
 
-                                                            transition={{
-                                                                duration: 0.3
-                                                            }}
-
                                                         >
 
                                                             <div className="checkout-review-address">
@@ -1413,15 +1458,21 @@ function Checkout() {
                                                                 <div>
 
                                                                     <strong>
-                                                                        Nabil Pharmacy
+
+                                                                        {
+                                                                            isArabic
+                                                                                ? "صيدلية نبيل"
+                                                                                : "Nabil Pharmacy"
+                                                                        }
+
                                                                     </strong>
 
 
                                                                     <span>
 
-                                                                        Your order will
-                                                                        be prepared for
-                                                                        pharmacy pickup.
+                                                                        {
+                                                                            text.pickupPrepared
+                                                                        }
 
                                                                     </span>
 
@@ -1449,19 +1500,33 @@ function Checkout() {
                                             <div className="checkout-card-heading">
 
                                                 <span>
-                                                    03
+
+                                                    {
+                                                        formatNumber(
+                                                            3
+                                                        )
+                                                    }
+
                                                 </span>
 
 
                                                 <div>
 
                                                     <h2>
-                                                        Payment Method
+
+                                                        {
+                                                            text.paymentMethod
+                                                        }
+
                                                     </h2>
 
 
                                                     <p>
-                                                        Select your preferred payment option.
+
+                                                        {
+                                                            text.selectPayment
+                                                        }
+
                                                     </p>
 
                                                 </div>
@@ -1499,12 +1564,20 @@ function Checkout() {
                                                     <div>
 
                                                         <strong>
-                                                            Cash on Delivery
+
+                                                            {
+                                                                text.cashOnDelivery
+                                                            }
+
                                                         </strong>
 
 
                                                         <span>
-                                                            Pay when your order arrives
+
+                                                            {
+                                                                text.payOnArrival
+                                                            }
+
                                                         </span>
 
                                                     </div>
@@ -1539,12 +1612,20 @@ function Checkout() {
                                                     <div>
 
                                                         <strong>
-                                                            Card Payment
+
+                                                            {
+                                                                text.cardPayment
+                                                            }
+
                                                         </strong>
 
 
                                                         <span>
-                                                            Interactive Preview
+
+                                                            {
+                                                                text.interactivePreview
+                                                            }
+
                                                         </span>
 
                                                     </div>
@@ -1554,10 +1635,6 @@ function Checkout() {
                                             </div>
 
 
-                                            {/* =====================================
-                                                INTERACTIVE CARD
-                                            ===================================== */}
-
                                             <AnimatePresence>
 
                                                 {
@@ -1566,7 +1643,7 @@ function Checkout() {
 
                                                         <motion.div
 
-                                                            key="interactive-payment-card"
+                                                            key="interactive-card"
 
                                                             initial={{
                                                                 opacity: 0,
@@ -1584,10 +1661,6 @@ function Checkout() {
                                                                 opacity: 0,
                                                                 y: 15,
                                                                 scale: 0.98
-                                                            }}
-
-                                                            transition={{
-                                                                duration: 0.35
                                                             }}
 
                                                         >
@@ -1612,27 +1685,8 @@ function Checkout() {
                                                     {
                                                         paymentMethod ===
                                                             "card"
-                                                            ? (
-                                                                <>
-                                                                    This is an interactive
-                                                                    card-payment preview.
-                                                                    Card number, expiry date
-                                                                    and CVV are not stored and
-                                                                    are never sent to Supabase.
-                                                                    Real card charging will be
-                                                                    enabled only after a secure
-                                                                    payment provider is connected.
-                                                                </>
-                                                            )
-                                                            : (
-                                                                <>
-                                                                    Cash on Delivery is currently
-                                                                    the active payment method.
-                                                                    Product prices and stock are
-                                                                    still verified securely by
-                                                                    the backend.
-                                                                </>
-                                                            )
+                                                            ? text.cardSecurity
+                                                            : text.cashSecurity
                                                     }
 
                                                 </span>
@@ -1652,21 +1706,32 @@ function Checkout() {
                                             <div className="checkout-card-heading">
 
                                                 <span>
-                                                    04
+
+                                                    {
+                                                        formatNumber(
+                                                            4
+                                                        )
+                                                    }
+
                                                 </span>
 
 
                                                 <div>
 
                                                     <h2>
-                                                        Order Notes
+
+                                                        {
+                                                            text.orderNotes
+                                                        }
+
                                                     </h2>
 
 
                                                     <p>
 
-                                                        Optional instructions
-                                                        for the pharmacy.
+                                                        {
+                                                            text.notesDescription
+                                                        }
 
                                                     </p>
 
@@ -1678,7 +1743,11 @@ function Checkout() {
                                             <div className="checkout-field">
 
                                                 <label htmlFor="notes">
-                                                    Notes
+
+                                                    {
+                                                        text.notes
+                                                    }
+
                                                 </label>
 
 
@@ -1698,7 +1767,9 @@ function Checkout() {
                                                         handleChange
                                                     }
 
-                                                    placeholder="Add any useful instructions..."
+                                                    placeholder={
+                                                        text.notesPlaceholder
+                                                    }
 
                                                 />
 
@@ -1708,10 +1779,6 @@ function Checkout() {
 
                                     </div>
 
-
-                                    {/* =====================================
-                                        ORDER SUMMARY
-                                    ===================================== */}
 
                                     <CheckoutSummary
 
@@ -1731,6 +1798,14 @@ function Checkout() {
                                             formatPrice
                                         }
 
+                                        formatNumber={
+                                            formatNumber
+                                        }
+
+                                        text={
+                                            text
+                                        }
+
                                     />
 
                                 </form>
@@ -1742,7 +1817,7 @@ function Checkout() {
 
                             /*
                             =================================================
-                            STEP 2 - REVIEW
+                            REVIEW STEP
                             =================================================
                             */
 
@@ -1767,18 +1842,10 @@ function Checkout() {
                                     y: -15
                                 }}
 
-                                transition={{
-                                    duration: 0.3
-                                }}
-
                             >
 
                                 <div className="container checkout-review-layout">
 
-
-                                    {/* =====================================
-                                        LEFT REVIEW
-                                    ===================================== */}
 
                                     <div className="checkout-review-main">
 
@@ -1787,38 +1854,44 @@ function Checkout() {
 
                                         <section className="checkout-review-card">
 
-
                                             <div className="checkout-review-heading">
 
                                                 <div>
 
                                                     <span>
-                                                        Customer
+
+                                                        {
+                                                            text.customer
+                                                        }
+
                                                     </span>
 
 
                                                     <h2>
-                                                        Contact Information
+
+                                                        {
+                                                            text.contactInformation
+                                                        }
+
                                                     </h2>
 
                                                 </div>
 
 
                                                 <button
-
                                                     type="button"
-
                                                     onClick={
                                                         returnToDetails
                                                     }
-
                                                 >
 
                                                     <Edit3
                                                         size={16}
                                                     />
 
-                                                    Edit
+                                                    {
+                                                        text.edit
+                                                    }
 
                                                 </button>
 
@@ -1830,12 +1903,20 @@ function Checkout() {
                                                 <div>
 
                                                     <span>
-                                                        Name
+
+                                                        {
+                                                            text.name
+                                                        }
+
                                                     </span>
 
 
                                                     <strong>
-                                                        {formData.fullName}
+
+                                                        {
+                                                            formData.fullName
+                                                        }
+
                                                     </strong>
 
                                                 </div>
@@ -1844,12 +1925,22 @@ function Checkout() {
                                                 <div>
 
                                                     <span>
-                                                        Phone
+
+                                                        {
+                                                            text.phone
+                                                        }
+
                                                     </span>
 
 
-                                                    <strong>
-                                                        {formData.phone}
+                                                    <strong
+                                                        dir="ltr"
+                                                    >
+
+                                                        {
+                                                            formData.phone
+                                                        }
+
                                                     </strong>
 
                                                 </div>
@@ -1858,7 +1949,11 @@ function Checkout() {
                                                 <div>
 
                                                     <span>
-                                                        Email
+
+                                                        {
+                                                            text.email
+                                                        }
+
                                                     </span>
 
 
@@ -1866,7 +1961,7 @@ function Checkout() {
 
                                                         {
                                                             formData.email ||
-                                                            "Not provided"
+                                                            text.notProvided
                                                         }
 
                                                     </strong>
@@ -1882,13 +1977,16 @@ function Checkout() {
 
                                         <section className="checkout-review-card">
 
-
                                             <div className="checkout-review-heading">
 
                                                 <div>
 
                                                     <span>
-                                                        Delivery
+
+                                                        {
+                                                            text.delivery
+                                                        }
+
                                                     </span>
 
 
@@ -1897,8 +1995,8 @@ function Checkout() {
                                                         {
                                                             deliveryMethod ===
                                                                 "delivery"
-                                                                ? "Home Delivery"
-                                                                : "Pharmacy Pickup"
+                                                                ? text.homeDelivery
+                                                                : text.pharmacyPickup
                                                         }
 
                                                     </h2>
@@ -1907,20 +2005,19 @@ function Checkout() {
 
 
                                                 <button
-
                                                     type="button"
-
                                                     onClick={
                                                         returnToDetails
                                                     }
-
                                                 >
 
                                                     <Edit3
                                                         size={16}
                                                     />
 
-                                                    Edit
+                                                    {
+                                                        text.edit
+                                                    }
 
                                                 </button>
 
@@ -1945,7 +2042,7 @@ function Checkout() {
 
                                                                         {
                                                                             formData.address ||
-                                                                            "Address not entered"
+                                                                            text.addressNotEntered
                                                                         }
 
                                                                     </strong>
@@ -1961,7 +2058,7 @@ function Checkout() {
                                                                         {
                                                                             formData.area &&
                                                                             formData.city
-                                                                                ? ", "
+                                                                                ? "، "
                                                                                 : ""
                                                                         }
 
@@ -1997,18 +2094,25 @@ function Checkout() {
                                                                         <div>
 
                                                                             <strong>
-                                                                                Map Pin
+
+                                                                                {
+                                                                                    text.mapPin
+                                                                                }
+
                                                                             </strong>
 
 
-                                                                            <span>
+                                                                            <span
+                                                                                dir="ltr"
+                                                                            >
 
                                                                                 {
                                                                                     Number(
                                                                                         formData.latitude
-                                                                                    ).toFixed(
-                                                                                        5
                                                                                     )
+                                                                                        .toFixed(
+                                                                                            5
+                                                                                        )
                                                                                 }
 
                                                                                 ,{" "}
@@ -2016,9 +2120,10 @@ function Checkout() {
                                                                                 {
                                                                                     Number(
                                                                                         formData.longitude
-                                                                                    ).toFixed(
-                                                                                        5
                                                                                     )
+                                                                                        .toFixed(
+                                                                                            5
+                                                                                        )
                                                                                 }
 
                                                                             </span>
@@ -2043,12 +2148,22 @@ function Checkout() {
                                                             <div>
 
                                                                 <strong>
-                                                                    Nabil Pharmacy
+
+                                                                    {
+                                                                        isArabic
+                                                                            ? "صيدلية نبيل"
+                                                                            : "Nabil Pharmacy"
+                                                                    }
+
                                                                 </strong>
 
 
                                                                 <span>
-                                                                    Pharmacy pickup selected.
+
+                                                                    {
+                                                                        text.pickupPrepared
+                                                                    }
+
                                                                 </span>
 
                                                             </div>
@@ -2065,13 +2180,16 @@ function Checkout() {
 
                                         <section className="checkout-review-card">
 
-
                                             <div className="checkout-review-heading">
 
                                                 <div>
 
                                                     <span>
-                                                        Payment
+
+                                                        {
+                                                            text.paymentMethod
+                                                        }
+
                                                     </span>
 
 
@@ -2080,8 +2198,8 @@ function Checkout() {
                                                         {
                                                             paymentMethod ===
                                                                 "card"
-                                                                ? "Card Payment Preview"
-                                                                : "Cash on Delivery"
+                                                                ? text.cardPaymentPreview
+                                                                : text.cashOnDelivery
                                                         }
 
                                                     </h2>
@@ -2090,20 +2208,19 @@ function Checkout() {
 
 
                                                 <button
-
                                                     type="button"
-
                                                     onClick={
                                                         returnToDetails
                                                     }
-
                                                 >
 
                                                     <Edit3
                                                         size={16}
                                                     />
 
-                                                    Edit
+                                                    {
+                                                        text.edit
+                                                    }
 
                                                 </button>
 
@@ -2131,8 +2248,8 @@ function Checkout() {
                                                         {
                                                             paymentMethod ===
                                                                 "card"
-                                                                ? "Card Payment Preview"
-                                                                : "Cash on Delivery"
+                                                                ? text.cardPaymentPreview
+                                                                : text.cashOnDelivery
                                                         }
 
                                                     </strong>
@@ -2143,12 +2260,8 @@ function Checkout() {
                                                         {
                                                             paymentMethod ===
                                                                 "card"
-                                                                ? (
-                                                                    "Interactive card selected. Real card charging is not connected yet, so switch to Cash on Delivery before submitting the order."
-                                                                )
-                                                                : (
-                                                                    "Payment will be collected when your order arrives."
-                                                                )
+                                                                ? text.cardReviewDescription
+                                                                : text.cashReviewDescription
                                                         }
 
                                                     </span>
@@ -2164,18 +2277,25 @@ function Checkout() {
 
                                         <section className="checkout-review-card">
 
-
                                             <div className="checkout-review-heading">
 
                                                 <div>
 
                                                     <span>
-                                                        Products
+
+                                                        {
+                                                            text.products
+                                                        }
+
                                                     </span>
 
 
                                                     <h2>
-                                                        Your Pharmacy Items
+
+                                                        {
+                                                            text.pharmacyItems
+                                                        }
+
                                                     </h2>
 
                                                 </div>
@@ -2208,7 +2328,11 @@ function Checkout() {
                                                                 <div>
 
                                                                     <strong>
-                                                                        {item.name}
+
+                                                                        {
+                                                                            item.name
+                                                                        }
+
                                                                     </strong>
 
 
@@ -2216,13 +2340,25 @@ function Checkout() {
 
                                                                         {
                                                                             item.brand ||
-                                                                            "Nabil Pharmacy"
+                                                                            (
+                                                                                isArabic
+                                                                                    ? "صيدلية نبيل"
+                                                                                    : "Nabil Pharmacy"
+                                                                            )
                                                                         }
 
-                                                                        {" • Qty "}
+                                                                        {" • "}
 
                                                                         {
-                                                                            item.quantity
+                                                                            text.quantityShort
+                                                                        }
+
+                                                                        {" "}
+
+                                                                        {
+                                                                            formatNumber(
+                                                                                item.quantity
+                                                                            )
                                                                         }
 
                                                                     </span>
@@ -2266,18 +2402,25 @@ function Checkout() {
 
                                                 <section className="checkout-review-card">
 
-
                                                     <div className="checkout-review-heading">
 
                                                         <div>
 
                                                             <span>
-                                                                Notes
+
+                                                                {
+                                                                    text.notes
+                                                                }
+
                                                             </span>
 
 
                                                             <h2>
-                                                                Order Instructions
+
+                                                                {
+                                                                    text.orderInstructions
+                                                                }
+
                                                             </h2>
 
                                                         </div>
@@ -2307,26 +2450,43 @@ function Checkout() {
 
                                     <aside className="checkout-final-summary">
 
-
                                         <span className="checkout-summary-label">
-                                            Final Review
+
+                                            {
+                                                text.finalReview
+                                            }
+
                                         </span>
 
 
                                         <h2>
-                                            Order Summary
+
+                                            {
+                                                text.orderSummary
+                                            }
+
                                         </h2>
 
 
                                         <div className="checkout-summary-row">
 
                                             <span>
-                                                Items
+
+                                                {
+                                                    text.itemsLabel
+                                                }
+
                                             </span>
 
 
                                             <strong>
-                                                {cartCount}
+
+                                                {
+                                                    formatNumber(
+                                                        cartCount
+                                                    )
+                                                }
+
                                             </strong>
 
                                         </div>
@@ -2335,7 +2495,11 @@ function Checkout() {
                                         <div className="checkout-summary-row">
 
                                             <span>
-                                                Subtotal
+
+                                                {
+                                                    text.subtotal
+                                                }
+
                                             </span>
 
 
@@ -2355,7 +2519,11 @@ function Checkout() {
                                         <div className="checkout-summary-row">
 
                                             <span>
-                                                Delivery
+
+                                                {
+                                                    text.delivery
+                                                }
+
                                             </span>
 
 
@@ -2364,8 +2532,8 @@ function Checkout() {
                                                 {
                                                     deliveryMethod ===
                                                         "delivery"
-                                                        ? "Home Delivery"
-                                                        : "Pickup"
+                                                        ? text.homeDelivery
+                                                        : text.pickup
                                                 }
 
                                             </strong>
@@ -2376,7 +2544,11 @@ function Checkout() {
                                         <div className="checkout-summary-row">
 
                                             <span>
-                                                Payment
+
+                                                {
+                                                    text.paymentMethod
+                                                }
+
                                             </span>
 
 
@@ -2385,8 +2557,8 @@ function Checkout() {
                                                 {
                                                     paymentMethod ===
                                                         "card"
-                                                        ? "Card Preview"
-                                                        : "Cash"
+                                                        ? text.cardPreview
+                                                        : text.cash
                                                 }
 
                                             </strong>
@@ -2401,7 +2573,11 @@ function Checkout() {
                                         <div className="checkout-summary-total">
 
                                             <span>
-                                                Total
+
+                                                {
+                                                    text.total
+                                                }
+
                                             </span>
 
 
@@ -2428,35 +2604,14 @@ function Checkout() {
                                                 {
                                                     paymentMethod ===
                                                         "card"
-                                                        ? (
-                                                            <>
-                                                                Card preview mode is active.
-                                                                No card information is sent
-                                                                to Nabil Pharmacy or Supabase.
-                                                                Select Cash on Delivery to
-                                                                submit the order until a real
-                                                                payment gateway is connected.
-                                                            </>
-                                                        )
-                                                        : (
-                                                            <>
-                                                                Product prices and
-                                                                stock are independently
-                                                                verified by the secure
-                                                                order backend before
-                                                                your order is accepted.
-                                                            </>
-                                                        )
+                                                        ? text.cardBackendSecurity
+                                                        : text.cashBackendSecurity
                                                 }
 
                                             </p>
 
                                         </div>
 
-
-                                        {/* =====================================
-                                            DOCTOR + CAR BUTTON
-                                        ===================================== */}
 
                                         <OrderSuccessButton
 
@@ -2478,7 +2633,7 @@ function Checkout() {
 
                                             disabled={
                                                 cartItems.length ===
-                                                    0
+                                                0
                                             }
 
                                         />
@@ -2493,15 +2648,15 @@ function Checkout() {
                                                     style={{
                                                         color:
                                                             "#8d0b12",
+
                                                         fontWeight:
                                                             "700"
                                                     }}
                                                 >
 
-                                                    Card payment is currently
-                                                    preview-only. Choose Cash
-                                                    on Delivery to place the
-                                                    real order.
+                                                    {
+                                                        text.cardPreviewNotice
+                                                    }
 
                                                 </small>
 
@@ -2517,14 +2672,15 @@ function Checkout() {
                                                     style={{
                                                         color:
                                                             "#19723d",
+
                                                         fontWeight:
                                                             "700"
                                                     }}
                                                 >
 
-                                                    Order successfully created.
-                                                    Your receipt will open
-                                                    automatically.
+                                                    {
+                                                        text.orderCreated
+                                                    }
 
                                                 </small>
 
@@ -2553,7 +2709,9 @@ function Checkout() {
                                                 size={16}
                                             />
 
-                                            Edit Checkout Details
+                                            {
+                                                text.editCheckout
+                                            }
 
                                         </button>
 
@@ -2569,13 +2727,15 @@ function Checkout() {
             </AnimatePresence>
 
         </main>
+
     );
+
 }
 
 
 /*
 ========================================================
-ORDER SUMMARY COMPONENT
+ORDER SUMMARY
 ========================================================
 */
 
@@ -2584,7 +2744,9 @@ function CheckoutSummary({
     cartItems,
     cartCount,
     subtotal,
-    formatPrice
+    formatPrice,
+    formatNumber,
+    text
 
 }) {
 
@@ -2594,31 +2756,33 @@ function CheckoutSummary({
 
 
             <span className="checkout-summary-label">
-                Order Summary
+
+                {
+                    text.orderSummary
+                }
+
             </span>
 
 
             <h2>
 
-                {cartCount}
+                {
+                    formatNumber(
+                        cartCount
+                    )
+                }
 
                 {" "}
 
-                item
-
                 {
-                    cartCount !==
+                    cartCount ===
                     1
-                        ? "s"
-                        : ""
+                        ? text.item
+                        : text.items
                 }
 
             </h2>
 
-
-            {/* =========================================
-                PRODUCTS
-            ========================================= */}
 
             <div className="checkout-summary-products">
 
@@ -2645,16 +2809,26 @@ function CheckoutSummary({
                                 <div>
 
                                     <strong>
-                                        {item.name}
+
+                                        {
+                                            item.name
+                                        }
+
                                     </strong>
 
 
                                     <span>
 
-                                        Qty:{" "}
+                                        {
+                                            text.quantityShort
+                                        }
+
+                                        :{" "}
 
                                         {
-                                            item.quantity
+                                            formatNumber(
+                                                item.quantity
+                                            )
                                         }
 
                                     </span>
@@ -2693,14 +2867,14 @@ function CheckoutSummary({
             </div>
 
 
-            {/* =========================================
-                SUBTOTAL
-            ========================================= */}
-
             <div className="checkout-summary-row">
 
                 <span>
-                    Subtotal
+
+                    {
+                        text.subtotal
+                    }
+
                 </span>
 
 
@@ -2717,19 +2891,23 @@ function CheckoutSummary({
             </div>
 
 
-            {/* =========================================
-                DELIVERY
-            ========================================= */}
-
             <div className="checkout-summary-row">
 
                 <span>
-                    Delivery
+
+                    {
+                        text.delivery
+                    }
+
                 </span>
 
 
                 <strong>
-                    Calculated later
+
+                    {
+                        text.calculatedLater
+                    }
+
                 </strong>
 
             </div>
@@ -2739,14 +2917,14 @@ function CheckoutSummary({
             </div>
 
 
-            {/* =========================================
-                TOTAL
-            ========================================= */}
-
             <div className="checkout-summary-total">
 
                 <span>
-                    Total
+
+                    {
+                        text.total
+                    }
+
                 </span>
 
 
@@ -2762,10 +2940,6 @@ function CheckoutSummary({
 
             </div>
 
-
-            {/* =========================================
-                REVIEW BUTTON
-            ========================================= */}
 
             <button
 
@@ -2779,21 +2953,25 @@ function CheckoutSummary({
                     size={20}
                 />
 
-                Review Order
+                {
+                    text.reviewOrder
+                }
 
             </button>
 
 
             <p className="checkout-demo-note">
 
-                You will review your
-                order before final
-                submission.
+                {
+                    text.reviewBeforeSubmit
+                }
 
             </p>
 
         </aside>
+
     );
+
 }
 
 

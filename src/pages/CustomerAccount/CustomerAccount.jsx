@@ -63,55 +63,73 @@ function CustomerAccount() {
     const [
         mode,
         setMode
-    ] = useState("login");
+    ] = useState(
+        "login"
+    );
 
 
     const [
         fullName,
         setFullName
-    ] = useState("");
+    ] = useState(
+        ""
+    );
 
 
     const [
         email,
         setEmail
-    ] = useState("");
+    ] = useState(
+        ""
+    );
 
 
     const [
         password,
         setPassword
-    ] = useState("");
+    ] = useState(
+        ""
+    );
 
 
     const [
         confirmPassword,
         setConfirmPassword
-    ] = useState("");
+    ] = useState(
+        ""
+    );
 
 
     const [
         showPassword,
         setShowPassword
-    ] = useState(false);
+    ] = useState(
+        false
+    );
 
 
     const [
         submitting,
         setSubmitting
-    ] = useState(false);
+    ] = useState(
+        false
+    );
 
 
     const [
         error,
         setError
-    ] = useState("");
+    ] = useState(
+        ""
+    );
 
 
     const [
         success,
         setSuccess
-    ] = useState("");
+    ] = useState(
+        ""
+    );
 
 
     /*
@@ -137,6 +155,7 @@ function CustomerAccount() {
                 ) {
 
                     return requested;
+
                 }
 
 
@@ -151,6 +170,129 @@ function CustomerAccount() {
 
     /*
     ========================================================
+    CUSTOMER REDIRECT
+    ========================================================
+
+    A customer must never be redirected into /admin merely
+    because somebody manually added:
+
+    ?redirect=/admin
+
+    Admin authorization is still enforced by AdminRoute and
+    RLS, but we also avoid bad frontend routing.
+    */
+
+    const customerRedirect =
+        useMemo(
+            () => {
+
+                if (
+                    redirectTo === "/admin" ||
+                    redirectTo.startsWith(
+                        "/admin/"
+                    )
+                ) {
+
+                    return "/";
+
+                }
+
+
+                return redirectTo;
+
+            },
+            [
+                redirectTo
+            ]
+        );
+
+
+    /*
+    ========================================================
+    GET DESTINATION AFTER LOGIN
+    ========================================================
+
+    This is ONLY a navigation decision.
+
+    Security is still enforced by:
+    - Supabase Authentication
+    - AdminRoute
+    - PostgreSQL RLS
+
+    Roles:
+    customer     -> customer website
+    admin        -> /admin
+    super_admin  -> /admin
+    */
+
+    const getLoginDestination =
+        async (
+            signedInUser
+        ) => {
+
+            if (
+                !signedInUser?.id
+            ) {
+
+                return customerRedirect;
+
+            }
+
+
+            const {
+                data: profile,
+                error: profileError
+            } =
+                await supabase
+                    .from(
+                        "profiles"
+                    )
+                    .select(
+                        "role"
+                    )
+                    .eq(
+                        "id",
+                        signedInUser.id
+                    )
+                    .single();
+
+
+            if (
+                profileError
+            ) {
+
+                console.error(
+                    "Account role verification error:",
+                    profileError
+                );
+
+
+                throw new Error(
+                    "We could not verify your account access."
+                );
+
+            }
+
+
+            if (
+                profile?.role ===
+                    "admin" ||
+                profile?.role ===
+                    "super_admin"
+            ) {
+
+                return "/admin";
+
+            }
+
+
+            return customerRedirect;
+
+        };
+
+
+    /*
+    ========================================================
     SWITCH LOGIN / SIGNUP
     ========================================================
     */
@@ -159,19 +301,35 @@ function CustomerAccount() {
         nextMode
     ) => {
 
-        setError("");
+        setError(
+            ""
+        );
 
-        setSuccess("");
 
-        setPassword("");
+        setSuccess(
+            ""
+        );
 
-        setConfirmPassword("");
 
-        setShowPassword(false);
+        setPassword(
+            ""
+        );
+
+
+        setConfirmPassword(
+            ""
+        );
+
+
+        setShowPassword(
+            false
+        );
+
 
         setMode(
             nextMode
         );
+
     };
 
 
@@ -192,13 +350,20 @@ function CustomerAccount() {
             if (
                 submitting
             ) {
+
                 return;
+
             }
 
 
-            setError("");
+            setError(
+                ""
+            );
 
-            setSuccess("");
+
+            setSuccess(
+                ""
+            );
 
 
             if (
@@ -209,7 +374,9 @@ function CustomerAccount() {
                     "Please enter your email address."
                 );
 
+
                 return;
+
             }
 
 
@@ -221,18 +388,29 @@ function CustomerAccount() {
                     "Please enter your password."
                 );
 
+
                 return;
+
             }
 
 
-            setSubmitting(true);
+            setSubmitting(
+                true
+            );
 
 
             try {
 
+                /*
+                ============================================
+                1. AUTHENTICATE
+                ============================================
+                */
+
                 const {
                     data,
-                    error
+                    error:
+                        loginError
                 } =
                     await supabase
                         .auth
@@ -248,8 +426,12 @@ function CustomerAccount() {
                         });
 
 
-                if (error) {
-                    throw error;
+                if (
+                    loginError
+                ) {
+
+                    throw loginError;
+
                 }
 
 
@@ -260,38 +442,70 @@ function CustomerAccount() {
                     throw new Error(
                         "Login could not be completed."
                     );
+
                 }
 
+
+                /*
+                ============================================
+                2. REMOVE GUEST CHECKOUT MODE
+                ============================================
+                */
 
                 sessionStorage.removeItem(
                     "nabil-checkout-guest"
                 );
 
 
+                /*
+                ============================================
+                3. CHECK DATABASE ROLE
+                ============================================
+                */
+
+                const destination =
+                    await getLoginDestination(
+                        data.user
+                    );
+
+
+                /*
+                ============================================
+                4. REDIRECT
+                ============================================
+                */
+
                 navigate(
-                    redirectTo,
+                    destination,
                     {
-                        replace: true
+                        replace:
+                            true
                     }
                 );
 
-            } catch (error) {
+            } catch (
+                loginError
+            ) {
 
                 console.error(
-                    "Customer login error:",
-                    error
+                    "Account login error:",
+                    loginError
                 );
 
 
                 setError(
-                    error?.message ||
+                    loginError?.message ||
                     "Unable to sign in."
                 );
 
             } finally {
 
-                setSubmitting(false);
+                setSubmitting(
+                    false
+                );
+
             }
+
         };
 
 
@@ -299,6 +513,17 @@ function CustomerAccount() {
     ========================================================
     SIGNUP
     ========================================================
+
+    IMPORTANT SECURITY RULE:
+
+    Public registration NEVER creates an administrator.
+
+    Your Supabase profile trigger assigns every new account:
+
+    role = customer
+
+    Admin promotion happens separately through the protected
+    super-admin system.
     */
 
     const handleSignup =
@@ -312,13 +537,20 @@ function CustomerAccount() {
             if (
                 submitting
             ) {
+
                 return;
+
             }
 
 
-            setError("");
+            setError(
+                ""
+            );
 
-            setSuccess("");
+
+            setSuccess(
+                ""
+            );
 
 
             if (
@@ -329,7 +561,9 @@ function CustomerAccount() {
                     "Please enter your full name."
                 );
 
+
                 return;
+
             }
 
 
@@ -341,19 +575,24 @@ function CustomerAccount() {
                     "Please enter your email address."
                 );
 
+
                 return;
+
             }
 
 
             if (
-                password.length < 8
+                password.length <
+                8
             ) {
 
                 setError(
                     "Your password must contain at least 8 characters."
                 );
 
+
                 return;
+
             }
 
 
@@ -366,18 +605,23 @@ function CustomerAccount() {
                     "The passwords do not match."
                 );
 
+
                 return;
+
             }
 
 
-            setSubmitting(true);
+            setSubmitting(
+                true
+            );
 
 
             try {
 
                 const {
                     data,
-                    error
+                    error:
+                        signupError
                 } =
                     await supabase
                         .auth
@@ -395,7 +639,8 @@ function CustomerAccount() {
                                 data: {
 
                                     full_name:
-                                        fullName.trim()
+                                        fullName
+                                            .trim()
 
                                 }
 
@@ -404,13 +649,24 @@ function CustomerAccount() {
                         });
 
 
-                if (error) {
-                    throw error;
+                if (
+                    signupError
+                ) {
+
+                    throw signupError;
+
                 }
 
 
                 /*
+                ============================================
                 EMAIL CONFIRMATION DISABLED
+                ============================================
+
+                A new public account is always customer.
+
+                Never redirect a newly registered user to
+                /admin.
                 */
 
                 if (
@@ -423,19 +679,23 @@ function CustomerAccount() {
 
 
                     navigate(
-                        redirectTo,
+                        customerRedirect,
                         {
-                            replace: true
+                            replace:
+                                true
                         }
                     );
 
 
                     return;
+
                 }
 
 
                 /*
+                ============================================
                 EMAIL CONFIRMATION ENABLED
+                ============================================
                 */
 
                 setMode(
@@ -443,34 +703,48 @@ function CustomerAccount() {
                 );
 
 
-                setPassword("");
+                setPassword(
+                    ""
+                );
 
-                setConfirmPassword("");
 
-                setShowPassword(false);
+                setConfirmPassword(
+                    ""
+                );
+
+
+                setShowPassword(
+                    false
+                );
 
 
                 setSuccess(
                     "Account created. Please confirm your email, then sign in."
                 );
 
-            } catch (error) {
+            } catch (
+                signupError
+            ) {
 
                 console.error(
                     "Customer signup error:",
-                    error
+                    signupError
                 );
 
 
                 setError(
-                    error?.message ||
+                    signupError?.message ||
                     "Unable to create your account."
                 );
 
             } finally {
 
-                setSubmitting(false);
+                setSubmitting(
+                    false
+                );
+
             }
+
         };
 
 
@@ -480,21 +754,24 @@ function CustomerAccount() {
     ========================================================
     */
 
-    const continueAsGuest = () => {
+    const continueAsGuest =
+        () => {
 
-        sessionStorage.setItem(
-            "nabil-checkout-guest",
-            "true"
-        );
+            sessionStorage.setItem(
+                "nabil-checkout-guest",
+                "true"
+            );
 
 
-        navigate(
-            redirectTo,
-            {
-                replace: true
-            }
-        );
-    };
+            navigate(
+                customerRedirect,
+                {
+                    replace:
+                        true
+                }
+            );
+
+        };
 
 
     /*
@@ -506,20 +783,26 @@ function CustomerAccount() {
     const handleLogout =
         async () => {
 
-            setError("");
+            setError(
+                ""
+            );
 
 
             try {
 
                 await signOut();
 
-            } catch (error) {
+            } catch (
+                logoutError
+            ) {
 
                 setError(
-                    error?.message ||
+                    logoutError?.message ||
                     "Could not sign out."
                 );
+
             }
+
         };
 
 
@@ -550,19 +833,27 @@ function CustomerAccount() {
 
 
                     <span>
+
                         Loading Nabil Pharmacy...
+
                     </span>
 
                 </div>
 
             </main>
+
         );
+
     }
 
 
     /*
     ========================================================
-    LOGGED-IN CUSTOMER
+    LOGGED-IN ACCOUNT
+
+    Normally AccountPage now sends logged-in users to the
+    profile page. This fallback is kept so the component is
+    still safe if used somewhere else.
     ========================================================
     */
 
@@ -587,12 +878,18 @@ function CustomerAccount() {
                     <motion.section
                         className="customer-account-card"
                         initial={{
-                            opacity: 0,
-                            y: 20
+                            opacity:
+                                0,
+
+                            y:
+                                20
                         }}
                         animate={{
-                            opacity: 1,
-                            y: 0
+                            opacity:
+                                1,
+
+                            y:
+                                0
                         }}
                     >
 
@@ -606,17 +903,23 @@ function CustomerAccount() {
 
 
                         <span className="customer-auth-eyebrow">
+
                             Nabil Pharmacy
+
                         </span>
 
 
                         <h1>
+
                             Welcome, {displayName}
+
                         </h1>
 
 
                         <p>
-                            You're signed in to your customer account.
+
+                            You're signed in to your account.
+
                         </p>
 
 
@@ -630,12 +933,18 @@ function CustomerAccount() {
                             <div>
 
                                 <span>
+
                                     Signed in as
+
                                 </span>
 
 
                                 <strong>
-                                    {user.email}
+
+                                    {
+                                        user.email
+                                    }
+
                                 </strong>
 
                             </div>
@@ -647,9 +956,10 @@ function CustomerAccount() {
 
                             <Link
                                 to={
-                                    redirectTo === "/"
+                                    customerRedirect ===
+                                    "/"
                                         ? "/products"
-                                        : redirectTo
+                                        : customerRedirect
                                 }
                                 className="customer-auth-primary"
                             >
@@ -660,7 +970,8 @@ function CustomerAccount() {
 
 
                                 {
-                                    redirectTo === "/checkout"
+                                    customerRedirect ===
+                                    "/checkout"
                                         ? "Continue to Checkout"
                                         : "Shop Products"
                                 }
@@ -691,7 +1002,11 @@ function CustomerAccount() {
                             error && (
 
                                 <div className="customer-auth-error">
-                                    {error}
+
+                                    {
+                                        error
+                                    }
+
                                 </div>
 
                             )
@@ -702,7 +1017,9 @@ function CustomerAccount() {
                 </div>
 
             </main>
+
         );
+
     }
 
 
@@ -726,15 +1043,22 @@ function CustomerAccount() {
                 <motion.section
                     className="customer-auth-intro"
                     initial={{
-                        opacity: 0,
-                        x: -18
+                        opacity:
+                            0,
+
+                        x:
+                            -18
                     }}
                     animate={{
-                        opacity: 1,
-                        x: 0
+                        opacity:
+                            1,
+
+                        x:
+                            0
                     }}
                     transition={{
-                        duration: 0.45
+                        duration:
+                            0.45
                     }}
                 >
 
@@ -743,15 +1067,20 @@ function CustomerAccount() {
                         <span className="customer-auth-brand-line">
                         </span>
 
+
                         <span>
+
                             Nabil Pharmacy
+
                         </span>
 
                     </div>
 
 
                     <span className="customer-auth-intro-label">
+
                         Since 1975
+
                     </span>
 
 
@@ -762,7 +1091,9 @@ function CustomerAccount() {
                         <br />
 
                         <strong>
+
                             in your pocket.
+
                         </strong>
 
                     </h1>
@@ -785,8 +1116,11 @@ function CustomerAccount() {
                                 size={15}
                             />
 
+
                             <span>
+
                                 Track your orders
+
                             </span>
 
                         </div>
@@ -798,8 +1132,11 @@ function CustomerAccount() {
                                 size={15}
                             />
 
+
                             <span>
+
                                 Access your receipts
+
                             </span>
 
                         </div>
@@ -811,8 +1148,11 @@ function CustomerAccount() {
                                 size={15}
                             />
 
+
                             <span>
+
                                 Faster future checkout
+
                             </span>
 
                         </div>
@@ -826,14 +1166,20 @@ function CustomerAccount() {
                             size={17}
                         />
 
+
                         <div>
 
                             <strong>
+
                                 Secure customer access
+
                             </strong>
 
+
                             <span>
+
                                 Your account is protected by Supabase Authentication.
+
                             </span>
 
                         </div>
@@ -843,7 +1189,6 @@ function CustomerAccount() {
                 </motion.section>
 
 
-
                 {/* =================================================
                     INTERACTIVE IPHONE
                 ================================================= */}
@@ -851,29 +1196,45 @@ function CustomerAccount() {
                 <motion.section
                     className="customer-phone-stage"
                     initial={{
-                        opacity: 0,
-                        scale: 0.95,
-                        y: 18
+                        opacity:
+                            0,
+
+                        scale:
+                            0.95,
+
+                        y:
+                            18
                     }}
                     animate={{
-                        opacity: 1,
-                        scale: 1,
-                        y: 0
+                        opacity:
+                            1,
+
+                        scale:
+                            1,
+
+                        y:
+                            0
                     }}
                     transition={{
-                        duration: 0.5,
-                        delay: 0.05
+                        duration:
+                            0.5,
+
+                        delay:
+                            0.05
                     }}
                 >
 
                     <div className="customer-phone-caption">
 
                         <span>
+
                             {
-                                mode === "login"
+                                mode ===
+                                "login"
                                     ? "Customer Login"
                                     : "Create Account"
                             }
+
                         </span>
 
 
@@ -882,7 +1243,9 @@ function CustomerAccount() {
 
 
                         <span>
+
                             Interactive
+
                         </span>
 
                     </div>
@@ -890,7 +1253,8 @@ function CustomerAccount() {
 
                     <div
                         className={
-                            mode === "signup"
+                            mode ===
+                            "signup"
                                 ? "customer-iphone flipped"
                                 : "customer-iphone"
                         }
@@ -919,7 +1283,8 @@ function CustomerAccount() {
                             <section
                                 className="iphone-face iphone-front"
                                 aria-hidden={
-                                    mode !== "login"
+                                    mode !==
+                                    "login"
                                 }
                             >
 
@@ -927,7 +1292,8 @@ function CustomerAccount() {
 
 
                                 {
-                                    mode === "login" && (
+                                    mode ===
+                                    "login" && (
 
                                         <LoginScreen
 
@@ -993,7 +1359,6 @@ function CustomerAccount() {
                             </section>
 
 
-
                             {/* =================================================
                                 SIGNUP BACK
                             ================================================= */}
@@ -1001,7 +1366,8 @@ function CustomerAccount() {
                             <section
                                 className="iphone-face iphone-back"
                                 aria-hidden={
-                                    mode !== "signup"
+                                    mode !==
+                                    "signup"
                                 }
                             >
 
@@ -1009,7 +1375,8 @@ function CustomerAccount() {
 
 
                                 {
-                                    mode === "signup" && (
+                                    mode ===
+                                    "signup" && (
 
                                         <SignupScreen
 
@@ -1099,9 +1466,10 @@ function CustomerAccount() {
             </div>
 
         </main>
-    );
-}
 
+    );
+
+}
 
 
 /*
@@ -1143,17 +1511,23 @@ function LoginScreen({
             <div className="iphone-auth-heading">
 
                 <span>
+
                     Welcome Back
+
                 </span>
 
 
                 <h2>
+
                     Sign in
+
                 </h2>
 
 
                 <p>
+
                     Access your pharmacy account.
+
                 </p>
 
             </div>
@@ -1168,8 +1542,13 @@ function LoginScreen({
                             size={14}
                         />
 
+
                         <span>
-                            {success}
+
+                            {
+                                success
+                            }
+
                         </span>
 
                     </div>
@@ -1183,7 +1562,9 @@ function LoginScreen({
 
                     <div className="iphone-message error">
 
-                        {error}
+                        {
+                            error
+                        }
 
                     </div>
 
@@ -1289,7 +1670,9 @@ function LoginScreen({
             <div className="iphone-switch-section">
 
                 <span>
+
                     New to Nabil Pharmacy?
+
                 </span>
 
 
@@ -1314,7 +1697,9 @@ function LoginScreen({
             <div className="iphone-or">
 
                 <span>
+
                     OR
+
                 </span>
 
             </div>
@@ -1348,9 +1733,10 @@ function LoginScreen({
             </div>
 
         </div>
-    );
-}
 
+    );
+
+}
 
 
 /*
@@ -1397,17 +1783,23 @@ function SignupScreen({
             <div className="iphone-auth-heading signup-heading">
 
                 <span>
+
                     New Customer
+
                 </span>
 
 
                 <h2>
+
                     Create account
+
                 </h2>
 
 
                 <p>
+
                     Join Nabil Pharmacy in seconds.
+
                 </p>
 
             </div>
@@ -1418,7 +1810,9 @@ function SignupScreen({
 
                     <div className="iphone-message error">
 
-                        {error}
+                        {
+                            error
+                        }
 
                     </div>
 
@@ -1592,7 +1986,9 @@ function SignupScreen({
             <div className="iphone-switch-section signup-switch">
 
                 <span>
+
                     Already have an account?
+
                 </span>
 
 
@@ -1627,9 +2023,10 @@ function SignupScreen({
             </button>
 
         </div>
-    );
-}
 
+    );
+
+}
 
 
 /*
@@ -1653,20 +2050,25 @@ function PhoneBrand() {
             <div>
 
                 <strong>
+
                     Nabil Pharmacy
+
                 </strong>
 
 
                 <span>
+
                     Since 1975
+
                 </span>
 
             </div>
 
         </div>
-    );
-}
 
+    );
+
+}
 
 
 /*
@@ -1684,7 +2086,9 @@ function PhoneChrome() {
             <div className="iphone-status-bar">
 
                 <span>
+
                     9:41
+
                 </span>
 
 
@@ -1720,9 +2124,10 @@ function PhoneChrome() {
             </div>
 
         </>
-    );
-}
 
+    );
+
+}
 
 
 /*
@@ -1744,27 +2149,40 @@ function PhoneInput({
 
         <div className="iphone-form-field">
 
-            <label htmlFor={id}>
-                {label}
+            <label
+                htmlFor={
+                    id
+                }
+            >
+
+                {
+                    label
+                }
+
             </label>
 
 
             <div className="iphone-input-shell">
 
-                {icon}
+                {
+                    icon
+                }
 
 
                 <input
-                    id={id}
+                    id={
+                        id
+                    }
                     {...inputProps}
                 />
 
             </div>
 
         </div>
-    );
-}
 
+    );
+
+}
 
 
 /*
@@ -1789,8 +2207,16 @@ function PasswordInput({
 
         <div className="iphone-form-field">
 
-            <label htmlFor={id}>
-                {label}
+            <label
+                htmlFor={
+                    id
+                }
+            >
+
+                {
+                    label
+                }
+
             </label>
 
 
@@ -1802,7 +2228,9 @@ function PasswordInput({
 
 
                 <input
-                    id={id}
+                    id={
+                        id
+                    }
                     type={
                         showPassword
                             ? "text"
@@ -1831,14 +2259,18 @@ function PasswordInput({
                     {
                         showPassword
                             ? (
+
                                 <EyeOff
                                     size={16}
                                 />
+
                             )
                             : (
+
                                 <Eye
                                     size={16}
                                 />
+
                             )
                     }
 
@@ -1847,7 +2279,9 @@ function PasswordInput({
             </div>
 
         </div>
+
     );
+
 }
 
 

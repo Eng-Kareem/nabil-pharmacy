@@ -1,0 +1,22 @@
+.customer-profile-avatar img,
+.customer-id-card-avatar img,
+.navbar-profile-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+
+    display: block !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    transform: none !important;
+}
+
+
+.customer-profile-avatar,
+.customer-id-card-avatar,
+.navbar-profile-avatar {
+    overflow: hidden !important;
+
+    border-radius: 50% !important;
+}

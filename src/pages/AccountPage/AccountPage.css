@@ -1,0 +1,41 @@
+import {
+    useAuth
+} from "../../context/AuthContext.jsx";
+
+import CustomerAccount
+    from "../CustomerAccount/CustomerAccount.jsx";
+
+import CustomerProfile
+    from "../CustomerProfile/CustomerProfile.jsx";
+
+
+function AccountPage() {
+
+    const {
+        user
+    } = useAuth();
+
+
+    if (
+        user
+    ) {
+
+        return (
+
+            <CustomerProfile />
+
+        );
+
+    }
+
+
+    return (
+
+        <CustomerAccount />
+
+    );
+
+}
+
+
+export default AccountPage;

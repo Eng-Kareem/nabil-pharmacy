@@ -7,10 +7,30 @@ import {
     useState
 } from "react";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import checkoutTranslations
+    from "../../i18n/checkoutTranslations.js";
+
 import "./PaymentCard.css";
 
 
 function PaymentCard() {
+
+    const {
+        language,
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        checkoutTranslations[
+            language
+        ] ||
+        checkoutTranslations.en;
+
 
     const [
         cardNumber,
@@ -36,18 +56,6 @@ function PaymentCard() {
     ] = useState("");
 
 
-    /*
-    ========================================================
-    CARD FLIP STATES
-    ========================================================
-
-    manualFlip:
-    User clicks/taps the card.
-
-    cvvFocused:
-    Automatically flips while typing CVV.
-    */
-
     const [
         manualFlip,
         setManualFlip
@@ -60,22 +68,10 @@ function PaymentCard() {
     ] = useState(false);
 
 
-    /*
-    Card shows the back when either:
-    - user manually flipped it
-    - CVV input is focused
-    */
-
     const showBack =
         manualFlip ||
         cvvFocused;
 
-
-    /*
-    ========================================================
-    MANUAL CARD FLIP
-    ========================================================
-    */
 
     const handleCardFlip =
         () => {
@@ -88,24 +84,15 @@ function PaymentCard() {
         };
 
 
-    /*
-    ========================================================
-    KEYBOARD CARD FLIP
-    ========================================================
-    */
-
     const handleCardKeyDown =
         event => {
 
             if (
-                event.key ===
-                    "Enter" ||
-                event.key ===
-                    " "
+                event.key === "Enter" ||
+                event.key === " "
             ) {
 
                 event.preventDefault();
-
 
                 handleCardFlip();
 
@@ -113,12 +100,6 @@ function PaymentCard() {
 
         };
 
-
-    /*
-    ========================================================
-    CARD NUMBER
-    ========================================================
-    */
 
     const formatCardNumber = (
         value
@@ -131,14 +112,11 @@ function PaymentCard() {
             );
 
 
-        const limited =
-            numbersOnly.slice(
+        return numbersOnly
+            .slice(
                 0,
                 16
-            );
-
-
-        return limited
+            )
             .replace(
                 /(.{4})/g,
                 "$1 "
@@ -161,12 +139,6 @@ function PaymentCard() {
     };
 
 
-    /*
-    ========================================================
-    EXPIRY
-    ========================================================
-    */
-
     const handleExpiry = (
         event
     ) => {
@@ -184,17 +156,11 @@ function PaymentCard() {
 
 
         if (
-            value.length >=
-            3
+            value.length >= 3
         ) {
 
             value =
-                `${value.slice(
-                    0,
-                    2
-                )}/${value.slice(
-                    2
-                )}`;
+                `${value.slice(0, 2)}/${value.slice(2)}`;
 
         }
 
@@ -206,17 +172,11 @@ function PaymentCard() {
     };
 
 
-    /*
-    ========================================================
-    CVV
-    ========================================================
-    */
-
     const handleCvv = (
         event
     ) => {
 
-        const value =
+        setCvv(
             event.target.value
                 .replace(
                     /\D/g,
@@ -225,46 +185,11 @@ function PaymentCard() {
                 .slice(
                     0,
                     4
-                );
-
-
-        setCvv(
-            value
+                )
         );
 
     };
 
-
-    /*
-    ========================================================
-    DISPLAY CARD NUMBER
-    ========================================================
-    */
-
-    const maskedCardNumber =
-        () => {
-
-            if (
-                !cardNumber
-            ) {
-
-                return (
-                    "•••• •••• •••• ••••"
-                );
-
-            }
-
-
-            return cardNumber;
-
-        };
-
-
-    /*
-    ========================================================
-    DETECT CARD TYPE
-    ========================================================
-    */
 
     const detectCardType =
         () => {
@@ -275,10 +200,6 @@ function PaymentCard() {
                     ""
                 );
 
-
-            /*
-            VISA
-            */
 
             if (
                 clean.startsWith(
@@ -291,10 +212,6 @@ function PaymentCard() {
             }
 
 
-            /*
-            MASTERCARD
-            */
-
             if (
                 /^5[1-5]/.test(
                     clean
@@ -306,7 +223,7 @@ function PaymentCard() {
             }
 
 
-            return "CARD";
+            return text.genericCard;
 
         };
 
@@ -315,10 +232,6 @@ function PaymentCard() {
 
         <div className="payment-card-wrapper">
 
-
-            {/* =========================================
-                3D INTERACTIVE CARD
-            ========================================= */}
 
             <div
 
@@ -346,11 +259,13 @@ function PaymentCard() {
 
                 aria-label={
                     showBack
-                        ? "Show front of payment card"
-                        : "Show back of payment card"
+                        ? text.showCardFront
+                        : text.showCardBack
                 }
 
-                title="Click or tap the card to rotate it"
+                title={
+                    text.rotateCard
+                }
 
                 style={{
                     cursor:
@@ -362,10 +277,6 @@ function PaymentCard() {
                 <div className="payment-card-3d">
 
 
-                    {/* =====================================
-                        FRONT
-                    ===================================== */}
-
                     <div className="payment-card-face payment-card-front">
 
 
@@ -373,30 +284,37 @@ function PaymentCard() {
                         </div>
 
 
-                        {/* =================================
-                            TOP BRAND
-                        ================================= */}
-
                         <div className="payment-card-top">
-
 
                             <div className="payment-card-brand">
 
                                 <img
                                     src="/nabil-logo.png"
-                                    alt="Nabil Pharmacy"
+                                    alt={
+                                        isArabic
+                                            ? "صيدلية نبيل"
+                                            : "Nabil Pharmacy"
+                                    }
                                 />
 
 
                                 <div>
 
                                     <strong>
-                                        Nabil Pharmacy
+                                        {
+                                            isArabic
+                                                ? "صيدلية نبيل"
+                                                : "Nabil Pharmacy"
+                                        }
                                     </strong>
 
 
                                     <span>
-                                        Since 1975
+                                        {
+                                            isArabic
+                                                ? "منذ عام ١٩٧٥"
+                                                : "Since 1975"
+                                        }
                                     </span>
 
                                 </div>
@@ -415,60 +333,43 @@ function PaymentCard() {
                         </div>
 
 
-                        {/* =================================
-                            CHIP
-                        ================================= */}
-
                         <div className="payment-card-chip-row">
-
 
                             <div className="payment-card-chip">
 
-                                <span>
-                                </span>
-
-                                <span>
-                                </span>
-
-                                <span>
-                                </span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
 
                             </div>
 
 
                             <div className="contactless-symbol">
-
                                 )))
-
                             </div>
 
                         </div>
 
 
-                        {/* =================================
-                            CARD NUMBER
-                        ================================= */}
-
-                        <div className="payment-card-number">
+                        <div
+                            className="payment-card-number"
+                            dir="ltr"
+                        >
 
                             {
-                                maskedCardNumber()
+                                cardNumber ||
+                                "•••• •••• •••• ••••"
                             }
 
                         </div>
 
 
-                        {/* =================================
-                            CARD BOTTOM
-                        ================================= */}
-
                         <div className="payment-card-bottom">
-
 
                             <div>
 
                                 <span>
-                                    CARD HOLDER
+                                    {text.cardHolder}
                                 </span>
 
 
@@ -476,7 +377,7 @@ function PaymentCard() {
 
                                     {
                                         cardName ||
-                                        "YOUR NAME"
+                                        text.yourNameCard
                                     }
 
                                 </strong>
@@ -487,15 +388,17 @@ function PaymentCard() {
                             <div>
 
                                 <span>
-                                    EXPIRES
+                                    {text.expires}
                                 </span>
 
 
-                                <strong>
+                                <strong
+                                    dir="ltr"
+                                >
 
                                     {
                                         expiry ||
-                                        "MM/YY"
+                                        text.expiryPlaceholder
                                     }
 
                                 </strong>
@@ -507,17 +410,19 @@ function PaymentCard() {
                     </div>
 
 
-                    {/* =====================================
-                        BACK
-                    ===================================== */}
-
                     <div className="payment-card-face payment-card-back">
 
 
                         <div className="payment-card-back-top">
 
                             <span>
-                                NABIL PHARMACY
+
+                                {
+                                    isArabic
+                                        ? "صيدلية نبيل"
+                                        : "NABIL PHARMACY"
+                                }
+
                             </span>
 
 
@@ -528,25 +433,16 @@ function PaymentCard() {
                         </div>
 
 
-                        {/* =================================
-                            MAGNETIC STRIP
-                        ================================= */}
-
                         <div className="payment-card-magnetic-strip">
                         </div>
 
 
-                        {/* =================================
-                            SIGNATURE + CVV
-                        ================================= */}
-
                         <div className="payment-card-signature">
-
 
                             <div>
 
                                 <span>
-                                    AUTHORIZED SIGNATURE
+                                    {text.authorizedSignature}
                                 </span>
 
 
@@ -556,12 +452,17 @@ function PaymentCard() {
                             </div>
 
 
-                            <strong>
+                            <strong
+                                dir="ltr"
+                            >
 
                                 {
-                                    cvv
-                                        ? cvv
-                                        : "CVV"
+                                    cvv ||
+                                    (
+                                        isArabic
+                                            ? "رمز الأمان"
+                                            : "CVV"
+                                    )
                                 }
 
                             </strong>
@@ -569,24 +470,10 @@ function PaymentCard() {
                         </div>
 
 
-                        {/* =================================
-                            BACK TEXT
-                        ================================= */}
-
                         <div className="payment-card-back-text">
 
-
                             <p>
-
-                                Interactive payment
-                                preview for Nabil
-                                Pharmacy.
-
-                                <br />
-
-                                Card information is
-                                not saved anywhere.
-
+                                {text.cardBackDescription}
                             </p>
 
 
@@ -598,7 +485,7 @@ function PaymentCard() {
 
 
                                 <span>
-                                    SECURE
+                                    {text.secure}
                                 </span>
 
                             </div>
@@ -611,10 +498,6 @@ function PaymentCard() {
 
             </div>
 
-
-            {/* =========================================
-                SMALL INTERACTION MESSAGE
-            ========================================= */}
 
             <div
                 style={{
@@ -641,35 +524,33 @@ function PaymentCard() {
                             "var(--red)"
                     }}
                 >
-                    Click or tap the card
+
+                    {
+                        text.clickCard
+                    }
+
                 </span>
 
-                {" "}to view the other side.
+                {" "}
+
+                {
+                    text.viewOtherSide
+                }
 
             </div>
 
 
-            {/* =========================================
-                CARD FORM
-            ========================================= */}
-
             <div className="payment-card-form">
 
 
-                {/* =====================================
-                    CARD NUMBER
-                ===================================== */}
-
                 <div className="payment-card-field payment-card-field-full">
 
-
                     <label htmlFor="cardNumber">
-                        Card Number
+                        {text.cardNumber}
                     </label>
 
 
                     <div className="payment-input-wrapper">
-
 
                         <CreditCard
                             size={18}
@@ -677,40 +558,30 @@ function PaymentCard() {
 
 
                         <input
-
                             id="cardNumber"
-
                             type="text"
-
                             inputMode="numeric"
-
                             autoComplete="cc-number"
-
                             placeholder="1234 5678 9012 3456"
-
                             value={
                                 cardNumber
                             }
-
                             onChange={
                                 handleCardNumber
                             }
-
                             onFocus={() => {
 
                                 setCvvFocused(
                                     false
                                 );
 
-
                                 setManualFlip(
                                     false
                                 );
 
                             }}
-
                             maxLength={19}
-
+                            dir="ltr"
                         />
 
                     </div>
@@ -718,135 +589,99 @@ function PaymentCard() {
                 </div>
 
 
-                {/* =====================================
-                    CARDHOLDER NAME
-                ===================================== */}
-
                 <div className="payment-card-field payment-card-field-full">
 
-
                     <label htmlFor="cardName">
-                        Cardholder Name
+                        {text.cardholderName}
                     </label>
 
 
                     <input
-
                         id="cardName"
-
                         type="text"
-
                         autoComplete="cc-name"
-
-                        placeholder="Name on card"
-
+                        placeholder={
+                            text.nameOnCard
+                        }
                         value={
                             cardName
                         }
-
                         onChange={
                             event =>
                                 setCardName(
-
-                                    event
-                                        .target
-                                        .value
-                                        .toUpperCase()
+                                    event.target.value
                                         .slice(
                                             0,
                                             30
                                         )
-
                                 )
                         }
-
                         onFocus={() => {
 
                             setCvvFocused(
                                 false
                             );
 
-
                             setManualFlip(
                                 false
                             );
 
                         }}
-
                     />
 
                 </div>
 
 
-                {/* =====================================
-                    EXPIRY + CVV
-                ===================================== */}
-
                 <div className="payment-card-small-fields">
 
 
-                    {/* EXPIRY */}
-
                     <div className="payment-card-field">
 
-
                         <label htmlFor="cardExpiry">
-                            Expiry Date
+                            {text.expiryDate}
                         </label>
 
 
                         <input
-
                             id="cardExpiry"
-
                             type="text"
-
                             inputMode="numeric"
-
                             autoComplete="cc-exp"
-
-                            placeholder="MM/YY"
-
+                            placeholder={
+                                text.expiryPlaceholder
+                            }
                             value={
                                 expiry
                             }
-
                             onChange={
                                 handleExpiry
                             }
-
                             onFocus={() => {
 
                                 setCvvFocused(
                                     false
                                 );
 
-
                                 setManualFlip(
                                     false
                                 );
 
                             }}
-
                             maxLength={5}
-
+                            dir="ltr"
                         />
 
                     </div>
 
 
-                    {/* CVV */}
-
                     <div className="payment-card-field">
 
-
                         <label htmlFor="cardCvv">
-                            CVV
+                            {text.securityCode}
                         </label>
 
 
                         <div className="payment-input-wrapper">
-
 
                             <LockKeyhole
                                 size={17}
@@ -854,43 +689,29 @@ function PaymentCard() {
 
 
                             <input
-
                                 id="cardCvv"
-
                                 type="password"
-
                                 inputMode="numeric"
-
                                 autoComplete="cc-csc"
-
                                 placeholder="•••"
-
                                 value={
                                     cvv
                                 }
-
                                 onChange={
                                     handleCvv
                                 }
-
-                                onFocus={() => {
-
+                                onFocus={() =>
                                     setCvvFocused(
                                         true
-                                    );
-
-                                }}
-
-                                onBlur={() => {
-
+                                    )
+                                }
+                                onBlur={() =>
                                     setCvvFocused(
                                         false
-                                    );
-
-                                }}
-
+                                    )
+                                }
                                 maxLength={4}
-
+                                dir="ltr"
                             />
 
                         </div>
@@ -900,12 +721,7 @@ function PaymentCard() {
                 </div>
 
 
-                {/* =====================================
-                    SECURITY MESSAGE
-                ===================================== */}
-
                 <div className="payment-card-security-message">
-
 
                     <LockKeyhole
                         size={17}
@@ -913,12 +729,7 @@ function PaymentCard() {
 
 
                     <span>
-
-                        Card information is currently
-                        used only for the interactive
-                        checkout preview and is not
-                        saved anywhere.
-
+                        {text.cardInformationSecurity}
                     </span>
 
                 </div>

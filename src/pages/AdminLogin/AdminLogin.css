@@ -1,5 +1,12 @@
+/* =========================================================
+   ADMIN LOGIN
+========================================================= */
+
 .admin-login-page {
-    min-height: calc(100vh - 80px);
+    min-height:
+        calc(
+            100vh - 80px
+        );
 
     padding:
         60px 20px;
@@ -11,7 +18,12 @@
     background:
         radial-gradient(
             circle at top left,
-            rgba(170, 16, 24, 0.1),
+            rgba(
+                170,
+                16,
+                24,
+                0.1
+            ),
             transparent 35%
         ),
         linear-gradient(
@@ -22,27 +34,59 @@
 }
 
 
+/* =========================================================
+   ARABIC
+========================================================= */
+
+html[dir="rtl"]
+.admin-login-page {
+    font-family:
+        "Cairo",
+        "Manrope",
+        Arial,
+        sans-serif;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
 .admin-login-card {
     width: 100%;
 
     max-width: 520px;
 
-    padding:
-        34px;
+    padding: 34px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 28px;
 
     background:
-        rgba(255, 255, 255, 0.96);
+        rgba(
+            255,
+            255,
+            255,
+            0.96
+        );
 
     box-shadow:
         0 30px 80px
-        rgba(20, 20, 25, 0.12);
+        rgba(
+            20,
+            20,
+            25,
+            0.12
+        );
 }
 
+
+/* =========================================================
+   BRAND
+========================================================= */
 
 .admin-login-brand {
     padding-bottom: 24px;
@@ -54,7 +98,8 @@
     gap: 14px;
 
     border-bottom:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 }
 
 
@@ -62,12 +107,21 @@
     width: 62px;
     height: 62px;
 
+    min-width: 62px;
+    max-width: 62px;
+
+    min-height: 62px;
+    max-height: 62px;
+
+    flex: 0 0 62px;
+
     object-fit: contain;
 }
 
 
 .admin-login-brand span {
-    color: var(--red);
+    color:
+        var(--red);
 
     font-size: 0.62rem;
 
@@ -79,6 +133,14 @@
 }
 
 
+html[dir="rtl"]
+.admin-login-brand span {
+    letter-spacing: 0;
+
+    text-transform: none;
+}
+
+
 .admin-login-brand h1 {
     margin-top: 3px;
 
@@ -87,6 +149,16 @@
     letter-spacing: -0.03em;
 }
 
+
+html[dir="rtl"]
+.admin-login-brand h1 {
+    letter-spacing: 0;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
 
 .admin-login-heading {
     margin-top: 30px;
@@ -104,9 +176,13 @@
     border-radius: 15px;
 
     background:
-        var(--soft-red, #fff1f2);
+        var(
+            --soft-red,
+            #fff1f2
+        );
 
-    color: var(--red);
+    color:
+        var(--red);
 }
 
 
@@ -120,21 +196,33 @@
             2.7rem
         );
 
-    letter-spacing:
-        -0.05em;
+    line-height: 1.2;
+
+    letter-spacing: -0.05em;
+}
+
+
+html[dir="rtl"]
+.admin-login-heading h2 {
+    letter-spacing: 0;
 }
 
 
 .admin-login-heading p {
     margin-top: 7px;
 
-    color: var(--muted);
+    color:
+        var(--muted);
 
     font-size: 0.76rem;
 
-    line-height: 1.6;
+    line-height: 1.8;
 }
 
+
+/* =========================================================
+   FORM
+========================================================= */
 
 .admin-login-card form {
     margin-top: 28px;
@@ -166,14 +254,27 @@
 }
 
 
-.admin-login-field > div > svg {
+/* =========================================================
+   FIELD ICON
+========================================================= */
+
+.admin-login-field >
+div >
+svg {
     position: absolute;
 
-    left: 15px;
+    inset-inline-start: 15px;
 
-    color: var(--muted);
+    z-index: 2;
+
+    color:
+        var(--muted);
 }
 
+
+/* =========================================================
+   INPUT
+========================================================= */
 
 .admin-login-field input {
     width: 100%;
@@ -184,15 +285,17 @@
         0 48px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 14px;
 
     outline: 0;
 
-    background: white;
+    background: #ffffff;
 
-    color: var(--text);
+    color:
+        var(--text);
 
     font: inherit;
 
@@ -206,18 +309,32 @@
 
 .admin-login-field input:focus {
     border-color:
-        rgba(170, 16, 24, 0.45);
+        rgba(
+            170,
+            16,
+            24,
+            0.45
+        );
 
     box-shadow:
         0 0 0 4px
-        rgba(170, 16, 24, 0.06);
+        rgba(
+            170,
+            16,
+            24,
+            0.06
+        );
 }
 
+
+/* =========================================================
+   PASSWORD TOGGLE
+========================================================= */
 
 .admin-password-toggle {
     position: absolute;
 
-    right: 10px;
+    inset-inline-end: 10px;
 
     width: 36px;
     height: 36px;
@@ -230,13 +347,19 @@
 
     border-radius: 10px;
 
-    background: transparent;
+    background:
+        transparent;
 
-    color: var(--muted);
+    color:
+        var(--muted);
 
     cursor: pointer;
 }
 
+
+/* =========================================================
+   ERROR
+========================================================= */
 
 .admin-login-error {
     margin-top: 16px;
@@ -247,15 +370,27 @@
     border-radius: 12px;
 
     background:
-        rgba(170, 16, 24, 0.08);
+        rgba(
+            170,
+            16,
+            24,
+            0.08
+        );
 
-    color: var(--red);
+    color:
+        var(--red);
 
     font-size: 0.7rem;
 
-    line-height: 1.5;
+    font-weight: 700;
+
+    line-height: 1.7;
 }
 
+
+/* =========================================================
+   LOGIN BUTTON
+========================================================= */
 
 .admin-login-button {
     width: 100%;
@@ -293,7 +428,12 @@
 
     box-shadow:
         0 15px 34px
-        rgba(170, 16, 24, 0.24);
+        rgba(
+            170,
+            16,
+            24,
+            0.24
+        );
 }
 
 
@@ -304,6 +444,10 @@
 }
 
 
+/* =========================================================
+   SECURITY
+========================================================= */
+
 .admin-login-security {
     margin-top: 22px;
 
@@ -311,29 +455,39 @@
 
     display: flex;
 
-    align-items: flex-start;
+    align-items:
+        flex-start;
 
     gap: 8px;
 
     border-top:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
-    color: var(--muted);
+    color:
+        var(--muted);
 
     font-size: 0.62rem;
 
-    line-height: 1.5;
+    line-height: 1.7;
 }
 
 
 .admin-login-security svg {
     flex-shrink: 0;
 
-    color: var(--red);
+    color:
+        var(--red);
 }
 
 
-@media (max-width: 550px) {
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+    max-width: 550px
+) {
 
     .admin-login-page {
         padding:

@@ -1,9 +1,70 @@
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
 import "./WebsiteLoader.css";
 
 
 function WebsiteLoader({
     leaving = false
 }) {
+
+    const {
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        isArabic
+            ? {
+
+                welcome:
+                    "مرحبًا بك في",
+
+                pharmacy:
+                    "صيدلية نبيل",
+
+                since:
+                    "منذ عام ١٩٧٥",
+
+                preparing:
+                    "جاري تجهيز صيدليتك",
+
+                bottomPharmacy:
+                    "صيدلية نبيل",
+
+                group:
+                    "مجموعة H.O",
+
+                logoAlt:
+                    "صيدلية نبيل"
+
+            }
+            : {
+
+                welcome:
+                    "Welcome to",
+
+                pharmacy:
+                    "Nabil Pharmacy",
+
+                since:
+                    "Since 1975",
+
+                preparing:
+                    "Preparing your pharmacy",
+
+                bottomPharmacy:
+                    "NABIL PHARMACY",
+
+                group:
+                    "H.O GROUP",
+
+                logoAlt:
+                    "Nabil Pharmacy"
+
+            };
+
 
     return (
 
@@ -13,11 +74,14 @@ function WebsiteLoader({
                     ? "website-loader website-loader-leaving"
                     : "website-loader"
             }
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
+            }
         >
 
-            {/* =================================================
-                BACKGROUND DECORATIONS
-            ================================================= */}
+            {/* BACKGROUND */}
 
             <div className="website-loader-orb loader-orb-one">
             </div>
@@ -27,50 +91,35 @@ function WebsiteLoader({
             </div>
 
 
-
-            {/* =================================================
-                MAIN CONTENT
-            ================================================= */}
+            {/* MAIN */}
 
             <div className="website-loader-content">
 
 
-                {/* =============================================
-                    LOGO
-                ============================================= */}
+                {/* LOGO */}
 
                 <div className="website-loader-logo-area">
-
-
-                    {/* OUTER ROTATING RING */}
 
                     <div className="website-loader-ring website-loader-ring-outer">
                     </div>
 
 
-
-                    {/* SECOND RING */}
-
                     <div className="website-loader-ring website-loader-ring-inner">
                     </div>
 
-
-
-                    {/* LOGO CONTAINER */}
 
                     <div className="website-loader-logo-container">
 
                         <img
                             src="/nabil-logo.png"
-                            alt="Nabil Pharmacy"
+                            alt={
+                                text.logoAlt
+                            }
                             className="website-loader-logo"
                         />
 
                     </div>
 
-
-
-                    {/* PULSE */}
 
                     <div className="website-loader-pulse">
                     </div>
@@ -78,20 +127,25 @@ function WebsiteLoader({
                 </div>
 
 
-
-                {/* =============================================
-                    BRAND
-                ============================================= */}
+                {/* BRAND */}
 
                 <div className="website-loader-brand">
 
                     <span className="website-loader-small-title">
-                        Welcome to
+
+                        {
+                            text.welcome
+                        }
+
                     </span>
 
 
                     <h1>
-                        Nabil Pharmacy
+
+                        {
+                            text.pharmacy
+                        }
+
                     </h1>
 
 
@@ -102,7 +156,11 @@ function WebsiteLoader({
 
 
                         <strong>
-                            Since 1975
+
+                            {
+                                text.since
+                            }
+
                         </strong>
 
 
@@ -114,10 +172,7 @@ function WebsiteLoader({
                 </div>
 
 
-
-                {/* =============================================
-                    LOADING DOTS
-                ============================================= */}
+                {/* STATUS */}
 
                 <div
                     className="website-loader-status"
@@ -125,7 +180,11 @@ function WebsiteLoader({
                 >
 
                     <span>
-                        Preparing your pharmacy
+
+                        {
+                            text.preparing
+                        }
+
                     </span>
 
 
@@ -144,19 +203,19 @@ function WebsiteLoader({
 
                 </div>
 
-
             </div>
 
 
-
-            {/* =================================================
-                BOTTOM TEXT
-            ================================================= */}
+            {/* BOTTOM */}
 
             <div className="website-loader-bottom">
 
                 <span>
-                    NABIL PHARMACY
+
+                    {
+                        text.bottomPharmacy
+                    }
+
                 </span>
 
 
@@ -165,13 +224,19 @@ function WebsiteLoader({
 
 
                 <span>
-                    H.O GROUP
+
+                    {
+                        text.group
+                    }
+
                 </span>
 
             </div>
 
         </div>
+
     );
+
 }
 
 

@@ -1,0 +1,120 @@
+/* =========================================================
+   ADMIN DASHBOARD RTL
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-page {
+    direction: rtl;
+
+    font-family:
+        "Cairo",
+        "Manrope",
+        Arial,
+        sans-serif;
+}
+
+
+/* =========================================================
+   HEADINGS
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-label,
+html[dir="rtl"] .admin-dashboard-section-heading span {
+    letter-spacing: 0;
+
+    text-transform: none;
+}
+
+
+html[dir="rtl"] .admin-dashboard-header h1,
+html[dir="rtl"] .admin-dashboard-section-heading h2 {
+    letter-spacing: 0;
+}
+
+
+/* =========================================================
+   STAT ARROWS
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-stat-arrow {
+    right: auto;
+
+    left: 15px;
+}
+
+
+/* =========================================================
+   ORDER TABLE
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-order-table th {
+    text-align: right;
+
+    text-transform: none;
+}
+
+
+html[dir="rtl"] .admin-dashboard-order-table td {
+    text-align: right;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-order-status {
+    text-transform: none;
+}
+
+
+/* =========================================================
+   SALES
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-sales-chart,
+html[dir="rtl"] .admin-dashboard-sales-day {
+    direction: rtl;
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-quick-actions > a {
+    direction: rtl;
+}
+
+
+/* =========================================================
+   STOCK
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-stock-item {
+    direction: rtl;
+}
+
+
+/* =========================================================
+   NUMBERS
+========================================================= */
+
+html[dir="rtl"] .admin-dashboard-receipt {
+    direction: ltr;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+    max-width: 750px
+) {
+
+    html[dir="rtl"]
+    .admin-dashboard-header {
+        text-align: right;
+    }
+
+}

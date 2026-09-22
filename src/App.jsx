@@ -1,12 +1,14 @@
 import {
     useEffect,
+    useLayoutEffect,
     useState
 } from "react";
 
 
 import {
     Route,
-    Routes
+    Routes,
+    useLocation
 } from "react-router-dom";
 
 
@@ -44,8 +46,11 @@ import Cart
 import Receipt
     from "./pages/Receipt/Receipt.jsx";
 
-import CustomerAccount
-    from "./pages/CustomerAccount/CustomerAccount.jsx";
+import AccountPage
+    from "./pages/AccountPage/AccountPage.jsx";
+
+import NotFound
+    from "./pages/NotFound.jsx";
 
 
 import AdminLogin
@@ -65,18 +70,98 @@ import AdminOrders
 
 
 
+/*
+========================================================
+GLOBAL SCROLL TO TOP
+========================================================
+*/
+
+function ScrollToTop() {
+
+    const {
+        pathname,
+        search,
+        hash
+    } = useLocation();
+
+
+    useLayoutEffect(
+        () => {
+
+            window.scrollTo(
+                0,
+                0
+            );
+
+
+            document.documentElement.scrollTop =
+                0;
+
+
+            document.body.scrollTop =
+                0;
+
+
+            const frame =
+                window.requestAnimationFrame(
+                    () => {
+
+                        window.scrollTo(
+                            0,
+                            0
+                        );
+
+
+                        document.documentElement.scrollTop =
+                            0;
+
+
+                        document.body.scrollTop =
+                            0;
+
+                    }
+                );
+
+
+            return () => {
+
+                window.cancelAnimationFrame(
+                    frame
+                );
+
+            };
+
+        },
+        [
+            pathname,
+            search,
+            hash
+        ]
+    );
+
+
+    return null;
+
+}
+
+
+
 function App() {
 
     const [
         websiteLoading,
         setWebsiteLoading
-    ] = useState(true);
+    ] = useState(
+        true
+    );
 
 
     const [
         loaderLeaving,
         setLoaderLeaving
-    ] = useState(false);
+    ] = useState(
+        false
+    );
 
 
 
@@ -84,13 +169,6 @@ function App() {
     ========================================================
     WEBSITE STARTUP LOADER
     ========================================================
-
-    This loader is visual only.
-
-    It does NOT wait for a Supabase query.
-
-    That means 100 visitors do not generate 100 pointless
-    "connection test" requests when opening the website.
     */
 
     useEffect(
@@ -132,6 +210,52 @@ function App() {
                 window.clearTimeout(
                     removeTimer
                 );
+
+            };
+
+        },
+        []
+    );
+
+
+
+    /*
+    ========================================================
+    DISABLE BROWSER SCROLL RESTORATION
+    ========================================================
+    */
+
+    useEffect(
+        () => {
+
+            if (
+                !(
+                    "scrollRestoration" in
+                    window.history
+                )
+            ) {
+
+                return undefined;
+
+            }
+
+
+            const previousValue =
+                window.history
+                    .scrollRestoration;
+
+
+            window.history
+                .scrollRestoration =
+                "manual";
+
+
+            return () => {
+
+                window.history
+                    .scrollRestoration =
+                    previousValue;
+
             };
 
         },
@@ -144,10 +268,6 @@ function App() {
     ========================================================
     DEVELOPMENT SUPABASE TEST
     ========================================================
-
-    The test runs on localhost only.
-
-    It is removed from the production traffic path.
     */
 
     useEffect(
@@ -158,6 +278,7 @@ function App() {
             ) {
 
                 return;
+
             }
 
 
@@ -183,6 +304,7 @@ function App() {
                         ) {
 
                             await testSupabaseConnection();
+
                         }
 
                     } catch (
@@ -193,7 +315,9 @@ function App() {
                             "Development Supabase test failed:",
                             error
                         );
+
                     }
+
                 };
 
 
@@ -204,6 +328,7 @@ function App() {
 
                 active =
                     false;
+
             };
 
         },
@@ -220,11 +345,9 @@ function App() {
                 websiteLoading && (
 
                     <WebsiteLoader
-
                         leaving={
                             loaderLeaving
                         }
-
                     />
 
                 )
@@ -238,6 +361,9 @@ function App() {
                         : "website-app-ready"
                 }
             >
+
+                <ScrollToTop />
+
 
                 <Navbar />
 
@@ -289,10 +415,20 @@ function App() {
                     />
 
 
+                    {/* =========================================
+                        ACCOUNT
+
+                        NOT LOGGED IN:
+                        Login / Register
+
+                        LOGGED IN:
+                        Profile + Interactive ID
+                    ========================================= */}
+
                     <Route
                         path="/account"
                         element={
-                            <CustomerAccount />
+                            <AccountPage />
                         }
                     />
 
@@ -313,7 +449,6 @@ function App() {
                     />
 
 
-
                     {/* =========================================
                         ADMIN LOGIN
                     ========================================= */}
@@ -324,7 +459,6 @@ function App() {
                             <AdminLogin />
                         }
                     />
-
 
 
                     {/* =========================================
@@ -345,7 +479,6 @@ function App() {
                     />
 
 
-
                     {/* =========================================
                         ADMIN PRODUCTS
                     ========================================= */}
@@ -362,7 +495,6 @@ function App() {
 
                         }
                     />
-
 
 
                     {/* =========================================
@@ -383,7 +515,6 @@ function App() {
                     />
 
 
-
                     {/* =========================================
                         ADMIN ORDERS
                     ========================================= */}
@@ -402,6 +533,18 @@ function App() {
                     />
 
 
+                    {/* =========================================
+                        404
+                    ========================================= */}
+
+                    <Route
+                        path="*"
+                        element={
+                            <NotFound />
+                        }
+                    />
+
+
                 </Routes>
 
 
@@ -410,7 +553,9 @@ function App() {
             </div>
 
         </>
+
     );
+
 }
 
 

@@ -1,9 +1,32 @@
-.footer {
-    color: white;
+/* =========================================================
+   FOOTER
+========================================================= */
 
-    background: #18181a;
+.footer {
+    position: relative;
+
+    overflow: hidden;
+
+    color: #ffffff;
+
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(170, 16, 24, 0.16),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 88% 75%,
+            rgba(190, 135, 70, 0.09),
+            transparent 25%
+        ),
+        #18181a;
 }
 
+
+/* =========================================================
+   HERITAGE LINE
+========================================================= */
 
 .footer-pattern {
     height: 7px;
@@ -24,74 +47,555 @@
 }
 
 
-.footer-inner {
-    min-height: 140px;
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
 
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.footer-content {
+    padding:
+        48px 0
+        42px;
 
-    gap: 25px;
+    display: grid;
+
+    grid-template-columns:
+        minmax(220px, 0.9fr)
+        minmax(280px, 1fr)
+        minmax(280px, 1fr);
+
+    gap: 42px;
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.footer-brand-section {
+    min-width: 0;
 }
 
 
 .footer-brand {
     display: flex;
+
     align-items: center;
 
-    gap: 14px;
+    gap: 15px;
 }
 
 
 .footer-brand img {
-    width: 70px;
-    height: 70px;
+    width: 78px;
+    height: 78px;
 
-    object-fit: cover;
+    min-width: 78px;
 
-    border-radius: 14px;
+    display: block;
+
+    object-fit: contain;
+
+    border-radius: 15px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 12px 30px
+        rgba(0, 0, 0, 0.17);
 }
 
 
-.footer-brand div {
+.footer-brand-copy {
+    min-width: 0;
+
     display: flex;
+
     flex-direction: column;
 }
 
 
-.footer-brand strong {
-    font-size: 1rem;
+.footer-brand-copy strong {
+    font-size: 1.05rem;
+
+    font-weight: 900;
+
+    line-height: 1.3;
 }
 
 
-.footer-brand span {
+.footer-brand-copy span {
+    margin-top: 5px;
+
+    color:
+        rgba(255, 255, 255, 0.65);
+
+    font-size: 0.68rem;
+
+    font-weight: 700;
+}
+
+
+.footer-brand-copy small {
     margin-top: 4px;
 
     color:
-        rgba(255, 255, 255, 0.55);
+        var(--copper, #c08b62);
 
+    font-size: 0.61rem;
+
+    font-weight: 900;
+}
+
+
+.footer-pharmacy-note {
+    margin-top: 20px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    color:
+        rgba(255, 255, 255, 0.5);
+
+    font-size: 0.62rem;
+
+    font-weight: 700;
+}
+
+
+.footer-pharmacy-note svg {
+    color:
+        var(--red, #aa1018);
+}
+
+
+/* =========================================================
+   CONTACT SECTIONS
+========================================================= */
+
+.footer-contact-section {
+    min-width: 0;
+}
+
+
+.footer-section-heading {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding-bottom: 14px;
+
+    border-bottom:
+        1px solid
+        rgba(255, 255, 255, 0.09);
+}
+
+
+.footer-section-heading > svg {
+    flex-shrink: 0;
+
+    color:
+        var(--copper, #c08b62);
+}
+
+
+.footer-section-heading > div {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.footer-section-heading span {
+    color:
+        rgba(255, 255, 255, 0.48);
+
+    font-size: 0.55rem;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.06em;
+}
+
+
+.footer-section-heading strong {
+    color: #ffffff;
+
+    font-size: 0.82rem;
+
+    font-weight: 900;
+}
+
+
+.footer-role {
+    margin:
+        10px 0 0;
+
+    color:
+        rgba(255, 255, 255, 0.5);
+
+    font-size: 0.59rem;
+}
+
+
+/* =========================================================
+   CONTACT LINKS
+========================================================= */
+
+.footer-contact-links {
+    margin-top: 15px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+
+.footer-contact-link {
+    min-width: 0;
+
+    padding:
+        9px 10px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.07);
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+
+    color: #ffffff;
+
+    text-decoration: none;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.footer-contact-link:hover {
+    transform:
+        translateY(-1px);
+
+    border-color:
+        rgba(170, 16, 24, 0.35);
+
+    background:
+        rgba(170, 16, 24, 0.08);
+}
+
+
+.footer-contact-icon {
+    width: 35px;
+    height: 35px;
+
+    display: grid;
+
+    place-items: center;
+
+    flex-shrink: 0;
+
+    border-radius: 9px;
+
+    background:
+        rgba(170, 16, 24, 0.12);
+
+    color:
+        #ef656c;
+}
+
+
+.footer-contact-text {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.footer-contact-text small {
+    color:
+        rgba(255, 255, 255, 0.45);
+
+    font-size: 0.51rem;
+
+    font-weight: 800;
+}
+
+
+.footer-contact-text strong {
+    max-width: 100%;
+
+    overflow-wrap: anywhere;
+
+    color:
+        rgba(255, 255, 255, 0.9);
+
+    font-size: 0.62rem;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   FOOTER BOTTOM
+========================================================= */
+
+.footer-bottom {
+    border-top:
+        1px solid
+        rgba(255, 255, 255, 0.08);
+
+    background:
+        rgba(0, 0, 0, 0.16);
+}
+
+
+.footer-bottom-inner {
+    min-height: 67px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
+.footer-bottom p {
+    margin: 0;
+
+    color:
+        rgba(255, 255, 255, 0.48);
+
+    font-size: 0.58rem;
+
+    line-height: 1.6;
+}
+
+
+.footer-powered-bottom {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 5px;
+}
+
+
+.footer-powered-bottom svg {
+    color:
+        var(--copper, #c08b62);
+}
+
+
+.footer-powered-bottom strong {
+    color:
+        rgba(255, 255, 255, 0.82);
+}
+
+
+/* =========================================================
+   RTL
+========================================================= */
+
+html[dir="rtl"] .footer {
     font-family:
         "Cairo",
+        "Manrope",
+        Arial,
         sans-serif;
 }
 
 
-.footer p {
-    color:
-        rgba(255, 255, 255, 0.55);
+html[dir="rtl"]
+.footer-section-heading span {
+    letter-spacing: 0;
 
-    font-size: 0.78rem;
+    text-transform: none;
 }
 
 
-@media (max-width: 560px) {
+html[dir="rtl"]
+.footer-contact-section,
+html[dir="rtl"]
+.footer-brand-section {
+    text-align: right;
+}
 
-    .footer-inner {
-        padding: 30px 0;
 
-        flex-direction: column;
+html[dir="rtl"]
+.footer-contact-link,
+html[dir="rtl"]
+.footer-section-heading,
+html[dir="rtl"]
+.footer-brand,
+html[dir="rtl"]
+.footer-pharmacy-note {
+    direction: rtl;
+}
 
-        align-items: flex-start;
+
+/*
+Keep Instagram usernames, emails and phone numbers
+displayed naturally from left to right.
+*/
+
+html[dir="rtl"]
+.footer-contact-text strong[dir="ltr"] {
+    text-align: right;
+
+    unicode-bidi: isolate;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+    max-width: 1000px
+) {
+
+    .footer-content {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .footer-brand-section {
+        grid-column:
+            1 / -1;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+    max-width: 650px
+) {
+
+    .footer-content {
+        padding:
+            36px 0
+            30px;
+
+        grid-template-columns:
+            1fr;
+
+        gap: 31px;
+    }
+
+
+    .footer-brand-section {
+        grid-column: auto;
+    }
+
+
+    .footer-brand img {
+        width: 68px;
+        height: 68px;
+
+        min-width: 68px;
+    }
+
+
+    .footer-bottom-inner {
+        padding:
+            18px 0;
+
+        align-items:
+            flex-start;
+
+        flex-direction:
+            column;
+
+        gap: 9px;
+    }
+
+
+    .footer-powered-bottom {
+        justify-content:
+            flex-start;
+    }
+
+
+    html[dir="rtl"]
+    .footer-powered-bottom {
+        justify-content:
+            flex-start;
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (
+    max-width: 390px
+) {
+
+    .footer-contact-link {
+        padding:
+            9px;
+    }
+
+
+    .footer-contact-text strong {
+        font-size: 0.56rem;
+    }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (
+    prefers-reduced-motion: reduce
+) {
+
+    .footer-contact-link {
+        transition: none;
     }
 
 }

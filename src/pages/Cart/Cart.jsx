@@ -1,5 +1,6 @@
 import {
     ArrowLeft,
+    ArrowRight,
     Minus,
     PackageOpen,
     Plus,
@@ -20,6 +21,13 @@ import {
     useCart
 } from "../../context/CartContext.jsx";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import checkoutTranslations
+    from "../../i18n/checkoutTranslations.js";
+
 import "./Cart.css";
 
 
@@ -35,26 +43,134 @@ function Cart() {
     } = useCart();
 
 
+    const {
+        language,
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        checkoutTranslations[
+            language
+        ] ||
+        checkoutTranslations.en;
+
+
+    const BackIcon =
+        isArabic
+            ? ArrowRight
+            : ArrowLeft;
+
+
+    /*
+    ========================================================
+    TEXT REPLACEMENT
+    ========================================================
+    */
+
+    const replaceText = (
+        value,
+        replacements = {}
+    ) => {
+
+        let result =
+            value;
+
+
+        Object.entries(
+            replacements
+        ).forEach(
+            ([
+                key,
+                replacement
+            ]) => {
+
+                result =
+                    result.replaceAll(
+                        `{${key}}`,
+                        String(
+                            replacement
+                        )
+                    );
+
+            }
+        );
+
+
+        return result;
+
+    };
+
+
+    /*
+    ========================================================
+    NUMBER
+    ========================================================
+    */
+
+    const formatNumber = (
+        value
+    ) => {
+
+        return Number(
+            value ||
+            0
+        ).toLocaleString(
+            isArabic
+                ? "ar-EG"
+                : "en-US"
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    PRICE
+    ========================================================
+    */
+
     const formatPrice = (
         price
     ) => {
 
-        return (
-            `EGP ${price.toLocaleString()}`
-        );
+        const value =
+            Number(
+                price ||
+                0
+            ).toLocaleString(
+                isArabic
+                    ? "ar-EG"
+                    : "en-US"
+            );
+
+
+        return isArabic
+            ? `${value} ج.م`
+            : `EGP ${value}`;
+
     };
 
 
+    /*
+    ========================================================
+    EMPTY CART
+    ========================================================
+    */
+
     if (
-        cartItems.length === 0
+        cartItems.length ===
+        0
     ) {
 
         return (
+
             <main className="cart-page">
 
                 <div className="container">
 
                     <div className="empty-cart">
+
 
                         <motion.div
                             className="empty-cart-icon"
@@ -76,13 +192,20 @@ function Cart() {
 
 
                         <h1>
-                            Your cart is empty
+
+                            {
+                                text.emptyCart
+                            }
+
                         </h1>
 
 
                         <p>
-                            Browse our products and add
-                            something to your cart.
+
+                            {
+                                text.emptyCartDescription
+                            }
+
                         </p>
 
 
@@ -91,7 +214,9 @@ function Cart() {
                             className="primary-button"
                         >
 
-                            Explore Products
+                            {
+                                text.exploreProducts
+                            }
 
                         </Link>
 
@@ -100,58 +225,85 @@ function Cart() {
                 </div>
 
             </main>
+
         );
+
     }
 
 
+    /*
+    ========================================================
+    PAGE
+    ========================================================
+    */
+
     return (
+
         <main className="cart-page">
+
+
+            {/* =========================================
+                HEADER
+            ========================================= */}
 
             <section className="cart-header">
 
                 <div className="container">
+
 
                     <Link
                         to="/products"
                         className="cart-back-link"
                     >
 
-                        <ArrowLeft
+                        <BackIcon
                             size={18}
                         />
 
-                        Continue Shopping
+                        {
+                            text.continueShopping
+                        }
 
                     </Link>
 
 
                     <span className="section-label">
-                        Your Basket
+
+                        {
+                            text.yourBasket
+                        }
+
                     </span>
 
 
                     <h1>
-                        Shopping Cart
+
+                        {
+                            text.shoppingCart
+                        }
+
                     </h1>
 
 
                     <p>
 
-                        You currently have{" "}
-
-                        <strong>
-                            {cartCount}
-                        </strong>
-
-                        {" "}
-                        item
                         {
-                            cartCount !== 1
-                                ? "s"
-                                : ""
+                            replaceText(
+                                text.cartCount,
+                                {
+                                    count:
+                                        formatNumber(
+                                            cartCount
+                                        ),
+
+                                    item:
+                                        cartCount ===
+                                            1
+                                            ? text.item
+                                            : text.items
+                                }
+                            )
                         }
-                        {" "}
-                        in your cart.
 
                     </p>
 
@@ -160,19 +312,30 @@ function Cart() {
             </section>
 
 
+            {/* =========================================
+                CONTENT
+            ========================================= */}
+
             <section className="cart-content">
 
                 <div className="container cart-layout">
 
 
-                    {/* ITEMS */}
+                    {/* =====================================
+                        ITEMS
+                    ===================================== */}
 
                     <div className="cart-items-area">
+
 
                         <div className="cart-items-heading">
 
                             <h2>
-                                Cart Items
+
+                                {
+                                    text.cartItems
+                                }
+
                             </h2>
 
 
@@ -187,7 +350,9 @@ function Cart() {
                                     size={16}
                                 />
 
-                                Clear Cart
+                                {
+                                    text.clearCart
+                                }
 
                             </button>
 
@@ -222,12 +387,18 @@ function Cart() {
                                             </Link>
 
 
+                                            {/* =========================
+                                                PRODUCT INFO
+                                            ========================= */}
+
                                             <div className="cart-item-info">
 
                                                 <span>
+
                                                     {
                                                         item.category
                                                     }
+
                                                 </span>
 
 
@@ -238,28 +409,38 @@ function Cart() {
                                                 >
 
                                                     <h3>
+
                                                         {
                                                             item.name
                                                         }
+
                                                     </h3>
 
                                                 </Link>
 
 
                                                 <small>
+
                                                     {
                                                         item.brand
                                                     }
+
                                                 </small>
 
                                             </div>
 
 
+                                            {/* =========================
+                                                QUANTITY
+                                            ========================= */}
+
                                             <div className="cart-item-quantity">
 
                                                 <button
                                                     type="button"
-                                                    aria-label="Decrease quantity"
+                                                    aria-label={
+                                                        text.decreaseQuantity
+                                                    }
                                                     onClick={() =>
                                                         updateQuantity(
                                                             item.id,
@@ -281,15 +462,21 @@ function Cart() {
 
 
                                                 <span>
+
                                                     {
-                                                        item.quantity
+                                                        formatNumber(
+                                                            item.quantity
+                                                        )
                                                     }
+
                                                 </span>
 
 
                                                 <button
                                                     type="button"
-                                                    aria-label="Increase quantity"
+                                                    aria-label={
+                                                        text.increaseQuantity
+                                                    }
                                                     onClick={() =>
                                                         updateQuantity(
                                                             item.id,
@@ -312,43 +499,70 @@ function Cart() {
                                             </div>
 
 
+                                            {/* =========================
+                                                PRICE
+                                            ========================= */}
+
                                             <div className="cart-item-price">
 
                                                 <strong>
+
                                                     {
                                                         formatPrice(
-                                                            item.price *
+                                                            Number(
+                                                                item.price
+                                                            ) *
+                                                            Number(
                                                                 item.quantity
+                                                            )
                                                         )
                                                     }
+
                                                 </strong>
 
 
-                                                {item.quantity >
+                                                {
+                                                    item.quantity >
                                                     1 && (
 
-                                                    <small>
+                                                        <small>
 
-                                                        {
-                                                            formatPrice(
-                                                                item.price
-                                                            )
-                                                        }
+                                                            {
+                                                                formatPrice(
+                                                                    item.price
+                                                                )
+                                                            }
 
-                                                        {" "}
-                                                        each
+                                                            {" "}
 
-                                                    </small>
+                                                            {
+                                                                text.each
+                                                            }
 
-                                                )}
+                                                        </small>
+
+                                                    )
+                                                }
 
                                             </div>
 
 
+                                            {/* =========================
+                                                REMOVE
+                                            ========================= */}
+
                                             <button
                                                 type="button"
                                                 className="cart-remove-button"
-                                                aria-label={`Remove ${item.name}`}
+                                                aria-label={
+                                                    replaceText(
+                                                        text.removeProduct,
+                                                        {
+                                                            product:
+                                                                item.name
+                                                        }
+                                                    )
+                                                }
                                                 onClick={() =>
                                                     removeFromCart(
                                                         item.id
@@ -373,33 +587,50 @@ function Cart() {
                     </div>
 
 
-
-                    {/* SUMMARY */}
+                    {/* =====================================
+                        SUMMARY
+                    ===================================== */}
 
                     <aside className="cart-summary">
 
+
                         <span className="cart-summary-label">
-                            Order Summary
+
+                            {
+                                text.orderSummary
+                            }
+
                         </span>
 
 
                         <h2>
-                            Your Total
+
+                            {
+                                text.yourTotal
+                            }
+
                         </h2>
 
 
                         <div className="cart-summary-row">
 
                             <span>
-                                Subtotal
+
+                                {
+                                    text.subtotal
+                                }
+
                             </span>
 
+
                             <strong>
+
                                 {
                                     formatPrice(
                                         subtotal
                                     )
                                 }
+
                             </strong>
 
                         </div>
@@ -408,11 +639,20 @@ function Cart() {
                         <div className="cart-summary-row">
 
                             <span>
-                                Delivery
+
+                                {
+                                    text.delivery
+                                }
+
                             </span>
 
+
                             <strong>
-                                Calculated later
+
+                                {
+                                    text.calculatedLater
+                                }
+
                             </strong>
 
                         </div>
@@ -425,26 +665,37 @@ function Cart() {
                         <div className="cart-summary-total">
 
                             <span>
-                                Total
+
+                                {
+                                    text.total
+                                }
+
                             </span>
 
+
                             <strong>
+
                                 {
                                     formatPrice(
                                         subtotal
                                     )
                                 }
+
                             </strong>
 
                         </div>
 
 
                         <Link
-    to="/checkout"
-    className="cart-checkout-button"
->
-    Proceed to Checkout
-</Link>
+                            to="/checkout"
+                            className="cart-checkout-button"
+                        >
+
+                            {
+                                text.proceedCheckout
+                            }
+
+                        </Link>
 
 
                         <div className="cart-secure-note">
@@ -453,10 +704,9 @@ function Cart() {
 
                             <span>
 
-                                Secure checkout will
-                                be connected when the
-                                production payment and
-                                order backend is ready.
+                                {
+                                    text.secureCheckoutNote
+                                }
 
                             </span>
 
@@ -469,7 +719,9 @@ function Cart() {
             </section>
 
         </main>
+
     );
+
 }
 
 

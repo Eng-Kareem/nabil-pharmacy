@@ -13,6 +13,7 @@ import {
 
 import {
     useEffect,
+    useMemo,
     useState
 } from "react";
 
@@ -31,6 +32,10 @@ import {
 } from "../../context/AuthContext.jsx";
 
 import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import {
     supabase
 } from "../../lib/supabase.js";
 
@@ -39,22 +44,10 @@ import "./Navbar.css";
 
 function Navbar() {
 
-    /*
-    ========================================================
-    CART
-    ========================================================
-    */
-
     const {
         cartCount
     } = useCart();
 
-
-    /*
-    ========================================================
-    CUSTOMER AUTH
-    ========================================================
-    */
 
     const {
         user,
@@ -63,11 +56,11 @@ function Navbar() {
     } = useAuth();
 
 
-    /*
-    ========================================================
-    ROUTER
-    ========================================================
-    */
+    const {
+        isArabic,
+        toggleLanguage
+    } = useLanguage();
+
 
     const location =
         useLocation();
@@ -77,12 +70,6 @@ function Navbar() {
         useNavigate();
 
 
-    /*
-    ========================================================
-    STATES
-    ========================================================
-    */
-
     const [
         menuOpen,
         setMenuOpen
@@ -90,9 +77,9 @@ function Navbar() {
 
 
     const [
-        isAdmin,
-        setIsAdmin
-    ] = useState(false);
+        profile,
+        setProfile
+    ] = useState(null);
 
 
     const [
@@ -101,63 +88,248 @@ function Navbar() {
     ] = useState(true);
 
 
-
     /*
     ========================================================
-    CHECK ADMIN ROLE
+    TRANSLATIONS
     ========================================================
     */
 
-    useEffect(() => {
+    const text =
+        isArabic
+            ? {
 
-        let mounted = true;
+                pharmacy:
+                    "صيدلية نبيل",
+
+                since:
+                    "منذ عام ١٩٧٥",
+
+                home:
+                    "الرئيسية",
+
+                products:
+                    "المنتجات",
+
+                services:
+                    "خدماتنا",
+
+                story:
+                    "قصتنا",
+
+                contact:
+                    "تواصل معنا",
+
+                account:
+                    "حسابي",
+
+                login:
+                    "تسجيل الدخول",
+
+                cart:
+                    "السلة",
+
+                prescription:
+                    "رفع الروشتة",
+
+                english:
+                    "English",
+
+                arabic:
+                    "العربية",
+
+                adminPortal:
+                    "بوابة الإدارة",
+
+                dashboard:
+                    "لوحة التحكم",
+
+                inventory:
+                    "المخزون",
+
+                orders:
+                    "الطلبات",
+
+                viewWebsite:
+                    "عرض الموقع",
+
+                signOut:
+                    "تسجيل الخروج",
+
+                menu:
+                    "فتح القائمة",
+
+                profile:
+                    "الملف الشخصي"
+
+            }
+            : {
+
+                pharmacy:
+                    "Nabil Pharmacy",
+
+                since:
+                    "Since 1975",
+
+                home:
+                    "Home",
+
+                products:
+                    "Products",
+
+                services:
+                    "Services",
+
+                story:
+                    "Our Story",
+
+                contact:
+                    "Contact",
+
+                account:
+                    "My Account",
+
+                login:
+                    "Login / Create Account",
+
+                cart:
+                    "Cart",
+
+                prescription:
+                    "Upload Prescription",
+
+                english:
+                    "English",
+
+                arabic:
+                    "العربية",
+
+                adminPortal:
+                    "Admin Portal",
+
+                dashboard:
+                    "Dashboard",
+
+                inventory:
+                    "Inventory",
+
+                orders:
+                    "Orders",
+
+                viewWebsite:
+                    "View Website",
+
+                signOut:
+                    "Sign Out",
+
+                menu:
+                    "Toggle navigation",
+
+                profile:
+                    "My Profile"
+
+            };
 
 
-        const checkRole =
-            async () => {
+    /*
+    ========================================================
+    LOAD CURRENT USER PROFILE
+    ========================================================
 
-                /*
-                No logged-in user
-                */
+    This gives the navbar:
 
-                if (
-                    !user
-                ) {
+    - role
+    - profile picture
+    - full name
+    - username
+
+    The auth metadata is also used as a backup.
+    ========================================================
+    */
+
+    useEffect(
+        () => {
+
+            let mounted =
+                true;
+
+
+            const loadProfile =
+                async () => {
 
                     if (
-                        mounted
+                        !user?.id
                     ) {
 
-                        setIsAdmin(false);
+                        if (
+                            mounted
+                        ) {
 
-                        setRoleLoading(false);
+                            setProfile(
+                                null
+                            );
+
+                            setRoleLoading(
+                                false
+                            );
+
+                        }
+
+
+                        return;
+
                     }
 
 
-                    return;
-                }
+                    setRoleLoading(
+                        true
+                    );
 
 
-                setRoleLoading(true);
+                    try {
+
+                        const {
+                            data,
+                            error
+                        } =
+                            await supabase
+                                .from(
+                                    "profiles"
+                                )
+                                .select(`
+                                    id,
+                                    full_name,
+                                    username,
+                                    avatar_url,
+                                    role
+                                `)
+                                .eq(
+                                    "id",
+                                    user.id
+                                )
+                                .maybeSingle();
 
 
-                try {
+                        if (
+                            error
+                        ) {
 
-                    const {
-                        data,
-                        error
-                    } =
-                        await supabase
-                            .from("profiles")
-                            .select("role")
-                            .eq(
-                                "id",
-                                user.id
-                            )
-                            .maybeSingle();
+                            throw error;
+
+                        }
 
 
-                    if (
+                        if (
+                            mounted
+                        ) {
+
+                            setProfile(
+                                data ||
+                                null
+                            );
+
+                        }
+
+                    } catch (
                         error
                     ) {
 
@@ -171,88 +343,138 @@ function Navbar() {
                             mounted
                         ) {
 
-                            setIsAdmin(false);
+                            setProfile(
+                                null
+                            );
+
                         }
 
+                    } finally {
 
-                        return;
+                        if (
+                            mounted
+                        ) {
+
+                            setRoleLoading(
+                                false
+                            );
+
+                        }
+
                     }
 
-
-                    if (
-                        mounted
-                    ) {
-
-                        setIsAdmin(
-                            data?.role ===
-                            "admin"
-                        );
-                    }
-
-                } catch (error) {
-
-                    console.error(
-                        "Navbar role check error:",
-                        error
-                    );
+                };
 
 
-                    if (
-                        mounted
-                    ) {
+            loadProfile();
 
-                        setIsAdmin(false);
-                    }
 
-                } finally {
+            return () => {
 
-                    if (
-                        mounted
-                    ) {
+                mounted =
+                    false;
 
-                        setRoleLoading(false);
-                    }
-                }
             };
 
-
-        checkRole();
-
-
-        return () => {
-
-            mounted = false;
-        };
-
-    }, [
-        user
-    ]);
-
+        },
+        [
+            user
+        ]
+    );
 
 
     /*
     ========================================================
-    CLOSE MOBILE MENU WHEN ROUTE CHANGES
+    CLOSE MENU AFTER NAVIGATION
     ========================================================
     */
 
-    useEffect(() => {
+    useEffect(
+        () => {
 
-        setMenuOpen(false);
+            setMenuOpen(
+                false
+            );
 
-    }, [
+        },
+        [
+            location.pathname
+        ]
+    );
+
+
+    /*
+    ========================================================
+    USER INFORMATION
+    ========================================================
+    */
+
+    const avatarUrl =
+        profile?.avatar_url ||
+        user?.user_metadata?.avatar_url ||
+        "";
+
+
+    const displayName =
+        profile?.full_name ||
+        profile?.username ||
+        user?.user_metadata?.full_name ||
+        user?.email?.split("@")[0] ||
+        text.account;
+
+
+    const initials =
+        useMemo(
+            () => {
+
+                return String(
+                    displayName ||
+                    "NP"
+                )
+                    .trim()
+                    .split(/\s+/)
+                    .slice(
+                        0,
+                        2
+                    )
+                    .map(
+                        part =>
+                            part[0]
+                    )
+                    .join("")
+                    .toUpperCase() ||
+                    "NP";
+
+            },
+            [
+                displayName
+            ]
+        );
+
+
+    const isAdmin =
+        profile?.role ===
+            "admin" ||
+        profile?.role ===
+            "super_admin";
+
+
+    const onAdminPage =
+        location.pathname ===
+            "/admin" ||
         location.pathname
-    ]);
-
+            .startsWith(
+                "/admin/"
+            );
 
 
     /*
     ========================================================
-    ADMIN LOGOUT
+    SIGN OUT
     ========================================================
     */
 
-    const handleAdminLogout =
+    const handleLogout =
         async () => {
 
             try {
@@ -260,32 +482,98 @@ function Navbar() {
                 await signOut();
 
 
-                setIsAdmin(false);
+                setProfile(
+                    null
+                );
 
-                setMenuOpen(false);
+
+                setMenuOpen(
+                    false
+                );
 
 
                 navigate(
                     "/",
                     {
-                        replace: true
+                        replace:
+                            true
                     }
                 );
 
-            } catch (error) {
+            } catch (
+                error
+            ) {
 
                 console.error(
-                    "Admin logout error:",
+                    "Logout error:",
                     error
                 );
+
             }
+
         };
 
+
+    /*
+    ========================================================
+    PROFILE AVATAR
+    ========================================================
+    */
+
+    const ProfileAvatar = ({
+        small = false
+    }) => (
+
+        <span
+            className={
+                small
+                    ? "navbar-profile-avatar small"
+                    : "navbar-profile-avatar"
+            }
+        >
+
+            {
+                avatarUrl
+                    ? (
+
+                        <img
+                            src={
+                                avatarUrl
+                            }
+                            alt={
+                                displayName
+                            }
+                        />
+
+                    )
+                    : (
+
+                        <strong>
+
+                            {
+                                initials
+                            }
+
+                        </strong>
+
+                    )
+            }
+
+        </span>
+
+    );
 
 
     /*
     ========================================================
     ADMIN NAVBAR
+    ========================================================
+
+    Admin navbar appears only while the user is actually
+    inside /admin.
+
+    When an admin views the public website, they still get
+    the normal customer navbar and their profile picture.
     ========================================================
     */
 
@@ -293,20 +581,25 @@ function Navbar() {
         !authLoading &&
         !roleLoading &&
         user &&
-        isAdmin
+        isAdmin &&
+        onAdminPage
     ) {
 
         return (
 
-            <header className="navbar navbar-admin">
-
+            <header
+                className="navbar navbar-admin"
+                dir={
+                    isArabic
+                        ? "rtl"
+                        : "ltr"
+                }
+            >
 
                 <div className="container navbar-inner">
 
 
-                    {/* =================================================
-                        ADMIN BRAND
-                    ================================================= */}
+                    {/* BRAND */}
 
                     <Link
                         to="/admin"
@@ -315,19 +608,29 @@ function Navbar() {
 
                         <img
                             src="/nabil-logo.png"
-                            alt="Nabil Pharmacy"
+                            alt={
+                                text.pharmacy
+                            }
                         />
 
 
                         <div>
 
                             <strong>
-                                Nabil Pharmacy
+
+                                {
+                                    text.pharmacy
+                                }
+
                             </strong>
 
 
                             <span>
-                                Admin Portal
+
+                                {
+                                    text.adminPortal
+                                }
+
                             </span>
 
                         </div>
@@ -335,19 +638,15 @@ function Navbar() {
                     </Link>
 
 
-
-                    {/* =================================================
-                        DESKTOP ADMIN NAV
-                    ================================================= */}
+                    {/* ADMIN LINKS */}
 
                     <nav className="navbar-links navbar-admin-links">
-
 
                         <Link
                             to="/admin"
                             className={
                                 location.pathname ===
-                                    "/admin"
+                                "/admin"
                                     ? "active"
                                     : ""
                             }
@@ -357,10 +656,11 @@ function Navbar() {
                                 size={17}
                             />
 
-                            Dashboard
+                            {
+                                text.dashboard
+                            }
 
                         </Link>
-
 
 
                         <Link
@@ -379,10 +679,11 @@ function Navbar() {
                                 size={17}
                             />
 
-                            Products
+                            {
+                                text.products
+                            }
 
                         </Link>
-
 
 
                         <Link
@@ -401,10 +702,11 @@ function Navbar() {
                                 size={17}
                             />
 
-                            Inventory
+                            {
+                                text.inventory
+                            }
 
                         </Link>
-
 
 
                         <Link
@@ -423,19 +725,38 @@ function Navbar() {
                                 size={17}
                             />
 
-                            Orders
+                            {
+                                text.orders
+                            }
 
                         </Link>
 
                     </nav>
 
 
-
-                    {/* =================================================
-                        ADMIN ACTIONS
-                    ================================================= */}
+                    {/* ADMIN ACTIONS */}
 
                     <div className="navbar-actions navbar-admin-actions">
+
+                        <button
+                            type="button"
+                            className="navbar-language"
+                            onClick={
+                                toggleLanguage
+                            }
+                        >
+
+                            <span className="navbar-language-symbol">
+                                A
+                            </span>
+
+                            {
+                                isArabic
+                                    ? text.english
+                                    : text.arabic
+                            }
+
+                        </button>
 
 
                         <Link
@@ -447,17 +768,36 @@ function Navbar() {
                                 size={17}
                             />
 
-                            View Website
+                            {
+                                text.viewWebsite
+                            }
 
                         </Link>
 
+
+                        {/* ADMIN PROFILE PHOTO */}
+
+                        <Link
+                            to="/account"
+                            className="navbar-profile-button"
+                            aria-label={
+                                text.profile
+                            }
+                            title={
+                                displayName
+                            }
+                        >
+
+                            <ProfileAvatar />
+
+                        </Link>
 
 
                         <button
                             type="button"
                             className="navbar-admin-logout"
                             onClick={
-                                handleAdminLogout
+                                handleLogout
                             }
                         >
 
@@ -465,10 +805,11 @@ function Navbar() {
                                 size={17}
                             />
 
-                            Sign Out
+                            {
+                                text.signOut
+                            }
 
                         </button>
-
 
 
                         <button
@@ -480,7 +821,9 @@ function Navbar() {
                                         !current
                                 )
                             }
-                            aria-label="Toggle admin menu"
+                            aria-label={
+                                text.menu
+                            }
                         >
 
                             {
@@ -504,91 +847,116 @@ function Navbar() {
                 </div>
 
 
-
-                {/* =================================================
-                    MOBILE ADMIN MENU
-                ================================================= */}
+                {/* ADMIN MOBILE MENU */}
 
                 {
                     menuOpen && (
 
                         <div className="navbar-mobile-menu navbar-admin-mobile-menu">
 
-
                             <Link
-                                to="/admin"
+                                to="/account"
+                                className="navbar-mobile-profile"
                             >
+
+                                <ProfileAvatar
+                                    small
+                                />
+
+
+                                <div>
+
+                                    <strong>
+
+                                        {
+                                            displayName
+                                        }
+
+                                    </strong>
+
+
+                                    <span>
+
+                                        {
+                                            text.profile
+                                        }
+
+                                    </span>
+
+                                </div>
+
+                            </Link>
+
+
+                            <Link to="/admin">
 
                                 <LayoutDashboard
                                     size={18}
                                 />
 
-                                Dashboard
+                                {
+                                    text.dashboard
+                                }
 
                             </Link>
 
 
-
-                            <Link
-                                to="/admin/products"
-                            >
+                            <Link to="/admin/products">
 
                                 <Package
                                     size={18}
                                 />
 
-                                Products
+                                {
+                                    text.products
+                                }
 
                             </Link>
 
 
-
-                            <Link
-                                to="/admin/inventory"
-                            >
+                            <Link to="/admin/inventory">
 
                                 <Boxes
                                     size={18}
                                 />
 
-                                Inventory
+                                {
+                                    text.inventory
+                                }
 
                             </Link>
 
 
-
-                            <Link
-                                to="/admin/orders"
-                            >
+                            <Link to="/admin/orders">
 
                                 <ShoppingBag
                                     size={18}
                                 />
 
-                                Orders
+                                {
+                                    text.orders
+                                }
 
                             </Link>
 
 
-
-                            <Link
-                                to="/"
-                            >
+                            <Link to="/">
 
                                 <Store
                                     size={18}
                                 />
 
-                                View Website
+                                {
+                                    text.viewWebsite
+                                }
 
                             </Link>
-
 
 
                             <button
                                 type="button"
                                 onClick={
-                                    handleAdminLogout
+                                    handleLogout
                                 }
                             >
 
@@ -596,7 +964,9 @@ function Navbar() {
                                     size={18}
                                 />
 
-                                Sign Out
+                                {
+                                    text.signOut
+                                }
 
                             </button>
 
@@ -606,28 +976,33 @@ function Navbar() {
                 }
 
             </header>
-        );
-    }
 
+        );
+
+    }
 
 
     /*
     ========================================================
-    NORMAL CUSTOMER NAVBAR
+    CUSTOMER NAVBAR
     ========================================================
     */
 
     return (
 
-        <header className="navbar">
-
+        <header
+            className="navbar"
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
+            }
+        >
 
             <div className="container navbar-inner">
 
 
-                {/* =================================================
-                    BRAND
-                ================================================= */}
+                {/* BRAND */}
 
                 <Link
                     to="/"
@@ -636,19 +1011,29 @@ function Navbar() {
 
                     <img
                         src="/nabil-logo.png"
-                        alt="Nabil Pharmacy"
+                        alt={
+                            text.pharmacy
+                        }
                     />
 
 
                     <div>
 
                         <strong>
-                            Nabil Pharmacy
+
+                            {
+                                text.pharmacy
+                            }
+
                         </strong>
 
 
                         <span>
-                            Since 1975
+
+                            {
+                                text.since
+                            }
+
                         </span>
 
                     </div>
@@ -656,106 +1041,140 @@ function Navbar() {
                 </Link>
 
 
-
-                {/* =================================================
-                    DESKTOP CUSTOMER NAV
-                ================================================= */}
+                {/* CUSTOMER LINKS */}
 
                 <nav className="navbar-links">
 
+                    <Link to="/">
 
-                    <Link
-                        to="/"
-                        className={
-                            location.pathname ===
-                                "/"
-                                ? "active"
-                                : ""
+                        {
+                            text.home
                         }
-                    >
-
-                        Home
 
                     </Link>
 
 
+                    <Link to="/products">
 
-                    <Link
-                        to="/products"
-                        className={
-                            location.pathname
-                                .startsWith(
-                                    "/products"
-                                )
-                                ? "active"
-                                : ""
+                        {
+                            text.products
                         }
-                    >
-
-                        Products
 
                     </Link>
-
 
 
                     <a href="/#services">
-                        Services
-                    </a>
 
+                        {
+                            text.services
+                        }
+
+                    </a>
 
 
                     <a href="/#story">
-                        Our Story
+
+                        {
+                            text.story
+                        }
+
                     </a>
 
 
-
                     <a href="/#contact">
-                        Contact
+
+                        {
+                            text.contact
+                        }
+
                     </a>
 
                 </nav>
 
 
-
-                {/* =================================================
-                    CUSTOMER ACTIONS
-                ================================================= */}
+                {/* CUSTOMER ACTIONS */}
 
                 <div className="navbar-actions">
 
 
-                    {/* ACCOUNT */}
+                    {/* LANGUAGE */}
 
-                    <Link
-                        to="/account"
-                        className="navbar-account"
-                        aria-label={
-                            user
-                                ? "My account"
-                                : "Customer login"
+                    <button
+                        type="button"
+                        className="navbar-language"
+                        onClick={
+                            toggleLanguage
                         }
                     >
 
-                        <UserRound
-                            size={18}
-                        />
-
-
-                        <span>
-
-                            {
-                                authLoading
-                                    ? "Account"
-                                    : user
-                                        ? "My Account"
-                                        : "Login"
-                            }
-
+                        <span className="navbar-language-symbol">
+                            A
                         </span>
 
-                    </Link>
 
+                        {
+                            isArabic
+                                ? text.english
+                                : text.arabic
+                        }
+
+                    </button>
+
+
+                    {/* =====================================
+                        ACCOUNT
+
+                        Logged in:
+                        Show profile picture only.
+
+                        Logged out:
+                        Show login/account button.
+                    ===================================== */}
+
+                    {
+                        user
+                            ? (
+
+                                <Link
+                                    to="/account"
+                                    className="navbar-profile-button"
+                                    aria-label={
+                                        text.profile
+                                    }
+                                    title={
+                                        displayName
+                                    }
+                                >
+
+                                    <ProfileAvatar />
+
+                                </Link>
+
+                            )
+                            : (
+
+                                <Link
+                                    to="/account"
+                                    className="navbar-account"
+                                >
+
+                                    <UserRound
+                                        size={18}
+                                    />
+
+
+                                    <span>
+
+                                        {
+                                            text.login
+                                        }
+
+                                    </span>
+
+                                </Link>
+
+                            )
+                    }
 
 
                     {/* CART */}
@@ -763,7 +1182,9 @@ function Navbar() {
                     <Link
                         to="/cart"
                         className="navbar-cart"
-                        aria-label="Shopping cart"
+                        aria-label={
+                            text.cart
+                        }
                     >
 
                         <ShoppingBag
@@ -772,14 +1193,13 @@ function Navbar() {
 
 
                         {
-                            cartCount > 0 && (
+                            cartCount >
+                            0 && (
 
                                 <span>
 
                                     {
-                                        cartCount > 99
-                                            ? "99+"
-                                            : cartCount
+                                        cartCount
                                     }
 
                                 </span>
@@ -788,7 +1208,6 @@ function Navbar() {
                         }
 
                     </Link>
-
 
 
                     {/* PRESCRIPTION */}
@@ -802,10 +1221,11 @@ function Navbar() {
                             size={17}
                         />
 
-                        Upload Prescription
+                        {
+                            text.prescription
+                        }
 
                     </Link>
-
 
 
                     {/* MOBILE MENU */}
@@ -819,7 +1239,9 @@ function Navbar() {
                                     !current
                             )
                         }
-                        aria-label="Toggle navigation"
+                        aria-label={
+                            text.menu
+                        }
                     >
 
                         {
@@ -843,10 +1265,7 @@ function Navbar() {
             </div>
 
 
-
-            {/* =================================================
-                MOBILE CUSTOMER MENU
-            ================================================= */}
+            {/* CUSTOMER MOBILE MENU */}
 
             {
                 menuOpen && (
@@ -854,54 +1273,112 @@ function Navbar() {
                     <div className="navbar-mobile-menu">
 
 
+                        {
+                            user && (
+
+                                <Link
+                                    to="/account"
+                                    className="navbar-mobile-profile"
+                                >
+
+                                    <ProfileAvatar
+                                        small
+                                    />
+
+
+                                    <div>
+
+                                        <strong>
+
+                                            {
+                                                displayName
+                                            }
+
+                                        </strong>
+
+
+                                        <span>
+
+                                            {
+                                                text.profile
+                                            }
+
+                                        </span>
+
+                                    </div>
+
+                                </Link>
+
+                            )
+                        }
+
+
                         <Link to="/">
-                            Home
-                        </Link>
-
-
-                        <Link to="/products">
-                            Products
-                        </Link>
-
-
-                        <a href="/#services">
-                            Services
-                        </a>
-
-
-                        <a href="/#story">
-                            Our Story
-                        </a>
-
-
-                        <a href="/#contact">
-                            Contact
-                        </a>
-
-
-
-                        {/* ACCOUNT */}
-
-                        <Link
-                            to="/account"
-                            className="navbar-mobile-account"
-                        >
-
-                            <UserRound
-                                size={17}
-                            />
 
                             {
-                                user
-                                    ? "My Account"
-                                    : "Login / Create Account"
+                                text.home
                             }
 
                         </Link>
 
 
+                        <Link to="/products">
 
-                        {/* CART */}
+                            {
+                                text.products
+                            }
+
+                        </Link>
+
+
+                        <a href="/#services">
+
+                            {
+                                text.services
+                            }
+
+                        </a>
+
+
+                        <a href="/#story">
+
+                            {
+                                text.story
+                            }
+
+                        </a>
+
+
+                        <a href="/#contact">
+
+                            {
+                                text.contact
+                            }
+
+                        </a>
+
+
+                        {
+                            !user && (
+
+                                <Link
+                                    to="/account"
+                                    className="navbar-mobile-account"
+                                >
+
+                                    <UserRound
+                                        size={17}
+                                    />
+
+                                    {
+                                        text.login
+                                    }
+
+                                </Link>
+
+                            )
+                        }
+
 
                         <Link to="/cart">
 
@@ -909,18 +1386,20 @@ function Navbar() {
                                 size={17}
                             />
 
-                            Cart
+                            {
+                                text.cart
+                            }
+
 
                             {
-                                cartCount > 0 &&
-                                ` (${cartCount})`
+                                cartCount >
+                                    0
+                                    ? ` (${cartCount})`
+                                    : ""
                             }
 
                         </Link>
 
-
-
-                        {/* PRESCRIPTION */}
 
                         <Link
                             to="/prescription"
@@ -931,7 +1410,9 @@ function Navbar() {
                                 size={17}
                             />
 
-                            Upload Prescription
+                            {
+                                text.prescription
+                            }
 
                         </Link>
 
@@ -941,7 +1422,9 @@ function Navbar() {
             }
 
         </header>
+
     );
+
 }
 
 

@@ -1,4 +1,6 @@
 import {
+    Activity,
+    ArrowLeft,
     ArrowRight,
     Baby,
     HeartPulse,
@@ -11,8 +13,7 @@ import {
     Sparkles,
     Stethoscope,
     Upload,
-    Users,
-    Activity
+    Users
 } from "lucide-react";
 
 import {
@@ -34,6 +35,10 @@ import ProductCard
     from "../../components/ProductCard/ProductCard.jsx";
 
 import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import {
     supabase
 } from "../../lib/supabase.js";
 
@@ -46,11 +51,19 @@ function Home() {
         useReducedMotion();
 
 
-    /*
-        =========================================
-        SUPABASE DATA
-        =========================================
-    */
+    const {
+        language,
+        isArabic,
+        localize,
+        t
+    } = useLanguage();
+
+
+    const DirectionArrow =
+        isArabic
+            ? ArrowLeft
+            : ArrowRight;
+
 
     const [
         featuredProducts,
@@ -76,17 +89,17 @@ function Home() {
     ] = useState("");
 
 
-    /*
-        =========================================
-        FORMAT PRODUCT
-        =========================================
-    */
-
     const formatProduct = (
         product
     ) => {
 
+        const category =
+            product.categories ||
+            {};
+
+
         return {
+
             id:
                 product.id,
 
@@ -94,31 +107,53 @@ function Home() {
                 product.slug,
 
             name:
-                product.name,
+                localize(
+                    product,
+                    "name",
+                    ""
+                ),
 
             category:
-                product.categories?.name ||
+                localize(
+                    category,
+                    "name",
+                    t(
+                        "pharmacy"
+                    )
+                ),
+
+            categoryOriginal:
+                category.name ||
                 "Pharmacy",
 
             categorySlug:
-                product.categories?.slug ||
+                category.slug ||
                 "",
 
             categoryId:
                 product.category_id,
 
             brand:
-                product.brand ||
-                "Nabil Pharmacy",
+                localize(
+                    product,
+                    "brand",
+                    t(
+                        "nabilPharmacy"
+                    )
+                ),
 
             description:
-                product.description ||
-                "",
+                localize(
+                    product,
+                    "description",
+                    ""
+                ),
 
             price:
                 Number(
                     product.price
-                ) || 0,
+                ) ||
+                0,
 
             oldPrice:
                 product.old_price
@@ -128,7 +163,11 @@ function Home() {
                     : null,
 
             offer:
-                product.badge_text ||
+                localize(
+                    product,
+                    "badge_text",
+                    ""
+                ) ||
                 null,
 
             imageUrl:
@@ -145,181 +184,195 @@ function Home() {
                     product.featured
                 ),
 
-            /*
-                Stock database will be
-                connected later.
-            */
             inStock:
                 true,
 
             createdAt:
                 product.created_at
+
         };
+
     };
 
 
-    /*
-        =========================================
-        LOAD HOME DATA
-        =========================================
-    */
+    const loadHomeData =
+        async () => {
 
-    const loadHomeData = async () => {
-
-        setLoadingProducts(true);
-
-
-        try {
-
-            const [
-                productsResponse,
-                categoriesResponse
-            ] = await Promise.all([
-
-                /*
-                    FEATURED PRODUCTS
-                */
-
-                supabase
-                    .from("products")
-                    .select(`
-                        id,
-                        category_id,
-                        name,
-                        slug,
-                        brand,
-                        description,
-                        price,
-                        old_price,
-                        badge_text,
-                        image_url,
-                        prescription_required,
-                        featured,
-                        is_active,
-                        created_at,
-                        categories (
-                            id,
-                            name,
-                            slug
-                        )
-                    `)
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .eq(
-                        "featured",
-                        true
-                    )
-                    .order(
-                        "created_at",
-                        {
-                            ascending: false
-                        }
-                    )
-                    .limit(4),
-
-
-                /*
-                    ACTIVE CATEGORIES
-                */
-
-                supabase
-                    .from("categories")
-                    .select(`
-                        id,
-                        name,
-                        slug,
-                        description,
-                        image_url
-                    `)
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .order(
-                        "name",
-                        {
-                            ascending: true
-                        }
-                    )
-
-            ]);
-
-
-            if (
-                productsResponse.error
-            ) {
-
-                console.error(
-                    "Featured products error:",
-                    productsResponse.error
-                );
-
-            } else {
-
-                setFeaturedProducts(
-                    (
-                        productsResponse.data ||
-                        []
-                    ).map(
-                        formatProduct
-                    )
-                );
-            }
-
-
-            if (
-                categoriesResponse.error
-            ) {
-
-                console.error(
-                    "Categories error:",
-                    categoriesResponse.error
-                );
-
-            } else {
-
-                setCategories(
-                    categoriesResponse.data ||
-                    []
-                );
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Home data error:",
-                error
+            setLoadingProducts(
+                true
             );
 
-        } finally {
 
-            setLoadingProducts(false);
-        }
-    };
+            try {
+
+                const [
+                    productsResponse,
+                    categoriesResponse
+                ] =
+                    await Promise.all([
+
+                        supabase
+                            .from(
+                                "products"
+                            )
+                            .select(`
+                                id,
+                                category_id,
+                                name,
+                                name_ar,
+                                slug,
+                                brand,
+                                brand_ar,
+                                description,
+                                description_ar,
+                                price,
+                                old_price,
+                                badge_text,
+                                badge_text_ar,
+                                image_url,
+                                prescription_required,
+                                featured,
+                                is_active,
+                                created_at,
+                                categories (
+                                    id,
+                                    name,
+                                    name_ar,
+                                    slug,
+                                    description,
+                                    description_ar
+                                )
+                            `)
+                            .eq(
+                                "is_active",
+                                true
+                            )
+                            .eq(
+                                "featured",
+                                true
+                            )
+                            .order(
+                                "created_at",
+                                {
+                                    ascending:
+                                        false
+                                }
+                            )
+                            .limit(
+                                4
+                            ),
 
 
-    useEffect(() => {
+                        supabase
+                            .from(
+                                "categories"
+                            )
+                            .select(`
+                                id,
+                                name,
+                                name_ar,
+                                slug,
+                                description,
+                                description_ar,
+                                image_url
+                            `)
+                            .eq(
+                                "is_active",
+                                true
+                            )
+                            .order(
+                                "name",
+                                {
+                                    ascending:
+                                        true
+                                }
+                            )
 
-        loadHomeData();
-
-    }, []);
+                    ]);
 
 
-    /*
-        =========================================
-        CATEGORY ICONS
-        =========================================
-    */
+                if (
+                    productsResponse.error
+                ) {
+
+                    console.error(
+                        "Featured products error:",
+                        productsResponse.error
+                    );
+
+                } else {
+
+                    setFeaturedProducts(
+                        (
+                            productsResponse.data ||
+                            []
+                        ).map(
+                            formatProduct
+                        )
+                    );
+
+                }
+
+
+                if (
+                    categoriesResponse.error
+                ) {
+
+                    console.error(
+                        "Categories error:",
+                        categoriesResponse.error
+                    );
+
+                } else {
+
+                    setCategories(
+                        categoriesResponse.data ||
+                        []
+                    );
+
+                }
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    "Home data error:",
+                    error
+                );
+
+            } finally {
+
+                setLoadingProducts(
+                    false
+                );
+
+            }
+
+        };
+
+
+    useEffect(
+        () => {
+
+            loadHomeData();
+
+        },
+        [
+            language
+        ]
+    );
+
 
     const getCategoryIcon = (
         categoryName
     ) => {
 
         const name =
-            categoryName
-                .toLowerCase();
+            String(
+                categoryName ||
+                ""
+            ).toLowerCase();
 
 
         if (
@@ -329,6 +382,7 @@ function Home() {
         ) {
 
             return Baby;
+
         }
 
 
@@ -339,6 +393,7 @@ function Home() {
         ) {
 
             return HeartPulse;
+
         }
 
 
@@ -349,6 +404,7 @@ function Home() {
         ) {
 
             return Activity;
+
         }
 
 
@@ -359,18 +415,14 @@ function Home() {
         ) {
 
             return Sparkles;
+
         }
 
 
         return Pill;
+
     };
 
-
-    /*
-        =========================================
-        ANIMATION
-        =========================================
-    */
 
     const revealAnimation =
         useMemo(
@@ -381,16 +433,22 @@ function Home() {
                 ) {
 
                     return {
-                        initial: false,
+
+                        initial:
+                            false,
+
                         whileInView: {
                             opacity: 1,
                             y: 0
                         }
+
                     };
+
                 }
 
 
                 return {
+
                     initial: {
                         opacity: 0,
                         y: 25
@@ -409,6 +467,7 @@ function Home() {
                     transition: {
                         duration: 0.5
                     }
+
                 };
 
             },
@@ -418,39 +477,41 @@ function Home() {
         );
 
 
-    /*
-        =========================================
-        PRODUCT NOTIFICATION
-        =========================================
-    */
-
     const showProductNotification = (
         product
     ) => {
 
         setNotification(
-            `${product.name} added to your cart`
+            t(
+                "addedToCart",
+                {
+                    product:
+                        product.name
+                }
+            )
         );
 
 
         window.setTimeout(
             () => {
 
-                setNotification("");
+                setNotification(
+                    ""
+                );
 
             },
             2200
         );
+
     };
 
 
     return (
+
         <main className="home-page">
 
 
-            {/* =====================================
-                HERO
-            ===================================== */}
+            {/* HERO */}
 
             <section className="home-hero">
 
@@ -458,35 +519,61 @@ function Home() {
 
 
                     <motion.div
+
                         className="home-hero-content"
+
                         initial={
                             reduceMotion
                                 ? false
                                 : {
                                     opacity: 0,
-                                    x: -25
+                                    x:
+                                        isArabic
+                                            ? 25
+                                            : -25
                                 }
                         }
+
                         animate={{
                             opacity: 1,
                             x: 0
                         }}
+
                         transition={{
                             duration: 0.6
                         }}
+
                     >
 
                         <span className="section-label">
-                            Nabil Pharmacy • Since 1975
+
+                            {
+                                t(
+                                    "homeHeroLabel"
+                                )
+                            }
+
                         </span>
 
 
                         <h1>
 
-                            Trusted pharmacy care
+                            {
+                                t(
+                                    "heroTitleLead"
+                                )
+                            }
 
                             <span>
-                                {" "}for every generation.
+
+                                {" "}
+
+                                {
+                                    t(
+                                        "heroTitleAccent"
+                                    )
+                                }
+
                             </span>
 
                         </h1>
@@ -494,15 +581,17 @@ function Home() {
 
                         <p>
 
-                            Discover pharmacy essentials,
-                            wellness products and convenient
-                            healthcare services from a name
-                            serving families since 1975.
+                            {
+                                t(
+                                    "heroDescription"
+                                )
+                            }
 
                         </p>
 
 
                         <div className="home-hero-actions">
+
 
                             <Link
                                 to="/products"
@@ -513,7 +602,11 @@ function Home() {
                                     size={18}
                                 />
 
-                                Shop Products
+                                {
+                                    t(
+                                        "shopProducts"
+                                    )
+                                }
 
                             </Link>
 
@@ -527,15 +620,19 @@ function Home() {
                                     size={18}
                                 />
 
-                                Upload Prescription
+                                {
+                                    t(
+                                        "uploadPrescription"
+                                    )
+                                }
 
                             </Link>
 
                         </div>
 
 
-
                         <div className="home-hero-trust">
+
 
                             <div>
 
@@ -544,7 +641,13 @@ function Home() {
                                 />
 
                                 <span>
-                                    Pharmacy Care
+
+                                    {
+                                        t(
+                                            "pharmacyCare"
+                                        )
+                                    }
+
                                 </span>
 
                             </div>
@@ -557,7 +660,13 @@ function Home() {
                                 />
 
                                 <span>
-                                    Convenient Ordering
+
+                                    {
+                                        t(
+                                            "convenientOrdering"
+                                        )
+                                    }
+
                                 </span>
 
                             </div>
@@ -570,7 +679,13 @@ function Home() {
                                 />
 
                                 <span>
-                                    Family Focused
+
+                                    {
+                                        t(
+                                            "familyFocused"
+                                        )
+                                    }
+
                                 </span>
 
                             </div>
@@ -580,11 +695,10 @@ function Home() {
                     </motion.div>
 
 
-
-                    {/* HERO VISUAL */}
-
                     <motion.div
+
                         className="home-hero-visual"
+
                         initial={
                             reduceMotion
                                 ? false
@@ -593,36 +707,60 @@ function Home() {
                                     scale: 0.95
                                 }
                         }
+
                         animate={{
                             opacity: 1,
                             scale: 1
                         }}
+
                         transition={{
                             duration: 0.65
                         }}
+
                     >
 
                         <div className="home-hero-logo-card">
 
                             <img
                                 src="/nabil-logo.png"
-                                alt="Nabil Pharmacy"
+                                alt={
+                                    t(
+                                        "nabilPharmacy"
+                                    )
+                                }
                             />
 
 
                             <span>
-                                Since 1975
+
+                                {
+                                    t(
+                                        "since1975"
+                                    )
+                                }
+
                             </span>
 
 
                             <h2>
-                                Nabil Pharmacy
+
+                                {
+                                    t(
+                                        "nabilPharmacy"
+                                    )
+                                }
+
                             </h2>
 
 
                             <p>
-                                Pharmacy care built
-                                around trust.
+
+                                {
+                                    t(
+                                        "pharmacyCareBuiltTrust"
+                                    )
+                                }
+
                             </p>
 
                         </div>
@@ -634,14 +772,28 @@ function Home() {
                                 size={20}
                             />
 
+
                             <div>
 
                                 <strong>
-                                    Trusted Care
+
+                                    {
+                                        t(
+                                            "trustedCare"
+                                        )
+                                    }
+
                                 </strong>
 
+
                                 <span>
-                                    Since 1975
+
+                                    {
+                                        t(
+                                            "since1975"
+                                        )
+                                    }
+
                                 </span>
 
                             </div>
@@ -655,14 +807,28 @@ function Home() {
                                 size={20}
                             />
 
+
                             <div>
 
                                 <strong>
-                                    Pharmacy
+
+                                    {
+                                        t(
+                                            "pharmacy"
+                                        )
+                                    }
+
                                 </strong>
 
+
                                 <span>
-                                    Everyday health
+
+                                    {
+                                        t(
+                                            "everydayHealth"
+                                        )
+                                    }
+
                                 </span>
 
                             </div>
@@ -676,25 +842,35 @@ function Home() {
             </section>
 
 
-
-            {/* =====================================
-                TRUST STRIP
-            ===================================== */}
+            {/* TRUST STRIP */}
 
             <section className="home-trust-strip">
 
                 <div className="container home-trust-grid">
+
 
                     <div>
 
                         <ShieldCheck />
 
                         <strong>
-                            Pharmacy Trusted
+
+                            {
+                                t(
+                                    "pharmacyTrusted"
+                                )
+                            }
+
                         </strong>
 
                         <span>
-                            Since 1975
+
+                            {
+                                t(
+                                    "since1975"
+                                )
+                            }
+
                         </span>
 
                     </div>
@@ -705,11 +881,23 @@ function Home() {
                         <ShoppingBag />
 
                         <strong>
-                            Easy Shopping
+
+                            {
+                                t(
+                                    "easyShopping"
+                                )
+                            }
+
                         </strong>
 
                         <span>
-                            Browse online
+
+                            {
+                                t(
+                                    "browseOnline"
+                                )
+                            }
+
                         </span>
 
                     </div>
@@ -720,11 +908,23 @@ function Home() {
                         <Upload />
 
                         <strong>
-                            Prescription Service
+
+                            {
+                                t(
+                                    "prescriptionService"
+                                )
+                            }
+
                         </strong>
 
                         <span>
-                            Secure system coming
+
+                            {
+                                t(
+                                    "secureSystemComing"
+                                )
+                            }
+
                         </span>
 
                     </div>
@@ -735,11 +935,23 @@ function Home() {
                         <MapPin />
 
                         <strong>
-                            Delivery & Pickup
+
+                            {
+                                t(
+                                    "deliveryPickup"
+                                )
+                            }
+
                         </strong>
 
                         <span>
-                            Flexible options
+
+                            {
+                                t(
+                                    "flexibleOptions"
+                                )
+                            }
+
                         </span>
 
                     </div>
@@ -749,10 +961,7 @@ function Home() {
             </section>
 
 
-
-            {/* =====================================
-                SERVICES
-            ===================================== */}
+            {/* SERVICES */}
 
             <motion.section
                 id="services"
@@ -764,24 +973,41 @@ function Home() {
 
                     <div className="home-section-heading">
 
+
                         <div>
 
                             <span className="section-label">
-                                Our Services
+
+                                {
+                                    t(
+                                        "ourServices"
+                                    )
+                                }
+
                             </span>
 
 
                             <h2>
-                                Healthcare made simpler.
+
+                                {
+                                    t(
+                                        "healthcareSimpler"
+                                    )
+                                }
+
                             </h2>
 
                         </div>
 
 
                         <p>
-                            Convenient pharmacy services
-                            designed around everyday
-                            health needs.
+
+                            {
+                                t(
+                                    "convenientServicesDescription"
+                                )
+                            }
+
                         </p>
 
                     </div>
@@ -808,30 +1034,42 @@ function Home() {
 
 
                             <h3>
-                                Pharmacy Products
+
+                                {
+                                    t(
+                                        "pharmacyProducts"
+                                    )
+                                }
+
                             </h3>
 
 
                             <p>
-                                Browse medicines,
-                                vitamins, baby care,
-                                personal care and health
-                                devices.
+
+                                {
+                                    t(
+                                        "pharmacyProductsDescription"
+                                    )
+                                }
+
                             </p>
 
 
                             <strong>
 
-                                Browse Products
+                                {
+                                    t(
+                                        "browseProducts"
+                                    )
+                                }
 
-                                <ArrowRight
+                                <DirectionArrow
                                     size={16}
                                 />
 
                             </strong>
 
                         </Link>
-
 
 
                         <Link
@@ -852,29 +1090,42 @@ function Home() {
 
 
                             <h3>
-                                Prescription Service
+
+                                {
+                                    t(
+                                        "prescriptionService"
+                                    )
+                                }
+
                             </h3>
 
 
                             <p>
-                                A secure prescription
-                                workflow will allow pharmacy
-                                review before fulfilment.
+
+                                {
+                                    t(
+                                        "prescriptionWorkflowDescription"
+                                    )
+                                }
+
                             </p>
 
 
                             <strong>
 
-                                Prescription Page
+                                {
+                                    t(
+                                        "prescriptionPage"
+                                    )
+                                }
 
-                                <ArrowRight
+                                <DirectionArrow
                                     size={16}
                                 />
 
                             </strong>
 
                         </Link>
-
 
 
                         <a
@@ -895,22 +1146,36 @@ function Home() {
 
 
                             <h3>
-                                Delivery & Pickup
+
+                                {
+                                    t(
+                                        "deliveryPickup"
+                                    )
+                                }
+
                             </h3>
 
 
                             <p>
-                                Choose convenient delivery
-                                or collect your order from
-                                a pharmacy branch.
+
+                                {
+                                    t(
+                                        "deliveryPickupDescription"
+                                    )
+                                }
+
                             </p>
 
 
                             <strong>
 
-                                Learn More
+                                {
+                                    t(
+                                        "learnMore"
+                                    )
+                                }
 
-                                <ArrowRight
+                                <DirectionArrow
                                     size={16}
                                 />
 
@@ -925,10 +1190,7 @@ function Home() {
             </motion.section>
 
 
-
-            {/* =====================================
-                DATABASE CATEGORIES
-            ===================================== */}
+            {/* CATEGORIES */}
 
             <motion.section
                 className="home-section home-categories"
@@ -937,17 +1199,31 @@ function Home() {
 
                 <div className="container">
 
+
                     <div className="home-section-heading">
+
 
                         <div>
 
                             <span className="section-label">
-                                Shop by Category
+
+                                {
+                                    t(
+                                        "shopByCategory"
+                                    )
+                                }
+
                             </span>
 
 
                             <h2>
-                                Find what you need.
+
+                                {
+                                    t(
+                                        "findWhatYouNeed"
+                                    )
+                                }
+
                             </h2>
 
                         </div>
@@ -958,16 +1234,19 @@ function Home() {
                             className="home-view-all"
                         >
 
-                            View All Products
+                            {
+                                t(
+                                    "viewAllProducts"
+                                )
+                            }
 
-                            <ArrowRight
+                            <DirectionArrow
                                 size={16}
                             />
 
                         </Link>
 
                     </div>
-
 
 
                     <div className="home-category-grid">
@@ -1002,17 +1281,30 @@ function Home() {
 
 
                                             <h3>
+
                                                 {
-                                                    category.name
+                                                    localize(
+                                                        category,
+                                                        "name",
+                                                        t(
+                                                            "pharmacy"
+                                                        )
+                                                    )
                                                 }
+
                                             </h3>
 
 
                                             <p>
 
                                                 {
-                                                    category.description ||
-                                                    "Explore pharmacy products."
+                                                    localize(
+                                                        category,
+                                                        "description",
+                                                        t(
+                                                            "explorePharmacyProducts"
+                                                        )
+                                                    )
                                                 }
 
                                             </p>
@@ -1020,9 +1312,13 @@ function Home() {
 
                                             <span>
 
-                                                Explore
+                                                {
+                                                    t(
+                                                        "explore"
+                                                    )
+                                                }
 
-                                                <ArrowRight
+                                                <DirectionArrow
                                                     size={15}
                                                 />
 
@@ -1031,6 +1327,7 @@ function Home() {
                                         </Link>
 
                                     );
+
                                 }
                             )
                         }
@@ -1042,10 +1339,7 @@ function Home() {
             </motion.section>
 
 
-
-            {/* =====================================
-                FEATURED PRODUCTS FROM SUPABASE
-            ===================================== */}
+            {/* FEATURED PRODUCTS */}
 
             <motion.section
                 className="home-section home-featured"
@@ -1054,17 +1348,31 @@ function Home() {
 
                 <div className="container">
 
+
                     <div className="home-section-heading">
+
 
                         <div>
 
                             <span className="section-label">
-                                Featured Products
+
+                                {
+                                    t(
+                                        "featuredProducts"
+                                    )
+                                }
+
                             </span>
 
 
                             <h2>
-                                Selected pharmacy essentials.
+
+                                {
+                                    t(
+                                        "selectedEssentials"
+                                    )
+                                }
+
                             </h2>
 
                         </div>
@@ -1075,16 +1383,19 @@ function Home() {
                             className="home-view-all"
                         >
 
-                            Shop All
+                            {
+                                t(
+                                    "shopAll"
+                                )
+                            }
 
-                            <ArrowRight
+                            <DirectionArrow
                                 size={16}
                             />
 
                         </Link>
 
                     </div>
-
 
 
                     {
@@ -1097,7 +1408,13 @@ function Home() {
                                     </div>
 
                                     <span>
-                                        Loading pharmacy products...
+
+                                        {
+                                            t(
+                                                "loadingProducts"
+                                            )
+                                        }
+
                                     </span>
 
                                 </div>
@@ -1142,14 +1459,26 @@ function Home() {
 
 
                                         <h3>
-                                            Featured products coming soon
+
+                                            {
+                                                t(
+                                                    "featuredComingSoon"
+                                                )
+                                            }
+
                                         </h3>
 
 
                                         <Link
                                             to="/products"
                                         >
-                                            Browse all products
+
+                                            {
+                                                t(
+                                                    "browseAllProducts"
+                                                )
+                                            }
+
                                         </Link>
 
                                     </div>
@@ -1162,10 +1491,7 @@ function Home() {
             </motion.section>
 
 
-
-            {/* =====================================
-                STORY / HERITAGE
-            ===================================== */}
+            {/* STORY */}
 
             <motion.section
                 id="story"
@@ -1175,15 +1501,26 @@ function Home() {
 
                 <div className="container home-story-layout">
 
+
                     <div className="home-story-visual">
 
                         <img
                             src="/nabil-logo.png"
-                            alt="Nabil Pharmacy logo"
+                            alt={
+                                t(
+                                    "nabilPharmacy"
+                                )
+                            }
                         />
 
                         <span>
-                            1975
+
+                            {
+                                isArabic
+                                    ? "١٩٧٥"
+                                    : "1975"
+                            }
+
                         </span>
 
                     </div>
@@ -1192,35 +1529,61 @@ function Home() {
                     <div className="home-story-content">
 
                         <span className="section-label">
-                            Our Story
+
+                            {
+                                t(
+                                    "ourStory"
+                                )
+                            }
+
                         </span>
 
 
                         <h2>
-                            Serving families since 1975.
+
+                            {
+                                t(
+                                    "servingFamilies"
+                                )
+                            }
+
                         </h2>
 
 
                         <p>
-                            Nabil Pharmacy combines its
-                            long-standing pharmacy identity
-                            with a modern digital experience
-                            designed to make everyday
-                            pharmacy shopping more
-                            convenient.
+
+                            {
+                                t(
+                                    "storyDescription"
+                                )
+                            }
+
                         </p>
 
 
                         <div className="home-story-stats">
 
+
                             <div>
 
                                 <strong>
-                                    1975
+
+                                    {
+                                        isArabic
+                                            ? "١٩٧٥"
+                                            : "1975"
+                                    }
+
                                 </strong>
 
                                 <span>
-                                    Established
+
+                                    {
+                                        t(
+                                            "established"
+                                        )
+                                    }
+
                                 </span>
 
                             </div>
@@ -1229,11 +1592,23 @@ function Home() {
                             <div>
 
                                 <strong>
-                                    5
+
+                                    {
+                                        isArabic
+                                            ? "٥"
+                                            : "5"
+                                    }
+
                                 </strong>
 
                                 <span>
-                                    Product Categories
+
+                                    {
+                                        t(
+                                            "productCategories"
+                                        )
+                                    }
+
                                 </span>
 
                             </div>
@@ -1242,11 +1617,23 @@ function Home() {
                             <div>
 
                                 <strong>
-                                    24/7
+
+                                    {
+                                        isArabic
+                                            ? "٢٤/٧"
+                                            : "24/7"
+                                    }
+
                                 </strong>
 
                                 <span>
-                                    Online Browsing
+
+                                    {
+                                        t(
+                                            "onlineBrowsing"
+                                        )
+                                    }
+
                                 </span>
 
                             </div>
@@ -1260,10 +1647,7 @@ function Home() {
             </motion.section>
 
 
-
-            {/* =====================================
-                PRESCRIPTION CTA
-            ===================================== */}
+            {/* PRESCRIPTION */}
 
             <motion.section
                 className="home-prescription-cta"
@@ -1274,24 +1658,39 @@ function Home() {
 
                     <div className="home-prescription-box">
 
+
                         <div>
 
                             <span className="section-label">
-                                Prescription Service
+
+                                {
+                                    t(
+                                        "prescriptionService"
+                                    )
+                                }
+
                             </span>
 
 
                             <h2>
-                                Have a prescription?
+
+                                {
+                                    t(
+                                        "havePrescription"
+                                    )
+                                }
+
                             </h2>
 
 
                             <p>
-                                Use our prescription page.
-                                Secure document upload will
-                                be enabled once protected
-                                pharmacy storage is
-                                configured.
+
+                                {
+                                    t(
+                                        "prescriptionCtaDescription"
+                                    )
+                                }
+
                             </p>
 
                         </div>
@@ -1306,7 +1705,11 @@ function Home() {
                                 size={18}
                             />
 
-                            Open Prescription Page
+                            {
+                                t(
+                                    "openPrescriptionPage"
+                                )
+                            }
 
                         </Link>
 
@@ -1317,10 +1720,7 @@ function Home() {
             </motion.section>
 
 
-
-            {/* =====================================
-                BRANCHES
-            ===================================== */}
+            {/* BRANCHES */}
 
             <motion.section
                 id="branches"
@@ -1330,17 +1730,30 @@ function Home() {
 
                 <div className="container">
 
+
                     <div className="home-section-heading">
 
                         <div>
 
                             <span className="section-label">
-                                Our Branches
+
+                                {
+                                    t(
+                                        "ourBranches"
+                                    )
+                                }
+
                             </span>
 
 
                             <h2>
-                                Find Nabil Pharmacy.
+
+                                {
+                                    t(
+                                        "findNabilPharmacy"
+                                    )
+                                }
+
                             </h2>
 
                         </div>
@@ -1362,16 +1775,24 @@ function Home() {
                         <div>
 
                             <h3>
-                                Branch information
+
+                                {
+                                    t(
+                                        "branchInformation"
+                                    )
+                                }
+
                             </h3>
 
 
                             <p>
-                                Pharmacy branch addresses,
-                                opening hours and map
-                                locations will appear here
-                                once they are added to the
-                                Supabase branches database.
+
+                                {
+                                    t(
+                                        "branchInformationDescription"
+                                    )
+                                }
+
                             </p>
 
                         </div>
@@ -1383,10 +1804,7 @@ function Home() {
             </motion.section>
 
 
-
-            {/* =====================================
-                CONTACT
-            ===================================== */}
+            {/* CONTACT */}
 
             <motion.section
                 id="contact"
@@ -1396,23 +1814,39 @@ function Home() {
 
                 <div className="container home-contact-box">
 
+
                     <div>
 
                         <span className="section-label">
-                            Contact Nabil Pharmacy
+
+                            {
+                                t(
+                                    "contactNabilPharmacy"
+                                )
+                            }
+
                         </span>
 
 
                         <h2>
-                            How can we help?
+
+                            {
+                                t(
+                                    "howCanWeHelp"
+                                )
+                            }
+
                         </h2>
 
 
                         <p>
-                            Contact information and direct
-                            pharmacy communication will be
-                            connected once the official
-                            branch details are added.
+
+                            {
+                                t(
+                                    "contactDescription"
+                                )
+                            }
+
                         </p>
 
                     </div>
@@ -1427,7 +1861,11 @@ function Home() {
                             size={18}
                         />
 
-                        Browse Pharmacy
+                        {
+                            t(
+                                "browsePharmacy"
+                            )
+                        }
 
                     </Link>
 
@@ -1436,10 +1874,7 @@ function Home() {
             </motion.section>
 
 
-
-            {/* =====================================
-                CART TOAST
-            ===================================== */}
+            {/* TOAST */}
 
             {
                 notification && (
@@ -1474,7 +1909,9 @@ function Home() {
             }
 
         </main>
+
     );
+
 }
 
 

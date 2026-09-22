@@ -26,100 +26,326 @@ import {
     supabase
 } from "../../lib/supabase.js";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import adminProductsTranslations
+    from "../../i18n/adminProductsTranslations.js";
+
 import "./AdminProducts.css";
+import "./AdminProductsRTL.css";
 
 
 const EMPTY_FORM = {
+
     id: null,
+
     name: "",
+    name_ar: "",
+
     slug: "",
+
     brand: "",
+    brand_ar: "",
+
     description: "",
+    description_ar: "",
+
     category_id: "",
+
     price: "",
     old_price: "",
+
     badge_text: "",
+    badge_text_ar: "",
+
     image_url: "",
+
     prescription_required: false,
+
     featured: false,
+
     is_active: true
+
+};
+
+
+const CATEGORY_AR_FALLBACKS = {
+
+    "Baby Care":
+        "العناية بالأطفال",
+
+    "Health Devices":
+        "الأجهزة الطبية",
+
+    "Medicine":
+        "الأدوية",
+
+    "Personal Care":
+        "العناية الشخصية",
+
+    "Vitamins":
+        "الفيتامينات"
+
 };
 
 
 function AdminProducts() {
 
+    const {
+        language,
+        isArabic
+    } =
+        useLanguage();
+
+
+    const text =
+        adminProductsTranslations[
+            language
+        ] ||
+        adminProductsTranslations.en;
+
+
     const [
         products,
         setProducts
-    ] = useState([]);
+    ] =
+        useState([]);
 
 
     const [
         categories,
         setCategories
-    ] = useState([]);
+    ] =
+        useState([]);
 
 
     const [
         loading,
         setLoading
-    ] = useState(true);
+    ] =
+        useState(true);
 
 
     const [
         saving,
         setSaving
-    ] = useState(false);
+    ] =
+        useState(false);
 
 
     const [
         uploadingImage,
         setUploadingImage
-    ] = useState(false);
+    ] =
+        useState(false);
 
 
     const [
         error,
         setError
-    ] = useState("");
+    ] =
+        useState("");
 
 
     const [
         success,
         setSuccess
-    ] = useState("");
+    ] =
+        useState("");
 
 
     const [
         searchTerm,
         setSearchTerm
-    ] = useState("");
+    ] =
+        useState("");
 
 
     const [
         modalOpen,
         setModalOpen
-    ] = useState(false);
+    ] =
+        useState(false);
 
 
     const [
         formData,
         setFormData
-    ] = useState({
-        ...EMPTY_FORM
-    });
+    ] =
+        useState({
+            ...EMPTY_FORM
+        });
 
 
     const [
         imageFile,
         setImageFile
-    ] = useState(null);
+    ] =
+        useState(null);
 
 
     const [
         imagePreview,
         setImagePreview
-    ] = useState("");
+    ] =
+        useState("");
+
+
+    /*
+    ========================================================
+    TEXT REPLACEMENT
+    ========================================================
+    */
+
+    const replaceText = (
+        value,
+        replacements = {}
+    ) => {
+
+        let result =
+            value;
+
+
+        Object.entries(
+            replacements
+        ).forEach(
+            ([
+                key,
+                replacement
+            ]) => {
+
+                result =
+                    result.replaceAll(
+                        `{${key}}`,
+                        String(
+                            replacement
+                        )
+                    );
+
+            }
+        );
+
+
+        return result;
+
+    };
+
+
+    /*
+    ========================================================
+    LOCALIZED PRODUCT
+    ========================================================
+    */
+
+    const displayProductName = (
+        product
+    ) => {
+
+        if (
+            isArabic &&
+            product?.name_ar
+        ) {
+
+            return product.name_ar;
+
+        }
+
+
+        return (
+            product?.name ||
+            "-"
+        );
+
+    };
+
+
+    const displayProductBrand = (
+        product
+    ) => {
+
+        if (
+            isArabic &&
+            product?.brand_ar
+        ) {
+
+            return product.brand_ar;
+
+        }
+
+
+        return (
+            product?.brand ||
+            text.noBrand
+        );
+
+    };
+
+
+    const displayCategory = (
+        category
+    ) => {
+
+        if (
+            !category
+        ) {
+
+            return text.uncategorized;
+
+        }
+
+
+        if (
+            !isArabic
+        ) {
+
+            return (
+                category.name ||
+                text.uncategorized
+            );
+
+        }
+
+
+        return (
+            category.name_ar ||
+            CATEGORY_AR_FALLBACKS[
+                category.name
+            ] ||
+            category.name ||
+            text.uncategorized
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    PRICE
+    ========================================================
+    */
+
+    const formatPrice = (
+        value
+    ) => {
+
+        const formatted =
+            Number(
+                value ||
+                0
+            ).toLocaleString(
+                isArabic
+                    ? "ar-EG"
+                    : "en-US"
+            );
+
+
+        return isArabic
+            ? `${formatted} ج.م`
+            : `EGP ${formatted}`;
+
+    };
 
 
     /*
@@ -128,114 +354,168 @@ function AdminProducts() {
     ========================================================
     */
 
-    const loadData = async () => {
+    const loadData =
+        async () => {
 
-        setLoading(true);
-        setError("");
-
-
-        try {
-
-            const [
-                productsResponse,
-                categoriesResponse
-            ] = await Promise.all([
-
-                supabase
-                    .from("products")
-                    .select(`
-                        id,
-                        category_id,
-                        name,
-                        slug,
-                        brand,
-                        description,
-                        price,
-                        old_price,
-                        badge_text,
-                        image_url,
-                        prescription_required,
-                        featured,
-                        is_active,
-                        created_at,
-                        categories (
-                            id,
-                            name
-                        )
-                    `)
-                    .order(
-                        "created_at",
-                        {
-                            ascending: false
-                        }
-                    ),
-
-
-                supabase
-                    .from("categories")
-                    .select(`
-                        id,
-                        name,
-                        slug
-                    `)
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .order("name")
-
-            ]);
-
-
-            if (productsResponse.error) {
-                throw productsResponse.error;
-            }
-
-
-            if (categoriesResponse.error) {
-                throw categoriesResponse.error;
-            }
-
-
-            setProducts(
-                productsResponse.data || []
-            );
-
-
-            setCategories(
-                categoriesResponse.data || []
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Admin products load error:",
-                error
+            setLoading(
+                true
             );
 
 
             setError(
-                error?.message ||
-                "Could not load product management data."
+                ""
             );
 
-        } finally {
 
-            setLoading(false);
-        }
-    };
+            try {
+
+                const [
+                    productsResponse,
+                    categoriesResponse
+                ] =
+                    await Promise.all([
+
+                        supabase
+                            .from(
+                                "products"
+                            )
+                            .select(`
+                                id,
+                                category_id,
+
+                                name,
+                                name_ar,
+
+                                slug,
+
+                                brand,
+                                brand_ar,
+
+                                description,
+                                description_ar,
+
+                                price,
+                                old_price,
+
+                                badge_text,
+                                badge_text_ar,
+
+                                image_url,
+
+                                prescription_required,
+                                featured,
+                                is_active,
+
+                                created_at,
+
+                                categories (
+                                    id,
+                                    name,
+                                    name_ar
+                                )
+                            `)
+                            .order(
+                                "created_at",
+                                {
+                                    ascending:
+                                        false
+                                }
+                            ),
 
 
-    useEffect(() => {
+                        supabase
+                            .from(
+                                "categories"
+                            )
+                            .select(`
+                                id,
+                                name,
+                                name_ar,
+                                slug
+                            `)
+                            .eq(
+                                "is_active",
+                                true
+                            )
+                            .order(
+                                "name"
+                            )
 
-        loadData();
+                    ]);
 
-    }, []);
+
+                if (
+                    productsResponse.error
+                ) {
+
+                    throw productsResponse.error;
+
+                }
+
+
+                if (
+                    categoriesResponse.error
+                ) {
+
+                    throw categoriesResponse.error;
+
+                }
+
+
+                setProducts(
+                    productsResponse.data ||
+                    []
+                );
+
+
+                setCategories(
+                    categoriesResponse.data ||
+                    []
+                );
+
+            } catch (
+                loadError
+            ) {
+
+                console.error(
+                    "Admin products load error:",
+                    loadError
+                );
+
+
+                setError(
+                    isArabic
+                        ? text.loadError
+                        : (
+                            loadError?.message ||
+                            text.loadError
+                        )
+                );
+
+            } finally {
+
+                setLoading(
+                    false
+                );
+
+            }
+
+        };
+
+
+    useEffect(
+        () => {
+
+            loadData();
+
+        },
+        []
+    );
 
 
     /*
     ========================================================
-    FILTER PRODUCTS
+    FILTER
     ========================================================
     */
 
@@ -249,22 +529,45 @@ function AdminProducts() {
                         .toLowerCase();
 
 
-                if (!term) {
+                if (
+                    !term
+                ) {
+
                     return products;
+
                 }
 
 
                 return products.filter(
                     product =>
+
                         [
+
                             product.name,
+
+                            product.name_ar,
+
                             product.brand,
-                            product.categories?.name
+
+                            product.brand_ar,
+
+                            product.categories
+                                ?.name,
+
+                            product.categories
+                                ?.name_ar
+
                         ]
-                            .filter(Boolean)
-                            .join(" ")
+                            .filter(
+                                Boolean
+                            )
+                            .join(
+                                " "
+                            )
                             .toLowerCase()
-                            .includes(term)
+                            .includes(
+                                term
+                            )
                 );
 
             },
@@ -285,7 +588,10 @@ function AdminProducts() {
         value
     ) => {
 
-        return value
+        return String(
+            value ||
+            ""
+        )
             .toLowerCase()
             .trim()
             .replace(
@@ -300,12 +606,13 @@ function AdminProducts() {
                 /-+/g,
                 "-"
             );
+
     };
 
 
     /*
     ========================================================
-    NORMAL INPUT CHANGE
+    FORM CHANGE
     ========================================================
     */
 
@@ -318,41 +625,51 @@ function AdminProducts() {
             value,
             checked,
             type
-        } = event.target;
+        } =
+            event.target;
 
 
         setFormData(
             current => {
 
                 const updated = {
+
                     ...current,
 
                     [name]:
-                        type === "checkbox"
+                        type ===
+                        "checkbox"
                             ? checked
                             : value
+
                 };
 
 
                 if (
-                    name === "name" &&
+                    name ===
+                        "name" &&
                     !current.id
                 ) {
 
                     updated.slug =
-                        createSlug(value);
+                        createSlug(
+                            value
+                        );
+
                 }
 
 
                 return updated;
+
             }
         );
+
     };
 
 
     /*
     ========================================================
-    CLEAN LOCAL IMAGE PREVIEW
+    IMAGE PREVIEW CLEANUP
     ========================================================
     */
 
@@ -362,19 +679,23 @@ function AdminProducts() {
 
         if (
             preview &&
-            preview.startsWith("blob:")
+            preview.startsWith(
+                "blob:"
+            )
         ) {
 
             URL.revokeObjectURL(
                 preview
             );
+
         }
+
     };
 
 
     /*
     ========================================================
-    IMAGE SELECTION
+    IMAGE CHANGE
     ========================================================
     */
 
@@ -382,22 +703,33 @@ function AdminProducts() {
         event
     ) => {
 
-        setError("");
+        setError(
+            ""
+        );
 
 
         const file =
-            event.target.files?.[0];
+            event.target
+                .files?.[0];
 
 
-        if (!file) {
+        if (
+            !file
+        ) {
+
             return;
+
         }
 
 
         const allowedTypes = [
+
             "image/jpeg",
+
             "image/png",
+
             "image/webp"
+
         ];
 
 
@@ -407,31 +739,42 @@ function AdminProducts() {
             )
         ) {
 
-            event.target.value = "";
+            event.target.value =
+                "";
+
 
             setError(
-                "Only JPG, PNG and WEBP images are allowed."
+                text.imageTypeError
             );
 
+
             return;
+
         }
 
 
         const maxFileSize =
-            5 * 1024 * 1024;
+            5 *
+            1024 *
+            1024;
 
 
         if (
-            file.size > maxFileSize
+            file.size >
+            maxFileSize
         ) {
 
-            event.target.value = "";
+            event.target.value =
+                "";
+
 
             setError(
-                "Product image must be smaller than 5 MB."
+                text.imageSizeError
             );
 
+
             return;
+
         }
 
 
@@ -446,72 +789,89 @@ function AdminProducts() {
             );
 
 
-        setImageFile(file);
+        setImageFile(
+            file
+        );
+
 
         setImagePreview(
             preview
         );
+
     };
 
 
     /*
     ========================================================
-    REMOVE IMAGE FROM FORM
+    REMOVE IMAGE
     ========================================================
     */
 
-    const removeSelectedImage = () => {
+    const removeSelectedImage =
+        () => {
 
-        revokeLocalPreview(
-            imagePreview
-        );
-
-
-        setImageFile(null);
-
-        setImagePreview("");
+            revokeLocalPreview(
+                imagePreview
+            );
 
 
-        setFormData(
-            current => ({
-                ...current,
-                image_url: ""
-            })
-        );
-    };
+            setImageFile(
+                null
+            );
+
+
+            setImagePreview(
+                ""
+            );
+
+
+            setFormData(
+                current => ({
+
+                    ...current,
+
+                    image_url:
+                        ""
+
+                })
+            );
+
+        };
 
 
     /*
     ========================================================
-    UPLOAD IMAGE TO SUPABASE STORAGE
+    UPLOAD PRODUCT IMAGE
     ========================================================
     */
 
     const uploadProductImage =
         async () => {
 
-            /*
-            If admin did not choose a new image,
-            keep the existing image.
-            */
-
-            if (!imageFile) {
+            if (
+                !imageFile
+            ) {
 
                 return (
                     formData.image_url ||
                     null
                 );
+
             }
 
 
-            setUploadingImage(true);
+            setUploadingImage(
+                true
+            );
 
 
             try {
 
                 const extension =
                     imageFile.name
-                        .split(".")
+                        .split(
+                            "."
+                        )
                         .pop()
                         ?.toLowerCase() ||
                     "jpg";
@@ -536,9 +896,11 @@ function AdminProducts() {
 
 
                 const {
-                    error: uploadError
+                    error:
+                        uploadError
                 } =
-                    await supabase.storage
+                    await supabase
+                        .storage
                         .from(
                             "product-images"
                         )
@@ -546,6 +908,7 @@ function AdminProducts() {
                             filePath,
                             imageFile,
                             {
+
                                 cacheControl:
                                     "3600",
 
@@ -554,19 +917,25 @@ function AdminProducts() {
 
                                 contentType:
                                     imageFile.type
+
                             }
                         );
 
 
-                if (uploadError) {
+                if (
+                    uploadError
+                ) {
+
                     throw uploadError;
+
                 }
 
 
                 const {
                     data
                 } =
-                    supabase.storage
+                    supabase
+                        .storage
                         .from(
                             "product-images"
                         )
@@ -580,8 +949,9 @@ function AdminProducts() {
                 ) {
 
                     throw new Error(
-                        "Could not create product image URL."
+                        text.imageUrlError
                     );
+
                 }
 
 
@@ -592,43 +962,61 @@ function AdminProducts() {
                 setUploadingImage(
                     false
                 );
+
             }
+
         };
 
 
     /*
     ========================================================
-    OPEN ADD PRODUCT
+    ADD MODAL
     ========================================================
     */
 
-    const openAddModal = () => {
+    const openAddModal =
+        () => {
 
-        revokeLocalPreview(
-            imagePreview
-        );
-
-
-        setFormData({
-            ...EMPTY_FORM
-        });
+            revokeLocalPreview(
+                imagePreview
+            );
 
 
-        setImageFile(null);
+            setFormData({
+                ...EMPTY_FORM
+            });
 
-        setImagePreview("");
 
-        setError("");
+            setImageFile(
+                null
+            );
 
-        setSuccess("");
 
-        setModalOpen(true);
-    };
+            setImagePreview(
+                ""
+            );
+
+
+            setError(
+                ""
+            );
+
+
+            setSuccess(
+                ""
+            );
+
+
+            setModalOpen(
+                true
+            );
+
+        };
 
 
     /*
     ========================================================
-    OPEN EDIT PRODUCT
+    EDIT MODAL
     ========================================================
     */
 
@@ -647,31 +1035,56 @@ function AdminProducts() {
                 product.id,
 
             name:
-                product.name || "",
+                product.name ||
+                "",
+
+            name_ar:
+                product.name_ar ||
+                "",
 
             slug:
-                product.slug || "",
+                product.slug ||
+                "",
 
             brand:
-                product.brand || "",
+                product.brand ||
+                "",
+
+            brand_ar:
+                product.brand_ar ||
+                "",
 
             description:
-                product.description || "",
+                product.description ||
+                "",
+
+            description_ar:
+                product.description_ar ||
+                "",
 
             category_id:
-                product.category_id || "",
+                product.category_id ||
+                "",
 
             price:
-                product.price ?? "",
+                product.price ??
+                "",
 
             old_price:
-                product.old_price ?? "",
+                product.old_price ??
+                "",
 
             badge_text:
-                product.badge_text || "",
+                product.badge_text ||
+                "",
+
+            badge_text_ar:
+                product.badge_text_ar ||
+                "",
 
             image_url:
-                product.image_url || "",
+                product.image_url ||
+                "",
 
             prescription_required:
                 Boolean(
@@ -687,10 +1100,13 @@ function AdminProducts() {
                 Boolean(
                     product.is_active
                 )
+
         });
 
 
-        setImageFile(null);
+        setImageFile(
+            null
+        );
 
 
         setImagePreview(
@@ -699,11 +1115,20 @@ function AdminProducts() {
         );
 
 
-        setError("");
+        setError(
+            ""
+        );
 
-        setSuccess("");
 
-        setModalOpen(true);
+        setSuccess(
+            ""
+        );
+
+
+        setModalOpen(
+            true
+        );
+
     };
 
 
@@ -713,221 +1138,16 @@ function AdminProducts() {
     ========================================================
     */
 
-    const closeModal = () => {
-
-        if (
-            saving ||
-            uploadingImage
-        ) {
-            return;
-        }
-
-
-        revokeLocalPreview(
-            imagePreview
-        );
-
-
-        setModalOpen(false);
-
-        setImageFile(null);
-
-        setImagePreview("");
-
-
-        setFormData({
-            ...EMPTY_FORM
-        });
-
-
-        setError("");
-    };
-
-
-    /*
-    ========================================================
-    SAVE PRODUCT
-    ========================================================
-    */
-
-    const handleSave = async (
-        event
-    ) => {
-
-        event.preventDefault();
-
-        setSaving(true);
-
-        setError("");
-
-        setSuccess("");
-
-
-        try {
-
-            const price =
-                Number(
-                    formData.price
-                );
-
-
-            const oldPrice =
-                formData.old_price === ""
-                    ? null
-                    : Number(
-                        formData.old_price
-                    );
-
+    const closeModal =
+        () => {
 
             if (
-                !formData.name.trim() ||
-                !formData.slug.trim() ||
-                !formData.category_id
+                saving ||
+                uploadingImage
             ) {
 
-                throw new Error(
-                    "Name, slug and category are required."
-                );
-            }
+                return;
 
-
-            if (
-                !Number.isFinite(price) ||
-                price < 0
-            ) {
-
-                throw new Error(
-                    "Enter a valid product price."
-                );
-            }
-
-
-            if (
-                oldPrice !== null &&
-                (
-                    !Number.isFinite(
-                        oldPrice
-                    ) ||
-                    oldPrice < 0
-                )
-            ) {
-
-                throw new Error(
-                    "Enter a valid old price."
-                );
-            }
-
-
-            /*
-            Upload the image first.
-            If there is no new image,
-            this returns the old image URL.
-            */
-
-            const imageUrl =
-                await uploadProductImage();
-
-
-            const payload = {
-
-                name:
-                    formData.name.trim(),
-
-                slug:
-                    formData.slug.trim(),
-
-                brand:
-                    formData.brand.trim() ||
-                    null,
-
-                description:
-                    formData.description.trim() ||
-                    null,
-
-                category_id:
-                    formData.category_id,
-
-                price,
-
-                old_price:
-                    oldPrice,
-
-                badge_text:
-                    formData.badge_text.trim() ||
-                    null,
-
-                image_url:
-                    imageUrl,
-
-                prescription_required:
-                    formData.prescription_required,
-
-                featured:
-                    formData.featured,
-
-                is_active:
-                    formData.is_active,
-
-                updated_at:
-                    new Date()
-                        .toISOString()
-            };
-
-
-            /*
-            EDIT EXISTING PRODUCT
-            */
-
-            if (
-                formData.id
-            ) {
-
-                const {
-                    error
-                } =
-                    await supabase
-                        .from("products")
-                        .update(payload)
-                        .eq(
-                            "id",
-                            formData.id
-                        );
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                setSuccess(
-                    "Product updated successfully."
-                );
-
-            }
-
-
-            /*
-            CREATE NEW PRODUCT
-            */
-
-            else {
-
-                const {
-                    error
-                } =
-                    await supabase
-                        .from("products")
-                        .insert(payload);
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                setSuccess(
-                    "Product created successfully."
-                );
             }
 
 
@@ -936,16 +1156,18 @@ function AdminProducts() {
             );
 
 
-            setImageFile(null);
-
-            setImagePreview("");
-
-
-            await loadData();
-
-
             setModalOpen(
                 false
+            );
+
+
+            setImageFile(
+                null
+            );
+
+
+            setImagePreview(
+                ""
             );
 
 
@@ -953,45 +1175,362 @@ function AdminProducts() {
                 ...EMPTY_FORM
             });
 
-        } catch (error) {
 
-            console.error(
-                "Save product error:",
-                error
+            setError(
+                ""
             );
 
-
-            if (
-                error?.code ===
-                "23505"
-            ) {
-
-                setError(
-                    "A product with this slug already exists."
-                );
-
-            } else {
-
-                setError(
-                    error?.message ||
-                    "Could not save the product."
-                );
-            }
-
-        } finally {
-
-            setSaving(false);
-
-            setUploadingImage(
-                false
-            );
-        }
-    };
+        };
 
 
     /*
     ========================================================
-    ACTIVATE / DEACTIVATE PRODUCT
+    SAVE PRODUCT
+    ========================================================
+    */
+
+    const handleSave =
+        async (
+            event
+        ) => {
+
+            event.preventDefault();
+
+
+            if (
+                saving ||
+                uploadingImage
+            ) {
+
+                return;
+
+            }
+
+
+            setSaving(
+                true
+            );
+
+
+            setError(
+                ""
+            );
+
+
+            setSuccess(
+                ""
+            );
+
+
+            try {
+
+                const price =
+                    Number(
+                        formData.price
+                    );
+
+
+                const oldPrice =
+                    formData.old_price ===
+                        ""
+                        ? null
+                        : Number(
+                            formData.old_price
+                        );
+
+
+                if (
+                    !formData.name
+                        .trim() ||
+                    !formData.slug
+                        .trim() ||
+                    !formData.category_id
+                ) {
+
+                    throw new Error(
+                        text.requiredFields
+                    );
+
+                }
+
+
+                if (
+                    !Number.isFinite(
+                        price
+                    ) ||
+                    price <
+                        0
+                ) {
+
+                    throw new Error(
+                        text.validPrice
+                    );
+
+                }
+
+
+                if (
+                    oldPrice !==
+                        null &&
+                    (
+                        !Number.isFinite(
+                            oldPrice
+                        ) ||
+                        oldPrice <
+                            0
+                    )
+                ) {
+
+                    throw new Error(
+                        text.validOldPrice
+                    );
+
+                }
+
+
+                const imageUrl =
+                    await uploadProductImage();
+
+
+                const payload = {
+
+                    name:
+                        formData.name
+                            .trim(),
+
+                    name_ar:
+                        formData.name_ar
+                            .trim() ||
+                        null,
+
+                    slug:
+                        formData.slug
+                            .trim(),
+
+                    brand:
+                        formData.brand
+                            .trim() ||
+                        null,
+
+                    brand_ar:
+                        formData.brand_ar
+                            .trim() ||
+                        null,
+
+                    description:
+                        formData.description
+                            .trim() ||
+                        null,
+
+                    description_ar:
+                        formData.description_ar
+                            .trim() ||
+                        null,
+
+                    category_id:
+                        formData.category_id,
+
+                    price,
+
+                    old_price:
+                        oldPrice,
+
+                    badge_text:
+                        formData.badge_text
+                            .trim() ||
+                        null,
+
+                    badge_text_ar:
+                        formData.badge_text_ar
+                            .trim() ||
+                        null,
+
+                    image_url:
+                        imageUrl,
+
+                    prescription_required:
+                        formData.prescription_required,
+
+                    featured:
+                        formData.featured,
+
+                    is_active:
+                        formData.is_active,
+
+                    updated_at:
+                        new Date()
+                            .toISOString()
+
+                };
+
+
+                /*
+                ============================================
+                UPDATE
+                ============================================
+                */
+
+                if (
+                    formData.id
+                ) {
+
+                    const {
+                        error:
+                            updateError
+                    } =
+                        await supabase
+                            .from(
+                                "products"
+                            )
+                            .update(
+                                payload
+                            )
+                            .eq(
+                                "id",
+                                formData.id
+                            );
+
+
+                    if (
+                        updateError
+                    ) {
+
+                        throw updateError;
+
+                    }
+
+
+                    setSuccess(
+                        text.productUpdated
+                    );
+
+                }
+
+
+                /*
+                ============================================
+                INSERT
+                ============================================
+                */
+
+                else {
+
+                    const {
+                        error:
+                            insertError
+                    } =
+                        await supabase
+                            .from(
+                                "products"
+                            )
+                            .insert(
+                                payload
+                            );
+
+
+                    if (
+                        insertError
+                    ) {
+
+                        throw insertError;
+
+                    }
+
+
+                    setSuccess(
+                        text.productCreated
+                    );
+
+                }
+
+
+                revokeLocalPreview(
+                    imagePreview
+                );
+
+
+                setImageFile(
+                    null
+                );
+
+
+                setImagePreview(
+                    ""
+                );
+
+
+                await loadData();
+
+
+                setModalOpen(
+                    false
+                );
+
+
+                setFormData({
+                    ...EMPTY_FORM
+                });
+
+            } catch (
+                saveError
+            ) {
+
+                console.error(
+                    "Save product error:",
+                    saveError
+                );
+
+
+                if (
+                    saveError?.code ===
+                    "23505"
+                ) {
+
+                    setError(
+                        text.duplicateSlug
+                    );
+
+                } else {
+
+                    setError(
+                        isArabic
+                            ? (
+                                saveError?.message?.includes(
+                                    "column"
+                                )
+                                    ? text.saveError
+                                    : (
+                                        saveError?.message ||
+                                        text.saveError
+                                    )
+                            )
+                            : (
+                                saveError?.message ||
+                                text.saveError
+                            )
+                    );
+
+                }
+
+            } finally {
+
+                setSaving(
+                    false
+                );
+
+
+                setUploadingImage(
+                    false
+                );
+
+            }
+
+        };
+
+
+    /*
+    ========================================================
+    ACTIVATE / DEACTIVATE
     ========================================================
     */
 
@@ -1000,18 +1539,26 @@ function AdminProducts() {
             product
         ) => {
 
-            setError("");
+            setError(
+                ""
+            );
 
-            setSuccess("");
+
+            setSuccess(
+                ""
+            );
 
 
             try {
 
                 const {
-                    error
+                    error:
+                        statusError
                 } =
                     await supabase
-                        .from("products")
+                        .from(
+                            "products"
+                        )
                         .update({
 
                             is_active:
@@ -1020,6 +1567,7 @@ function AdminProducts() {
                             updated_at:
                                 new Date()
                                     .toISOString()
+
                         })
                         .eq(
                             "id",
@@ -1027,70 +1575,111 @@ function AdminProducts() {
                         );
 
 
-                if (error) {
-                    throw error;
+                if (
+                    statusError
+                ) {
+
+                    throw statusError;
+
                 }
 
 
-                setSuccess(
+                const name =
+                    displayProductName(
+                        product
+                    );
 
-                    product.is_active
-                        ? `${product.name} deactivated.`
-                        : `${product.name} activated.`
+
+                setSuccess(
+                    replaceText(
+                        product.is_active
+                            ? text.productDeactivated
+                            : text.productActivated,
+                        {
+                            name
+                        }
+                    )
                 );
 
 
                 await loadData();
 
-            } catch (error) {
+            } catch (
+                statusError
+            ) {
 
                 console.error(
                     "Product status error:",
-                    error
+                    statusError
                 );
 
 
                 setError(
-                    error?.message ||
-                    "Could not update product status."
+                    isArabic
+                        ? text.statusError
+                        : (
+                            statusError?.message ||
+                            text.statusError
+                        )
                 );
+
             }
+
         };
 
 
     /*
     ========================================================
-    UI
+    PAGE
     ========================================================
     */
 
     return (
 
-        <main className="admin-products-page">
+        <main
+            className="admin-products-page"
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
+            }
+        >
 
             <div className="container">
 
 
-                {/* HEADER */}
+                {/* =========================================
+                    HEADER
+                ========================================= */}
 
                 <header className="admin-products-header">
 
                     <div>
 
                         <span>
-                            Product Management
+
+                            {
+                                text.productManagement
+                            }
+
                         </span>
 
 
                         <h1>
-                            Pharmacy Products
+
+                            {
+                                text.pharmacyProducts
+                            }
+
                         </h1>
 
 
                         <p>
-                            Add products, photos, prices,
-                            categories and control which
-                            products appear on the website.
+
+                            {
+                                text.pageDescription
+                            }
+
                         </p>
 
                     </div>
@@ -1108,15 +1697,18 @@ function AdminProducts() {
                             size={18}
                         />
 
-                        Add Product
+                        {
+                            text.addProduct
+                        }
 
                     </button>
 
                 </header>
 
 
-
-                {/* STATUS */}
+                {/* =========================================
+                    STATUS MESSAGES
+                ========================================= */}
 
                 {
                     success && (
@@ -1127,7 +1719,9 @@ function AdminProducts() {
                                 size={17}
                             />
 
-                            {success}
+                            {
+                                success
+                            }
 
                         </div>
 
@@ -1141,7 +1735,9 @@ function AdminProducts() {
 
                         <div className="admin-products-error">
 
-                            {error}
+                            {
+                                error
+                            }
 
                         </div>
 
@@ -1149,8 +1745,9 @@ function AdminProducts() {
                 }
 
 
-
-                {/* TOOLBAR */}
+                {/* =========================================
+                    TOOLBAR
+                ========================================= */}
 
                 <div className="admin-products-toolbar">
 
@@ -1160,9 +1757,12 @@ function AdminProducts() {
                             size={18}
                         />
 
+
                         <input
                             type="search"
-                            placeholder="Search products, brands or categories..."
+                            placeholder={
+                                text.searchPlaceholder
+                            }
                             value={
                                 searchTerm
                             }
@@ -1189,15 +1789,18 @@ function AdminProducts() {
                             size={17}
                         />
 
-                        Refresh
+                        {
+                            text.refresh
+                        }
 
                     </button>
 
                 </div>
 
 
-
-                {/* PRODUCTS TABLE */}
+                {/* =========================================
+                    TABLE
+                ========================================= */}
 
                 {
                     loading
@@ -1210,7 +1813,9 @@ function AdminProducts() {
                                     className="admin-products-spinner"
                                 />
 
-                                Loading products...
+                                {
+                                    text.loadingProducts
+                                }
 
                             </div>
 
@@ -1226,27 +1831,27 @@ function AdminProducts() {
                                         <tr>
 
                                             <th>
-                                                Product
+                                                {text.product}
                                             </th>
 
                                             <th>
-                                                Category
+                                                {text.category}
                                             </th>
 
                                             <th>
-                                                Price
+                                                {text.price}
                                             </th>
 
                                             <th>
-                                                Featured
+                                                {text.featured}
                                             </th>
 
                                             <th>
-                                                Status
+                                                {text.status}
                                             </th>
 
                                             <th>
-                                                Actions
+                                                {text.actions}
                                             </th>
 
                                         </tr>
@@ -1281,7 +1886,9 @@ function AdminProducts() {
                                                                                         product.image_url
                                                                                     }
                                                                                     alt={
-                                                                                        product.name
+                                                                                        displayProductName(
+                                                                                            product
+                                                                                        )
                                                                                     }
                                                                                     loading="lazy"
                                                                                 />
@@ -1304,7 +1911,9 @@ function AdminProducts() {
                                                                     <strong>
 
                                                                         {
-                                                                            product.name
+                                                                            displayProductName(
+                                                                                product
+                                                                            )
                                                                         }
 
                                                                     </strong>
@@ -1313,8 +1922,9 @@ function AdminProducts() {
                                                                     <span>
 
                                                                         {
-                                                                            product.brand ||
-                                                                            "No brand"
+                                                                            displayProductBrand(
+                                                                                product
+                                                                            )
                                                                         }
 
                                                                     </span>
@@ -1329,8 +1939,9 @@ function AdminProducts() {
                                                         <td>
 
                                                             {
-                                                                product.categories?.name ||
-                                                                "Uncategorized"
+                                                                displayCategory(
+                                                                    product.categories
+                                                                )
                                                             }
 
                                                         </td>
@@ -1340,13 +1951,10 @@ function AdminProducts() {
 
                                                             <strong>
 
-                                                                EGP{" "}
-
                                                                 {
-                                                                    Number(
+                                                                    formatPrice(
                                                                         product.price
                                                                     )
-                                                                        .toLocaleString()
                                                                 }
 
                                                             </strong>
@@ -1366,8 +1974,8 @@ function AdminProducts() {
 
                                                                 {
                                                                     product.featured
-                                                                        ? "Featured"
-                                                                        : "No"
+                                                                        ? text.yesFeatured
+                                                                        : text.no
                                                                 }
 
                                                             </span>
@@ -1387,8 +1995,8 @@ function AdminProducts() {
 
                                                                 {
                                                                     product.is_active
-                                                                        ? "Active"
-                                                                        : "Inactive"
+                                                                        ? text.active
+                                                                        : text.inactive
                                                                 }
 
                                                             </span>
@@ -1413,7 +2021,9 @@ function AdminProducts() {
                                                                         size={15}
                                                                     />
 
-                                                                    Edit
+                                                                    {
+                                                                        text.edit
+                                                                    }
 
                                                                 </button>
 
@@ -1434,8 +2044,8 @@ function AdminProducts() {
 
                                                                     {
                                                                         product.is_active
-                                                                            ? "Deactivate"
-                                                                            : "Activate"
+                                                                            ? text.deactivate
+                                                                            : text.activate
                                                                     }
 
                                                                 </button>
@@ -1461,7 +2071,9 @@ function AdminProducts() {
 
                                         <div className="admin-products-empty">
 
-                                            No products found.
+                                            {
+                                                text.noProducts
+                                            }
 
                                         </div>
 
@@ -1476,10 +2088,9 @@ function AdminProducts() {
             </div>
 
 
-
-            {/* =====================================================
-                ADD / EDIT PRODUCT MODAL
-            ===================================================== */}
+            {/* =============================================
+                PRODUCT MODAL
+            ============================================= */}
 
             <AnimatePresence>
 
@@ -1487,16 +2098,21 @@ function AdminProducts() {
                     modalOpen && (
 
                         <motion.div
+
                             className="admin-product-modal-backdrop"
+
                             initial={{
                                 opacity: 0
                             }}
+
                             animate={{
                                 opacity: 1
                             }}
+
                             exit={{
                                 opacity: 0
                             }}
+
                             onMouseDown={
                                 event => {
 
@@ -1506,29 +2122,39 @@ function AdminProducts() {
                                     ) {
 
                                         closeModal();
+
                                     }
+
                                 }
                             }
+
                         >
 
                             <motion.div
+
                                 className="admin-product-modal"
+
                                 initial={{
                                     opacity: 0,
                                     y: 25,
                                     scale: 0.98
                                 }}
+
                                 animate={{
                                     opacity: 1,
                                     y: 0,
                                     scale: 1
                                 }}
+
                                 exit={{
                                     opacity: 0,
                                     y: 15,
                                     scale: 0.98
                                 }}
+
                             >
+
+                                {/* HEADER */}
 
                                 <div className="admin-product-modal-header">
 
@@ -1538,8 +2164,8 @@ function AdminProducts() {
 
                                             {
                                                 formData.id
-                                                    ? "Edit Product"
-                                                    : "New Product"
+                                                    ? text.editProduct
+                                                    : text.newProduct
                                             }
 
                                         </span>
@@ -1549,8 +2175,15 @@ function AdminProducts() {
 
                                             {
                                                 formData.id
-                                                    ? formData.name
-                                                    : "Add Pharmacy Product"
+                                                    ? (
+                                                        isArabic
+                                                            ? (
+                                                                formData.name_ar ||
+                                                                formData.name
+                                                            )
+                                                            : formData.name
+                                                    )
+                                                    : text.addPharmacyProduct
                                             }
 
                                         </h2>
@@ -1563,7 +2196,9 @@ function AdminProducts() {
                                         onClick={
                                             closeModal
                                         }
-                                        aria-label="Close"
+                                        aria-label={
+                                            text.close
+                                        }
                                     >
 
                                         <X
@@ -1584,12 +2219,18 @@ function AdminProducts() {
                                     <div className="admin-product-form-grid">
 
 
-                                        {/* PRODUCT IMAGE */}
+                                        {/* =================================
+                                            IMAGE
+                                        ================================= */}
 
                                         <div className="admin-product-field admin-product-field-full">
 
                                             <label>
-                                                Product Photo
+
+                                                {
+                                                    text.productPhoto
+                                                }
+
                                             </label>
 
 
@@ -1605,7 +2246,9 @@ function AdminProducts() {
                                                                     src={
                                                                         imagePreview
                                                                     }
-                                                                    alt="Product preview"
+                                                                    alt={
+                                                                        text.productPreview
+                                                                    }
                                                                 />
 
                                                             )
@@ -1617,12 +2260,22 @@ function AdminProducts() {
                                                                         size={34}
                                                                     />
 
+
                                                                     <strong>
-                                                                        No product photo
+
+                                                                        {
+                                                                            text.noProductPhoto
+                                                                        }
+
                                                                     </strong>
 
+
                                                                     <span>
-                                                                        Choose an image below
+
+                                                                        {
+                                                                            text.chooseImageBelow
+                                                                        }
+
                                                                     </span>
 
                                                                 </div>
@@ -1641,7 +2294,10 @@ function AdminProducts() {
                                                             size={17}
                                                         />
 
-                                                        Choose Product Photo
+                                                        {
+                                                            text.chooseProductPhoto
+                                                        }
+
 
                                                         <input
                                                             type="file"
@@ -1655,8 +2311,11 @@ function AdminProducts() {
 
 
                                                     <p>
-                                                        JPG, PNG or WEBP.
-                                                        Maximum file size 5 MB.
+
+                                                        {
+                                                            text.imageRequirements
+                                                        }
+
                                                     </p>
 
 
@@ -1675,7 +2334,9 @@ function AdminProducts() {
                                                                     size={15}
                                                                 />
 
-                                                                Remove Photo
+                                                                {
+                                                                    text.removePhoto
+                                                                }
 
                                                             </button>
 
@@ -1689,14 +2350,44 @@ function AdminProducts() {
                                         </div>
 
 
+                                        {/* =================================
+                                            ENGLISH SECTION TITLE
+                                        ================================= */}
 
-                                        {/* PRODUCT NAME */}
+                                        <div className="admin-product-language-heading admin-product-field-full">
+
+                                            <strong>
+
+                                                {
+                                                    text.englishContent
+                                                }
+
+                                            </strong>
+
+
+                                            <span>
+
+                                                {
+                                                    text.englishContentHelp
+                                                }
+
+                                            </span>
+
+                                        </div>
+
+
+                                        {/* ENGLISH NAME */}
 
                                         <div className="admin-product-field">
 
                                             <label>
-                                                Product Name
+
+                                                {
+                                                    text.productNameEnglish
+                                                }
+
                                             </label>
+
 
                                             <input
                                                 name="name"
@@ -1706,12 +2397,14 @@ function AdminProducts() {
                                                 onChange={
                                                     handleChange
                                                 }
-                                                placeholder="Example: Vitamin C"
+                                                placeholder={
+                                                    text.productNameEnglishPlaceholder
+                                                }
+                                                dir="ltr"
                                                 required
                                             />
 
                                         </div>
-
 
 
                                         {/* SLUG */}
@@ -1719,8 +2412,13 @@ function AdminProducts() {
                                         <div className="admin-product-field">
 
                                             <label>
-                                                Slug
+
+                                                {
+                                                    text.slug
+                                                }
+
                                             </label>
+
 
                                             <input
                                                 name="slug"
@@ -1730,21 +2428,28 @@ function AdminProducts() {
                                                 onChange={
                                                     handleChange
                                                 }
-                                                placeholder="vitamin-c"
+                                                placeholder={
+                                                    text.slugPlaceholder
+                                                }
+                                                dir="ltr"
                                                 required
                                             />
 
                                         </div>
 
 
+                                        {/* ENGLISH BRAND */}
 
-                                        {/* BRAND */}
-
-                                        <div className="admin-product-field">
+                                        <div className="admin-product-field admin-product-field-full">
 
                                             <label>
-                                                Brand
+
+                                                {
+                                                    text.brandEnglish
+                                                }
+
                                             </label>
+
 
                                             <input
                                                 name="brand"
@@ -1754,20 +2459,237 @@ function AdminProducts() {
                                                 onChange={
                                                     handleChange
                                                 }
-                                                placeholder="Brand name"
+                                                placeholder={
+                                                    text.brandEnglishPlaceholder
+                                                }
+                                                dir="ltr"
                                             />
 
                                         </div>
 
 
+                                        {/* ENGLISH BADGE */}
 
-                                        {/* CATEGORY */}
+                                        <div className="admin-product-field admin-product-field-full">
+
+                                            <label>
+
+                                                {
+                                                    text.badgeEnglish
+                                                }
+
+                                            </label>
+
+
+                                            <input
+                                                name="badge_text"
+                                                value={
+                                                    formData.badge_text
+                                                }
+                                                onChange={
+                                                    handleChange
+                                                }
+                                                placeholder={
+                                                    text.badgeEnglishPlaceholder
+                                                }
+                                                dir="ltr"
+                                            />
+
+                                        </div>
+
+
+                                        {/* ENGLISH DESCRIPTION */}
+
+                                        <div className="admin-product-field admin-product-field-full">
+
+                                            <label>
+
+                                                {
+                                                    text.descriptionEnglish
+                                                }
+
+                                            </label>
+
+
+                                            <textarea
+                                                name="description"
+                                                rows="5"
+                                                value={
+                                                    formData.description
+                                                }
+                                                onChange={
+                                                    handleChange
+                                                }
+                                                placeholder={
+                                                    text.descriptionEnglishPlaceholder
+                                                }
+                                                dir="ltr"
+                                            />
+
+                                        </div>
+
+
+                                        {/* =================================
+                                            ARABIC SECTION
+                                        ================================= */}
+
+                                        <div className="admin-product-language-heading arabic admin-product-field-full">
+
+                                            <strong>
+
+                                                {
+                                                    text.arabicContent
+                                                }
+
+                                            </strong>
+
+
+                                            <span>
+
+                                                {
+                                                    text.arabicContentHelp
+                                                }
+
+                                            </span>
+
+                                        </div>
+
+
+                                        {/* ARABIC NAME */}
+
+                                        <div className="admin-product-field admin-product-field-full">
+
+                                            <label>
+
+                                                {
+                                                    text.productNameArabic
+                                                }
+
+                                            </label>
+
+
+                                            <input
+                                                name="name_ar"
+                                                value={
+                                                    formData.name_ar
+                                                }
+                                                onChange={
+                                                    handleChange
+                                                }
+                                                placeholder={
+                                                    text.productNameArabicPlaceholder
+                                                }
+                                                dir="rtl"
+                                            />
+
+                                        </div>
+
+
+                                        {/* ARABIC BRAND */}
+
+                                        <div className="admin-product-field admin-product-field-full">
+
+                                            <label>
+
+                                                {
+                                                    text.brandArabic
+                                                }
+
+                                            </label>
+
+
+                                            <input
+                                                name="brand_ar"
+                                                value={
+                                                    formData.brand_ar
+                                                }
+                                                onChange={
+                                                    handleChange
+                                                }
+                                                placeholder={
+                                                    text.brandArabicPlaceholder
+                                                }
+                                                dir="rtl"
+                                            />
+
+                                        </div>
+
+
+                                        {/* ARABIC BADGE */}
+
+                                        <div className="admin-product-field admin-product-field-full">
+
+                                            <label>
+
+                                                {
+                                                    text.badgeArabic
+                                                }
+
+                                            </label>
+
+
+                                            <input
+                                                name="badge_text_ar"
+                                                value={
+                                                    formData.badge_text_ar
+                                                }
+                                                onChange={
+                                                    handleChange
+                                                }
+                                                placeholder={
+                                                    text.badgeArabicPlaceholder
+                                                }
+                                                dir="rtl"
+                                            />
+
+                                        </div>
+
+
+                                        {/* ARABIC DESCRIPTION */}
+
+                                        <div className="admin-product-field admin-product-field-full">
+
+                                            <label>
+
+                                                {
+                                                    text.descriptionArabic
+                                                }
+
+                                            </label>
+
+
+                                            <textarea
+                                                name="description_ar"
+                                                rows="5"
+                                                value={
+                                                    formData.description_ar
+                                                }
+                                                onChange={
+                                                    handleChange
+                                                }
+                                                placeholder={
+                                                    text.descriptionArabicPlaceholder
+                                                }
+                                                dir="rtl"
+                                            />
+
+                                        </div>
+
+
+                                        {/* =================================
+                                            CATEGORY
+                                        ================================= */}
 
                                         <div className="admin-product-field">
 
                                             <label>
-                                                Category
+
+                                                {
+                                                    text.category
+                                                }
+
                                             </label>
+
 
                                             <select
                                                 name="category_id"
@@ -1781,7 +2703,11 @@ function AdminProducts() {
                                             >
 
                                                 <option value="">
-                                                    Select category
+
+                                                    {
+                                                        text.selectCategory
+                                                    }
+
                                                 </option>
 
 
@@ -1799,7 +2725,9 @@ function AdminProducts() {
                                                             >
 
                                                                 {
-                                                                    category.name
+                                                                    displayCategory(
+                                                                        category
+                                                                    )
                                                                 }
 
                                                             </option>
@@ -1813,14 +2741,18 @@ function AdminProducts() {
                                         </div>
 
 
-
                                         {/* PRICE */}
 
                                         <div className="admin-product-field">
 
                                             <label>
-                                                Price
+
+                                                {
+                                                    text.price
+                                                }
+
                                             </label>
+
 
                                             <input
                                                 name="price"
@@ -1834,20 +2766,25 @@ function AdminProducts() {
                                                     handleChange
                                                 }
                                                 placeholder="0.00"
+                                                dir="ltr"
                                                 required
                                             />
 
                                         </div>
 
 
-
                                         {/* OLD PRICE */}
 
-                                        <div className="admin-product-field">
+                                        <div className="admin-product-field admin-product-field-full">
 
                                             <label>
-                                                Old Price
+
+                                                {
+                                                    text.oldPrice
+                                                }
+
                                             </label>
+
 
                                             <input
                                                 name="old_price"
@@ -1860,54 +2797,10 @@ function AdminProducts() {
                                                 onChange={
                                                     handleChange
                                                 }
-                                                placeholder="Optional"
-                                            />
-
-                                        </div>
-
-
-
-                                        {/* BADGE */}
-
-                                        <div className="admin-product-field admin-product-field-full">
-
-                                            <label>
-                                                Badge
-                                            </label>
-
-                                            <input
-                                                name="badge_text"
-                                                value={
-                                                    formData.badge_text
+                                                placeholder={
+                                                    text.optional
                                                 }
-                                                onChange={
-                                                    handleChange
-                                                }
-                                                placeholder="Example: 15% OFF, NEW, SPECIAL"
-                                            />
-
-                                        </div>
-
-
-
-                                        {/* DESCRIPTION */}
-
-                                        <div className="admin-product-field admin-product-field-full">
-
-                                            <label>
-                                                Description
-                                            </label>
-
-                                            <textarea
-                                                name="description"
-                                                rows="5"
-                                                value={
-                                                    formData.description
-                                                }
-                                                onChange={
-                                                    handleChange
-                                                }
-                                                placeholder="Product description..."
+                                                dir="ltr"
                                             />
 
                                         </div>
@@ -1915,8 +2808,9 @@ function AdminProducts() {
                                     </div>
 
 
-
-                                    {/* SWITCHES */}
+                                    {/* =====================================
+                                        SWITCHES
+                                    ===================================== */}
 
                                     <div className="admin-product-switches">
 
@@ -1934,7 +2828,11 @@ function AdminProducts() {
                                             />
 
                                             <span>
-                                                Featured Product
+
+                                                {
+                                                    text.featuredProduct
+                                                }
+
                                             </span>
 
                                         </label>
@@ -1954,7 +2852,11 @@ function AdminProducts() {
                                             />
 
                                             <span>
-                                                Prescription Required
+
+                                                {
+                                                    text.prescriptionRequired
+                                                }
+
                                             </span>
 
                                         </label>
@@ -1974,7 +2876,11 @@ function AdminProducts() {
                                             />
 
                                             <span>
-                                                Active
+
+                                                {
+                                                    text.activeProduct
+                                                }
+
                                             </span>
 
                                         </label>
@@ -1982,21 +2888,21 @@ function AdminProducts() {
                                     </div>
 
 
-
-                                    {/* MODAL ERROR */}
+                                    {/* ERROR */}
 
                                     {
                                         error && (
 
                                             <div className="admin-products-error">
 
-                                                {error}
+                                                {
+                                                    error
+                                                }
 
                                             </div>
 
                                         )
                                     }
-
 
 
                                     {/* ACTIONS */}
@@ -2014,7 +2920,9 @@ function AdminProducts() {
                                             }
                                         >
 
-                                            Cancel
+                                            {
+                                                text.cancel
+                                            }
 
                                         </button>
 
@@ -2050,10 +2958,10 @@ function AdminProducts() {
 
                                             {
                                                 uploadingImage
-                                                    ? "Uploading Photo..."
+                                                    ? text.uploadingPhoto
                                                     : saving
-                                                        ? "Saving..."
-                                                        : "Save Product"
+                                                        ? text.saving
+                                                        : text.saveProduct
                                             }
 
                                         </button>
@@ -2072,7 +2980,9 @@ function AdminProducts() {
             </AnimatePresence>
 
         </main>
+
     );
+
 }
 
 

@@ -4,6 +4,13 @@ import {
     User
 } from "lucide-react";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import checkoutTranslations
+    from "../../i18n/checkoutTranslations.js";
+
 import "./ContactPhone.css";
 
 
@@ -11,6 +18,19 @@ function ContactPhone({
     formData,
     handleChange
 }) {
+
+    const {
+        language,
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        checkoutTranslations[
+            language
+        ] ||
+        checkoutTranslations.en;
+
 
     const initials =
         formData.fullName
@@ -25,27 +45,32 @@ function ContactPhone({
                             .toUpperCase()
                 )
                 .join("")
-            : "NP";
+            : isArabic
+                ? "ن"
+                : "NP";
 
 
     return (
+
         <section className="checkout-card contact-phone-section">
+
 
             <div className="checkout-card-heading">
 
                 <span>
-                    01
+                    {isArabic ? "٠١" : "01"}
                 </span>
+
 
                 <div>
 
                     <h2>
-                        Contact Details
+                        {text.contactDetails}
                     </h2>
 
+
                     <p>
-                        Enter your details directly
-                        into the interactive phone.
+                        {text.contactDetailsDescription}
                     </p>
 
                 </div>
@@ -56,10 +81,6 @@ function ContactPhone({
             <div className="contact-phone-layout">
 
 
-                {/* =========================
-                    PHONE
-                ========================= */}
-
                 <div className="contact-phone-device">
 
                     <div className="contact-phone-frame">
@@ -67,13 +88,12 @@ function ContactPhone({
                         <div className="contact-phone-screen">
 
 
-                            {/* STATUS BAR */}
-
                             <div className="contact-phone-status">
 
                                 <span>
-                                    9:41
+                                    {isArabic ? "٩:٤١" : "9:41"}
                                 </span>
+
 
                                 <div className="contact-phone-status-icons">
 
@@ -82,7 +102,7 @@ function ContactPhone({
                                     </span>
 
                                     <span>
-                                        WiFi
+                                        {isArabic ? "واي فاي" : "WiFi"}
                                     </span>
 
                                     <span className="phone-battery">
@@ -93,8 +113,6 @@ function ContactPhone({
                             </div>
 
 
-                            {/* DYNAMIC ISLAND */}
-
                             <div className="contact-phone-island">
 
                                 <span className="contact-phone-camera">
@@ -103,50 +121,39 @@ function ContactPhone({
                             </div>
 
 
-                            {/* APP HEADER */}
-
                             <div className="contact-phone-app-header">
 
                                 <span>
-                                    Nabil Pharmacy
+                                    {isArabic ? "صيدلية نبيل" : "Nabil Pharmacy"}
                                 </span>
 
                                 <strong>
-                                    Contact
+                                    {text.contact}
                                 </strong>
 
                             </div>
 
 
-
-                            {/* CONTACT PREVIEW */}
-
                             <div className="contact-phone-profile">
 
                                 <div className="contact-phone-avatar">
-
                                     {initials}
-
                                 </div>
 
 
                                 <h3>
-
                                     {
                                         formData.fullName ||
-                                        "Your Name"
+                                        text.yourName
                                     }
-
                                 </h3>
 
 
                                 <p>
-
                                     {
                                         formData.phone ||
-                                        "Your phone number"
+                                        text.yourPhoneNumber
                                     }
-
                                 </p>
 
 
@@ -159,7 +166,7 @@ function ContactPhone({
                                         />
 
                                         <span>
-                                            call
+                                            {text.call}
                                         </span>
 
                                     </div>
@@ -172,7 +179,7 @@ function ContactPhone({
                                         />
 
                                         <span>
-                                            email
+                                            {text.email}
                                         </span>
 
                                     </div>
@@ -185,7 +192,7 @@ function ContactPhone({
                                         />
 
                                         <span>
-                                            contact
+                                            {text.contactAction}
                                         </span>
 
                                     </div>
@@ -195,18 +202,13 @@ function ContactPhone({
                             </div>
 
 
-
-                            {/* PHONE FORM */}
-
                             <div className="contact-phone-form">
 
-
-                                {/* NAME */}
 
                                 <div className="contact-phone-field">
 
                                     <label htmlFor="fullName">
-                                        Full Name
+                                        {text.fullName}
                                     </label>
 
 
@@ -227,7 +229,9 @@ function ContactPhone({
                                             onChange={
                                                 handleChange
                                             }
-                                            placeholder="Your full name"
+                                            placeholder={
+                                                text.fullNamePlaceholder
+                                            }
                                             autoComplete="name"
                                             required
                                         />
@@ -237,13 +241,10 @@ function ContactPhone({
                                 </div>
 
 
-
-                                {/* PHONE */}
-
                                 <div className="contact-phone-field">
 
                                     <label htmlFor="phone">
-                                        Phone Number
+                                        {text.phoneNumber}
                                     </label>
 
 
@@ -264,7 +265,9 @@ function ContactPhone({
                                             onChange={
                                                 handleChange
                                             }
-                                            placeholder="Phone number"
+                                            placeholder={
+                                                text.phonePlaceholder
+                                            }
                                             autoComplete="tel"
                                             required
                                         />
@@ -274,13 +277,10 @@ function ContactPhone({
                                 </div>
 
 
-
-                                {/* EMAIL */}
-
                                 <div className="contact-phone-field">
 
                                     <label htmlFor="email">
-                                        Email
+                                        {text.emailAddress}
                                     </label>
 
 
@@ -301,7 +301,9 @@ function ContactPhone({
                                             onChange={
                                                 handleChange
                                             }
-                                            placeholder="Email address"
+                                            placeholder={
+                                                text.emailPlaceholder
+                                            }
                                             autoComplete="email"
                                         />
 
@@ -311,9 +313,6 @@ function ContactPhone({
 
                             </div>
 
-
-
-                            {/* HOME INDICATOR */}
 
                             <div className="contact-phone-home-indicator">
                             </div>
@@ -325,29 +324,20 @@ function ContactPhone({
                 </div>
 
 
-
-                {/* =========================
-                    SIDE INFORMATION
-                ========================= */}
-
                 <div className="contact-phone-side">
 
                     <span className="section-label">
-                        Live Contact Preview
+                        {text.liveContactPreview}
                     </span>
 
 
                     <h3>
-                        Your details,
-                        inside your phone.
+                        {text.detailsInsidePhone}
                     </h3>
 
 
                     <p>
-                        The phone updates immediately
-                        while you type. These details
-                        will later be used for order
-                        delivery and pharmacy contact.
+                        {text.phonePreviewDescription}
                     </p>
 
 
@@ -359,17 +349,15 @@ function ContactPhone({
                         <div>
 
                             <span>
-                                Customer
+                                {text.customer}
                             </span>
 
 
                             <strong>
-
                                 {
                                     formData.fullName ||
-                                    "Not entered yet"
+                                    text.notEntered
                                 }
-
                             </strong>
 
                         </div>
@@ -385,17 +373,15 @@ function ContactPhone({
                         <div>
 
                             <span>
-                                Phone
+                                {text.phone}
                             </span>
 
 
                             <strong>
-
                                 {
                                     formData.phone ||
-                                    "Not entered yet"
+                                    text.notEntered
                                 }
-
                             </strong>
 
                         </div>
@@ -411,17 +397,15 @@ function ContactPhone({
                         <div>
 
                             <span>
-                                Email
+                                {text.email}
                             </span>
 
 
                             <strong>
-
                                 {
                                     formData.email ||
-                                    "Optional"
+                                    text.optional
                                 }
-
                             </strong>
 
                         </div>
@@ -433,7 +417,9 @@ function ContactPhone({
             </div>
 
         </section>
+
     );
+
 }
 
 

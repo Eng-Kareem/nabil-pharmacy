@@ -1,0 +1,202 @@
+/* =========================================================
+   ADMIN ORDERS RTL
+========================================================= */
+
+html[dir="rtl"]
+.admin-orders-page {
+    direction: rtl;
+
+    font-family:
+        "Cairo",
+        "Manrope",
+        Arial,
+        sans-serif;
+}
+
+
+/* =========================================================
+   HEADERS
+========================================================= */
+
+html[dir="rtl"]
+.admin-orders-header > div > span {
+    letter-spacing: 0;
+
+    text-transform: none;
+}
+
+
+html[dir="rtl"]
+.admin-orders-header h1 {
+    letter-spacing: 0;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+html[dir="rtl"]
+.admin-orders-summary-card {
+    direction: rtl;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+html[dir="rtl"]
+.admin-orders-search svg {
+    left: auto;
+
+    right: 15px;
+}
+
+
+html[dir="rtl"]
+.admin-orders-search input {
+    padding:
+        0 43px
+        0 14px;
+
+    text-align: right;
+}
+
+
+html[dir="rtl"]
+.admin-orders-toolbar select {
+    text-align: right;
+}
+
+
+/* =========================================================
+   ORDER CARD
+========================================================= */
+
+html[dir="rtl"]
+.admin-order-main {
+    direction: rtl;
+}
+
+
+html[dir="rtl"]
+.admin-order-main span {
+    letter-spacing: 0;
+
+    text-transform: none;
+}
+
+
+html[dir="rtl"]
+.admin-order-number,
+html[dir="rtl"]
+.admin-order-customer,
+html[dir="rtl"]
+.admin-order-total,
+html[dir="rtl"]
+.admin-order-payment,
+html[dir="rtl"]
+.admin-order-status-control {
+    text-align: right;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+html[dir="rtl"]
+.admin-order-status-control select {
+    text-align: right;
+}
+
+
+/* =========================================================
+   DETAILS
+========================================================= */
+
+html[dir="rtl"]
+.admin-order-details {
+    direction: rtl;
+}
+
+
+html[dir="rtl"]
+.admin-order-details-section,
+html[dir="rtl"]
+.admin-order-products {
+    text-align: right;
+}
+
+
+html[dir="rtl"]
+.admin-order-detail-row {
+    direction: rtl;
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+html[dir="rtl"]
+.admin-order-product {
+    direction: rtl;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   MONEY
+========================================================= */
+
+html[dir="rtl"]
+.admin-order-money {
+    margin:
+        16px auto
+        0 0;
+}
+
+
+/* =========================================================
+   NOTES / STATUS NOTES
+========================================================= */
+
+html[dir="rtl"]
+.admin-order-notes,
+html[dir="rtl"]
+.admin-order-cancelled-note,
+html[dir="rtl"]
+.admin-order-delivered-note {
+    text-align: right;
+}
+
+
+/* =========================================================
+   RECEIPT BUTTON
+========================================================= */
+
+html[dir="rtl"]
+.admin-order-receipt-button {
+    direction: rtl;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+    max-width: 750px
+) {
+
+    html[dir="rtl"]
+    .admin-orders-header {
+        text-align: right;
+    }
+
+}

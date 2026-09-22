@@ -1,6 +1,6 @@
 import {
+    ArrowLeft,
     ArrowRight,
-    LogIn,
     ShieldCheck,
     ShoppingBag,
     UserRound
@@ -22,6 +22,13 @@ import {
     useAuth
 } from "../../context/AuthContext.jsx";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import checkoutTranslations
+    from "../../i18n/checkoutTranslations.js";
+
 import Checkout
     from "../../pages/Checkout/Checkout.jsx";
 
@@ -36,6 +43,25 @@ function CheckoutAccess() {
     } = useAuth();
 
 
+    const {
+        language,
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        checkoutTranslations[
+            language
+        ] ||
+        checkoutTranslations.en;
+
+
+    const ContinueIcon =
+        isArabic
+            ? ArrowLeft
+            : ArrowRight;
+
+
     const [
         guestCheckout,
         setGuestCheckout
@@ -44,7 +70,8 @@ function CheckoutAccess() {
             () =>
                 sessionStorage.getItem(
                     "nabil-checkout-guest"
-                ) === "true"
+                ) ===
+                "true"
         );
 
 
@@ -70,19 +97,25 @@ function CheckoutAccess() {
 
 
                     <span>
-                        Preparing checkout...
+
+                        {
+                            text.preparingCheckout
+                        }
+
                     </span>
 
                 </div>
 
             </main>
+
         );
+
     }
 
 
     /*
     ========================================================
-    LOGGED IN OR GUEST ALREADY SELECTED
+    LOGGED IN / GUEST
     ========================================================
     */
 
@@ -94,43 +127,57 @@ function CheckoutAccess() {
         return (
             <Checkout />
         );
+
     }
 
 
     /*
     ========================================================
-    ASK USER
+    GUEST
     ========================================================
     */
 
-    const continueAsGuest = () => {
+    const continueAsGuest =
+        () => {
 
-        sessionStorage.setItem(
-            "nabil-checkout-guest",
-            "true"
-        );
+            sessionStorage.setItem(
+                "nabil-checkout-guest",
+                "true"
+            );
 
 
-        setGuestCheckout(
-            true
-        );
-    };
+            setGuestCheckout(
+                true
+            );
 
+        };
+
+
+    /*
+    ========================================================
+    PAGE
+    ========================================================
+    */
 
     return (
 
         <main className="checkout-access-page">
 
+
             <motion.section
+
                 className="checkout-access-card"
+
                 initial={{
                     opacity: 0,
                     y: 22
                 }}
+
                 animate={{
                     opacity: 1,
                     y: 0
                 }}
+
             >
 
                 <div className="checkout-access-icon">
@@ -143,27 +190,40 @@ function CheckoutAccess() {
 
 
                 <span>
-                    Nabil Pharmacy Checkout
+
+                    {
+                        text.pharmacyCheckout
+                    }
+
                 </span>
 
 
                 <h1>
-                    How would you like to continue?
+
+                    {
+                        text.howContinue
+                    }
+
                 </h1>
 
 
                 <p>
 
-                    Sign in for a personalized
-                    pharmacy experience or continue
-                    without creating an account.
+                    {
+                        text.continueDescription
+                    }
 
                 </p>
 
 
+                {/* =====================================
+                    OPTIONS
+                ===================================== */}
 
                 <div className="checkout-access-options">
 
+
+                    {/* LOGIN */}
 
                     <Link
                         to="/account?redirect=/checkout"
@@ -182,28 +242,33 @@ function CheckoutAccess() {
                         <section>
 
                             <strong>
-                                Login or Create Account
+
+                                {
+                                    text.loginCreateAccount
+                                }
+
                             </strong>
 
 
                             <span>
 
-                                Keep your orders and
-                                receipts connected to
-                                your customer account.
+                                {
+                                    text.loginDescription
+                                }
 
                             </span>
 
                         </section>
 
 
-                        <ArrowRight
+                        <ContinueIcon
                             size={19}
                         />
 
                     </Link>
 
 
+                    {/* GUEST */}
 
                     <button
                         type="button"
@@ -225,21 +290,26 @@ function CheckoutAccess() {
                         <section>
 
                             <strong>
-                                Continue as Guest
+
+                                {
+                                    text.continueGuest
+                                }
+
                             </strong>
 
 
                             <span>
 
-                                Place your order without
-                                creating an account.
+                                {
+                                    text.guestDescription
+                                }
 
                             </span>
 
                         </section>
 
 
-                        <ArrowRight
+                        <ContinueIcon
                             size={19}
                         />
 
@@ -248,6 +318,9 @@ function CheckoutAccess() {
                 </div>
 
 
+                {/* =====================================
+                    SECURITY
+                ===================================== */}
 
                 <div className="checkout-access-security">
 
@@ -258,29 +331,36 @@ function CheckoutAccess() {
 
                     <span>
 
-                        Both customers and guests
-                        use the same secure checkout
-                        and inventory validation.
+                        {
+                            text.secureGuest
+                        }
 
                     </span>
 
                 </div>
 
 
+                {/* =====================================
+                    BACK
+                ===================================== */}
 
                 <Link
                     to="/cart"
                     className="checkout-access-cart"
                 >
 
-                    Back to Cart
+                    {
+                        text.backToCart
+                    }
 
                 </Link>
 
             </motion.section>
 
         </main>
+
     );
+
 }
 
 

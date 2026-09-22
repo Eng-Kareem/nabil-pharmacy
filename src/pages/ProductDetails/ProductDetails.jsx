@@ -1,6 +1,7 @@
 import {
     Activity,
     ArrowLeft,
+    ArrowRight,
     Baby,
     Check,
     Heart,
@@ -41,6 +42,10 @@ import {
 } from "../../context/CartContext.jsx";
 
 import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import {
     supabase
 } from "../../lib/supabase.js";
 
@@ -49,35 +54,63 @@ import "./ProductDetails.css";
 
 function ProductDetails() {
 
-    const { productId } =
-        useParams();
+    const {
+        productId
+    } = useParams();
 
-    const { addToCart } =
-        useCart();
+
+    const {
+        addToCart
+    } = useCart();
+
+
+    const {
+        language,
+        isArabic,
+        localize,
+        t
+    } = useLanguage();
+
 
     const reduceMotion =
         useReducedMotion();
 
 
-    const [product, setProduct] =
-        useState(null);
+    const [
+        product,
+        setProduct
+    ] = useState(null);
+
 
     const [
         relatedProducts,
         setRelatedProducts
     ] = useState([]);
 
-    const [loading, setLoading] =
-        useState(true);
 
-    const [error, setError] =
-        useState("");
+    const [
+        loading,
+        setLoading
+    ] = useState(true);
 
-    const [quantity, setQuantity] =
-        useState(1);
 
-    const [favorite, setFavorite] =
-        useState(false);
+    const [
+        error,
+        setError
+    ] = useState("");
+
+
+    const [
+        quantity,
+        setQuantity
+    ] = useState(1);
+
+
+    const [
+        favorite,
+        setFavorite
+    ] = useState(false);
+
 
     const [
         notification,
@@ -85,33 +118,106 @@ function ProductDetails() {
     ] = useState("");
 
 
+    const BackIcon =
+        isArabic
+            ? ArrowRight
+            : ArrowLeft;
+
+
+    const formatNumber = (
+        value
+    ) => {
+
+        return Number(
+            value ||
+            0
+        ).toLocaleString(
+            isArabic
+                ? "ar-EG"
+                : "en-US"
+        );
+
+    };
+
+
+    const formatPrice = (
+        price
+    ) => {
+
+        const amount =
+            Number(
+                price ||
+                0
+            ).toLocaleString(
+                isArabic
+                    ? "ar-EG"
+                    : "en-US"
+            );
+
+
+        return isArabic
+            ? `${amount} ج.م`
+            : `EGP ${amount}`;
+
+    };
+
+
     const formatProduct = (
         item
     ) => {
 
-        if (!item) {
+        if (
+            !item
+        ) {
+
             return null;
+
         }
 
 
         const stockQuantity =
-            (item.branch_stock || [])
-                .reduce(
-                    (total, stockRow) =>
-                        total +
-                        Number(
-                            stockRow.quantity || 0
-                        ),
-                    0
-                );
+            (
+                item.branch_stock ||
+                []
+            ).reduce(
+                (
+                    total,
+                    stockRow
+                ) =>
+                    total +
+                    Number(
+                        stockRow.quantity ||
+                        0
+                    ),
+                0
+            );
 
 
         return {
-            id: item.id,
-            slug: item.slug,
-            name: item.name,
+
+            id:
+                item.id,
+
+            slug:
+                item.slug,
+
+            name:
+                localize(
+                    item,
+                    "name",
+                    ""
+                ),
 
             category:
+                localize(
+                    item.categories,
+                    "name",
+                    t(
+                        "pharmacy"
+                    )
+                ),
+
+            categoryOriginal:
                 item.categories?.name ||
                 "Pharmacy",
 
@@ -123,23 +229,40 @@ function ProductDetails() {
                 item.category_id,
 
             brand:
-                item.brand ||
-                "Nabil Pharmacy",
+                localize(
+                    item,
+                    "brand",
+                    t(
+                        "nabilPharmacy"
+                    )
+                ),
 
             description:
-                item.description ||
-                "",
+                localize(
+                    item,
+                    "description",
+                    ""
+                ),
 
             price:
-                Number(item.price) || 0,
+                Number(
+                    item.price
+                ) ||
+                0,
 
             oldPrice:
                 item.old_price
-                    ? Number(item.old_price)
+                    ? Number(
+                        item.old_price
+                    )
                     : null,
 
             offer:
-                item.badge_text ||
+                localize(
+                    item,
+                    "badge_text",
+                    ""
+                ) ||
                 null,
 
             imageUrl:
@@ -152,342 +275,454 @@ function ProductDetails() {
                 ),
 
             featured:
-                Boolean(item.featured),
+                Boolean(
+                    item.featured
+                ),
 
             stockQuantity,
 
             inStock:
-                stockQuantity > 0,
+                stockQuantity >
+                0,
 
             lowStock:
-                stockQuantity > 0 &&
-                stockQuantity <= 5,
+                stockQuantity >
+                0 &&
+                stockQuantity <=
+                5,
 
             createdAt:
                 item.created_at
+
         };
+
     };
 
 
-    const loadProduct = async () => {
+    const productSelect = `
+        id,
+        category_id,
+        name,
+        name_ar,
+        slug,
+        brand,
+        brand_ar,
+        description,
+        description_ar,
+        price,
+        old_price,
+        badge_text,
+        badge_text_ar,
+        image_url,
+        prescription_required,
+        featured,
+        is_active,
+        created_at,
 
-        setLoading(true);
-        setError("");
+        categories (
+            id,
+            name,
+            name_ar,
+            slug,
+            description,
+            description_ar
+        ),
 
-        setProduct(null);
-        setRelatedProducts([]);
-
-
-        try {
-
-            const {
-                data,
-                error: productError
-            } =
-                await supabase
-                    .from("products")
-                    .select(`
-                        id,
-                        category_id,
-                        name,
-                        slug,
-                        brand,
-                        description,
-                        price,
-                        old_price,
-                        badge_text,
-                        image_url,
-                        prescription_required,
-                        featured,
-                        is_active,
-                        created_at,
-
-                        categories (
-                            id,
-                            name,
-                            slug
-                        ),
-
-                        branch_stock (
-                            quantity
-                        )
-                    `)
-                    .eq(
-                        "id",
-                        productId
-                    )
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .single();
+        branch_stock (
+            quantity
+        )
+    `;
 
 
-            if (productError) {
-                throw productError;
-            }
+    const loadProduct =
+        async () => {
 
+            setLoading(
+                true
+            );
 
-            const formattedProduct =
-                formatProduct(data);
-
+            setError(
+                ""
+            );
 
             setProduct(
-                formattedProduct
+                null
+            );
+
+            setRelatedProducts(
+                []
             );
 
 
-            if (data.category_id) {
+            try {
 
                 const {
-                    data: relatedData,
-                    error: relatedError
+                    data,
+                    error:
+                        productError
                 } =
                     await supabase
-                        .from("products")
-                        .select(`
-                            id,
-                            category_id,
-                            name,
-                            slug,
-                            brand,
-                            description,
-                            price,
-                            old_price,
-                            badge_text,
-                            image_url,
-                            prescription_required,
-                            featured,
-                            is_active,
-                            created_at,
-
-                            categories (
-                                id,
-                                name,
-                                slug
-                            ),
-
-                            branch_stock (
-                                quantity
-                            )
-                        `)
+                        .from(
+                            "products"
+                        )
+                        .select(
+                            productSelect
+                        )
                         .eq(
-                            "category_id",
-                            data.category_id
+                            "id",
+                            productId
                         )
                         .eq(
                             "is_active",
                             true
                         )
-                        .neq(
-                            "id",
-                            data.id
-                        )
-                        .limit(3);
+                        .single();
 
 
-                if (relatedError) {
+                if (
+                    productError
+                ) {
 
-                    console.error(
-                        "Related products error:",
-                        relatedError
-                    );
+                    throw productError;
 
-                } else {
-
-                    setRelatedProducts(
-                        (relatedData || [])
-                            .map(formatProduct)
-                    );
                 }
+
+
+                const formatted =
+                    formatProduct(
+                        data
+                    );
+
+
+                setProduct(
+                    formatted
+                );
+
+
+                if (
+                    data.category_id
+                ) {
+
+                    const {
+                        data:
+                            relatedData,
+                        error:
+                            relatedError
+                    } =
+                        await supabase
+                            .from(
+                                "products"
+                            )
+                            .select(
+                                productSelect
+                            )
+                            .eq(
+                                "category_id",
+                                data.category_id
+                            )
+                            .eq(
+                                "is_active",
+                                true
+                            )
+                            .neq(
+                                "id",
+                                data.id
+                            )
+                            .limit(
+                                3
+                            );
+
+
+                    if (
+                        relatedError
+                    ) {
+
+                        console.error(
+                            "Related products error:",
+                            relatedError
+                        );
+
+                    } else {
+
+                        setRelatedProducts(
+                            (
+                                relatedData ||
+                                []
+                            ).map(
+                                formatProduct
+                            )
+                        );
+
+                    }
+
+                }
+
+
+                setQuantity(
+                    1
+                );
+
+            } catch (
+                loadError
+            ) {
+
+                console.error(
+                    "Product details error:",
+                    loadError
+                );
+
+
+                setError(
+                    t(
+                        "productNotFound"
+                    )
+                );
+
+            } finally {
+
+                setLoading(
+                    false
+                );
+
             }
 
-
-            setQuantity(1);
-
-        } catch (error) {
-
-            console.error(
-                "Product details error:",
-                error
-            );
+        };
 
 
-            setError(
-                "We could not find this product."
-            );
+    useEffect(
+        () => {
 
-        } finally {
+            loadProduct();
 
-            setLoading(false);
-        }
-    };
-
-
-    useEffect(() => {
-
-        loadProduct();
-
-    }, [productId]);
+        },
+        [
+            productId,
+            language
+        ]
+    );
 
 
     const ProductIcon =
         useMemo(
             () => {
 
-                if (!product) {
+                if (
+                    !product
+                ) {
+
                     return Pill;
+
                 }
 
 
                 const category =
-                    product.category
-                        .toLowerCase();
+                    (
+                        product.categoryOriginal ||
+                        ""
+                    ).toLowerCase();
 
 
                 if (
-                    category.includes("baby")
+                    category.includes(
+                        "baby"
+                    )
                 ) {
+
                     return Baby;
+
                 }
 
 
                 if (
-                    category.includes("vitamin")
+                    category.includes(
+                        "vitamin"
+                    )
                 ) {
+
                     return HeartPulse;
+
                 }
 
 
                 if (
-                    category.includes("device")
+                    category.includes(
+                        "device"
+                    )
                 ) {
+
                     return Activity;
+
                 }
 
 
                 if (
-                    category.includes("personal")
+                    category.includes(
+                        "personal"
+                    )
                 ) {
+
                     return Sparkles;
+
                 }
 
 
                 return Pill;
 
             },
-            [product]
+            [
+                product
+            ]
         );
 
 
-    const increaseQuantity = () => {
+    const increaseQuantity =
+        () => {
 
-        if (!product) {
-            return;
-        }
+            if (
+                !product
+            ) {
+
+                return;
+
+            }
 
 
-        const maximum =
-            Math.min(
-                20,
-                product.stockQuantity
+            const maximum =
+                Math.min(
+                    20,
+                    product.stockQuantity
+                );
+
+
+            setQuantity(
+                current =>
+                    Math.min(
+                        current +
+                        1,
+                        maximum
+                    )
+            );
+
+        };
+
+
+    const decreaseQuantity =
+        () => {
+
+            setQuantity(
+                current =>
+                    Math.max(
+                        current -
+                        1,
+                        1
+                    )
+            );
+
+        };
+
+
+    const handleAddToCart =
+        () => {
+
+            if (
+                !product ||
+                !product.inStock
+            ) {
+
+                return;
+
+            }
+
+
+            addToCart(
+                product,
+                quantity
             );
 
 
-        setQuantity(
-            current =>
-                Math.min(
-                    current + 1,
-                    maximum
+            setNotification(
+                t(
+                    "addedQuantityToCart",
+                    {
+                        quantity:
+                            formatNumber(
+                                quantity
+                            ),
+
+                        product:
+                            product.name
+                    }
                 )
-        );
-    };
+            );
 
 
-    const decreaseQuantity = () => {
+            window.setTimeout(
+                () => {
 
-        setQuantity(
-            current =>
-                Math.max(
-                    current - 1,
-                    1
-                )
-        );
-    };
+                    setNotification(
+                        ""
+                    );
 
+                },
+                2200
+            );
 
-    const handleAddToCart = () => {
-
-        if (
-            !product ||
-            !product.inStock
-        ) {
-            return;
-        }
-
-
-        addToCart(
-            product,
-            quantity
-        );
-
-
-        setNotification(
-            `${quantity} × ${product.name} added to your cart`
-        );
-
-
-        window.setTimeout(
-            () => {
-                setNotification("");
-            },
-            2200
-        );
-    };
+        };
 
 
     const handleRelatedProductAdd = (
         relatedProduct
     ) => {
 
-        if (!relatedProduct.inStock) {
+        setNotification(
 
-            setNotification(
-                `${relatedProduct.name} is currently out of stock`
-            );
+            relatedProduct.inStock
 
-        } else {
+                ? t(
+                    "addedToCart",
+                    {
+                        product:
+                            relatedProduct.name
+                    }
+                )
 
-            setNotification(
-                `${relatedProduct.name} added to your cart`
-            );
-        }
+                : t(
+                    "productOutOfStock",
+                    {
+                        product:
+                            relatedProduct.name
+                    }
+                )
+
+        );
 
 
         window.setTimeout(
             () => {
-                setNotification("");
+
+                setNotification(
+                    ""
+                );
+
             },
             2200
         );
+
     };
 
 
-    const formatPrice = (
-        price
-    ) => {
+    /*
+    ========================================================
+    LOADING
+    ========================================================
+    */
+
+    if (
+        loading
+    ) {
 
         return (
-            `EGP ${Number(
-                price
-            ).toLocaleString()}`
-        );
-    };
 
-
-    if (loading) {
-
-        return (
             <main className="product-details-page">
 
                 <div className="container">
@@ -499,13 +734,26 @@ function ProductDetails() {
                             className="product-details-loading-icon"
                         />
 
+
                         <h1>
-                            Loading product
+
+                            {
+                                t(
+                                    "loadingProduct"
+                                )
+                            }
+
                         </h1>
 
+
                         <p>
-                            Getting the latest product
-                            information from Nabil Pharmacy.
+
+                            {
+                                t(
+                                    "loadingProductDescription"
+                                )
+                            }
+
                         </p>
 
                     </div>
@@ -513,9 +761,17 @@ function ProductDetails() {
                 </div>
 
             </main>
+
         );
+
     }
 
+
+    /*
+    ========================================================
+    ERROR
+    ========================================================
+    */
 
     if (
         error ||
@@ -523,6 +779,7 @@ function ProductDetails() {
     ) {
 
         return (
+
             <main className="product-details-page">
 
                 <div className="container">
@@ -533,25 +790,43 @@ function ProductDetails() {
                             size={48}
                         />
 
+
                         <h1>
-                            Product not found
+
+                            {
+                                t(
+                                    "productNotFound"
+                                )
+                            }
+
                         </h1>
 
+
                         <p>
-                            This product may no longer
-                            be available.
+
+                            {
+                                t(
+                                    "productMayUnavailable"
+                                )
+                            }
+
                         </p>
+
 
                         <Link
                             to="/products"
                             className="primary-button"
                         >
 
-                            <ArrowLeft
+                            <BackIcon
                                 size={18}
                             />
 
-                            Back to Products
+                            {
+                                t(
+                                    "backToProducts"
+                                )
+                            }
 
                         </Link>
 
@@ -560,12 +835,18 @@ function ProductDetails() {
                 </div>
 
             </main>
+
         );
+
     }
 
 
     return (
+
         <main className="product-details-page">
+
+
+            {/* BREADCRUMB */}
 
             <section className="product-details-breadcrumb">
 
@@ -573,11 +854,15 @@ function ProductDetails() {
 
                     <Link to="/products">
 
-                        <ArrowLeft
+                        <BackIcon
                             size={17}
                         />
 
-                        Back to Products
+                        {
+                            t(
+                                "backToProducts"
+                            )
+                        }
 
                     </Link>
 
@@ -586,34 +871,49 @@ function ProductDetails() {
             </section>
 
 
+            {/* PRODUCT */}
+
             <section className="product-details-main">
 
                 <div className="container product-details-layout">
 
+
                     <motion.div
+
                         className="product-details-visual"
+
                         initial={
                             reduceMotion
                                 ? false
                                 : {
                                     opacity: 0,
-                                    x: -25
+                                    x:
+                                        isArabic
+                                            ? 25
+                                            : -25
                                 }
                         }
+
                         animate={{
                             opacity: 1,
                             x: 0
                         }}
+
                         transition={{
                             duration: 0.5
                         }}
+
                     >
 
                         {
                             product.offer && (
 
                                 <span className="product-details-offer">
-                                    {product.offer}
+
+                                    {
+                                        product.offer
+                                    }
+
                                 </span>
 
                             )
@@ -659,10 +959,20 @@ function ProductDetails() {
                                 size={17}
                             />
 
-                            Nabil Pharmacy
+                            {
+                                t(
+                                    "nabilPharmacy"
+                                )
+                            }
 
                             <span>
-                                Since 1975
+
+                                {
+                                    t(
+                                        "since1975"
+                                    )
+                                }
+
                             </span>
 
                         </div>
@@ -671,26 +981,38 @@ function ProductDetails() {
 
 
                     <motion.div
+
                         className="product-details-info"
+
                         initial={
                             reduceMotion
                                 ? false
                                 : {
                                     opacity: 0,
-                                    x: 25
+                                    x:
+                                        isArabic
+                                            ? -25
+                                            : 25
                                 }
                         }
+
                         animate={{
                             opacity: 1,
                             x: 0
                         }}
+
                         transition={{
                             duration: 0.5
                         }}
+
                     >
 
                         <div className="product-details-category">
-                            {product.category}
+
+                            {
+                                product.category
+                            }
+
                         </div>
 
 
@@ -699,39 +1021,60 @@ function ProductDetails() {
                             <div>
 
                                 <span className="product-details-brand">
-                                    {product.brand}
+
+                                    {
+                                        product.brand
+                                    }
+
                                 </span>
 
+
                                 <h1>
-                                    {product.name}
+
+                                    {
+                                        product.name
+                                    }
+
                                 </h1>
 
                             </div>
 
 
                             <button
+
                                 type="button"
+
                                 className={
                                     favorite
                                         ? "product-details-favorite active"
                                         : "product-details-favorite"
                                 }
+
                                 onClick={() =>
                                     setFavorite(
                                         current =>
                                             !current
                                     )
                                 }
-                                aria-label="Add product to favorites"
+
+                                aria-label={
+                                    t(
+                                        "addFavorites"
+                                    )
+                                }
+
                             >
 
                                 <Heart
+
                                     size={21}
+
                                     fill={
                                         favorite
                                             ? "currentColor"
                                             : "none"
                                     }
+
                                 />
 
                             </button>
@@ -740,29 +1083,38 @@ function ProductDetails() {
 
 
                         <p className="product-details-description">
-                            {product.description}
+
+                            {
+                                product.description
+                            }
+
                         </p>
 
 
                         <div className="product-details-price">
 
                             <strong>
+
                                 {
                                     formatPrice(
                                         product.price
                                     )
                                 }
+
                             </strong>
+
 
                             {
                                 product.oldPrice && (
 
                                     <span>
+
                                         {
                                             formatPrice(
                                                 product.oldPrice
                                             )
                                         }
+
                                     </span>
 
                                 )
@@ -770,8 +1122,6 @@ function ProductDetails() {
 
                         </div>
 
-
-                        {/* REAL STOCK */}
 
                         <div
                             className={
@@ -785,7 +1135,11 @@ function ProductDetails() {
 
                             {
                                 product.inStock && (
-                                    <Check size={17} />
+
+                                    <Check
+                                        size={17}
+                                    />
+
                                 )
                             }
 
@@ -794,10 +1148,32 @@ function ProductDetails() {
 
                                 {
                                     !product.inStock
-                                        ? "Out of Stock"
+
+                                        ? t(
+                                            "outOfStock"
+                                        )
+
                                         : product.lowStock
-                                            ? `Only ${product.stockQuantity} left`
-                                            : `${product.stockQuantity} in stock`
+
+                                            ? t(
+                                                "onlyLeft",
+                                                {
+                                                    quantity:
+                                                        formatNumber(
+                                                            product.stockQuantity
+                                                        )
+                                                }
+                                            )
+
+                                            : t(
+                                                "inStockCount",
+                                                {
+                                                    quantity:
+                                                        formatNumber(
+                                                            product.stockQuantity
+                                                        )
+                                                }
+                                            )
                                 }
 
                             </span>
@@ -814,16 +1190,28 @@ function ProductDetails() {
                                         size={19}
                                     />
 
+
                                     <div>
 
                                         <strong>
-                                            Prescription Required
+
+                                            {
+                                                t(
+                                                    "prescriptionRequired"
+                                                )
+                                            }
+
                                         </strong>
 
+
                                         <span>
-                                            Pharmacy verification
-                                            will be required before
-                                            this product can be supplied.
+
+                                            {
+                                                t(
+                                                    "prescriptionVerification"
+                                                )
+                                            }
+
                                         </span>
 
                                     </div>
@@ -836,18 +1224,29 @@ function ProductDetails() {
 
                         <div className="product-details-purchase">
 
+
                             <div className="product-details-quantity">
 
                                 <button
+
                                     type="button"
+
                                     onClick={
                                         decreaseQuantity
                                     }
+
                                     disabled={
                                         !product.inStock ||
-                                        quantity <= 1
+                                        quantity <=
+                                        1
                                     }
-                                    aria-label="Decrease quantity"
+
+                                    aria-label={
+                                        t(
+                                            "decreaseQuantity"
+                                        )
+                                    }
+
                                 >
 
                                     <Minus
@@ -858,28 +1257,43 @@ function ProductDetails() {
 
 
                                 <span>
+
                                     {
                                         product.inStock
-                                            ? quantity
-                                            : 0
+                                            ? formatNumber(
+                                                quantity
+                                            )
+                                            : formatNumber(
+                                                0
+                                            )
                                     }
+
                                 </span>
 
 
                                 <button
+
                                     type="button"
+
                                     onClick={
                                         increaseQuantity
                                     }
+
                                     disabled={
                                         !product.inStock ||
                                         quantity >=
-                                            Math.min(
-                                                20,
-                                                product.stockQuantity
-                                            )
+                                        Math.min(
+                                            20,
+                                            product.stockQuantity
+                                        )
                                     }
-                                    aria-label="Increase quantity"
+
+                                    aria-label={
+                                        t(
+                                            "increaseQuantity"
+                                        )
+                                    }
+
                                 >
 
                                     <Plus
@@ -892,14 +1306,19 @@ function ProductDetails() {
 
 
                             <button
+
                                 type="button"
+
                                 className="product-details-add-button"
+
                                 onClick={
                                     handleAddToCart
                                 }
+
                                 disabled={
                                     !product.inStock
                                 }
+
                             >
 
                                 <ShoppingBag
@@ -908,8 +1327,12 @@ function ProductDetails() {
 
                                 {
                                     product.inStock
-                                        ? "Add to Cart"
-                                        : "Out of Stock"
+                                        ? t(
+                                            "addToCart"
+                                        )
+                                        : t(
+                                            "outOfStock"
+                                        )
                                 }
 
                             </button>
@@ -919,21 +1342,35 @@ function ProductDetails() {
 
                         <div className="product-details-benefits">
 
+
                             <div>
 
                                 <ShieldCheck
                                     size={19}
                                 />
 
+
                                 <div>
 
                                     <strong>
-                                        Pharmacy Checked
+
+                                        {
+                                            t(
+                                                "pharmacyChecked"
+                                            )
+                                        }
+
                                     </strong>
 
+
                                     <span>
-                                        Supplied through
-                                        Nabil Pharmacy
+
+                                        {
+                                            t(
+                                                "suppliedThroughNabil"
+                                            )
+                                        }
+
                                     </span>
 
                                 </div>
@@ -947,15 +1384,28 @@ function ProductDetails() {
                                     size={19}
                                 />
 
+
                                 <div>
 
                                     <strong>
-                                        Delivery
+
+                                        {
+                                            t(
+                                                "delivery"
+                                            )
+                                        }
+
                                     </strong>
 
+
                                     <span>
-                                        Delivery options
-                                        available at checkout
+
+                                        {
+                                            t(
+                                                "deliveryOptionsCheckout"
+                                            )
+                                        }
+
                                     </span>
 
                                 </div>
@@ -969,15 +1419,28 @@ function ProductDetails() {
                                     size={19}
                                 />
 
+
                                 <div>
 
                                     <strong>
-                                        Secure Packaging
+
+                                        {
+                                            t(
+                                                "securePackaging"
+                                            )
+                                        }
+
                                     </strong>
 
+
                                     <span>
-                                        Prepared carefully
-                                        before dispatch
+
+                                        {
+                                            t(
+                                                "preparedBeforeDispatch"
+                                            )
+                                        }
+
                                     </span>
 
                                 </div>
@@ -993,6 +1456,8 @@ function ProductDetails() {
             </section>
 
 
+            {/* INFORMATION */}
+
             <section className="product-details-information">
 
                 <div className="container">
@@ -1000,58 +1465,56 @@ function ProductDetails() {
                     <div className="product-details-information-card">
 
                         <span className="section-label">
-                            Product Information
+
+                            {
+                                t(
+                                    "productInformation"
+                                )
+                            }
+
                         </span>
 
+
                         <h2>
-                            About this product
+
+                            {
+                                t(
+                                    "aboutThisProduct"
+                                )
+                            }
+
                         </h2>
 
+
                         <p>
-                            {product.description}
+
+                            {
+                                product.description
+                            }
+
                         </p>
 
 
                         <div className="product-details-information-grid">
 
-                            <div>
-
-                                <span>
-                                    Brand
-                                </span>
-
-                                <strong>
-                                    {product.brand}
-                                </strong>
-
-                            </div>
-
 
                             <div>
 
                                 <span>
-                                    Category
+
+                                    {
+                                        t(
+                                            "brand"
+                                        )
+                                    }
+
                                 </span>
 
-                                <strong>
-                                    {product.category}
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span>
-                                    Prescription
-                                </span>
 
                                 <strong>
 
                                     {
-                                        product.prescriptionRequired
-                                            ? "Required"
-                                            : "Not marked as required"
+                                        product.brand
                                     }
 
                                 </strong>
@@ -1062,15 +1525,86 @@ function ProductDetails() {
                             <div>
 
                                 <span>
-                                    Availability
+
+                                    {
+                                        t(
+                                            "category"
+                                        )
+                                    }
+
                                 </span>
+
+
+                                <strong>
+
+                                    {
+                                        product.category
+                                    }
+
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+
+                                    {
+                                        t(
+                                            "prescription"
+                                        )
+                                    }
+
+                                </span>
+
+
+                                <strong>
+
+                                    {
+                                        product.prescriptionRequired
+                                            ? t(
+                                                "required"
+                                            )
+                                            : t(
+                                                "notMarkedRequired"
+                                            )
+                                    }
+
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+
+                                    {
+                                        t(
+                                            "availability"
+                                        )
+                                    }
+
+                                </span>
+
 
                                 <strong>
 
                                     {
                                         product.inStock
-                                            ? `${product.stockQuantity} available`
-                                            : "Out of stock"
+                                            ? t(
+                                                "availableCount",
+                                                {
+                                                    quantity:
+                                                        formatNumber(
+                                                            product.stockQuantity
+                                                        )
+                                                }
+                                            )
+                                            : t(
+                                                "outOfStock"
+                                            )
                                     }
 
                                 </strong>
@@ -1086,13 +1620,15 @@ function ProductDetails() {
                                 size={20}
                             />
 
+
                             <p>
-                                Product information on this
-                                website is for pharmacy
-                                shopping purposes and does
-                                not replace advice from a
-                                pharmacist or healthcare
-                                professional.
+
+                                {
+                                    t(
+                                        "productInfoNotice"
+                                    )
+                                }
+
                             </p>
 
                         </div>
@@ -1104,29 +1640,53 @@ function ProductDetails() {
             </section>
 
 
+            {/* RELATED */}
+
             {
-                relatedProducts.length > 0 && (
+                relatedProducts.length >
+                0 && (
 
                     <section className="product-details-related">
 
                         <div className="container">
+
 
                             <div className="product-details-related-heading">
 
                                 <div>
 
                                     <span className="section-label">
-                                        You May Also Like
+
+                                        {
+                                            t(
+                                                "youMayAlsoLike"
+                                            )
+                                        }
+
                                     </span>
 
+
                                     <h2>
-                                        Related products
+
+                                        {
+                                            t(
+                                                "relatedProducts"
+                                            )
+                                        }
+
                                     </h2>
 
                                 </div>
 
+
                                 <Link to="/products">
-                                    View All Products
+
+                                    {
+                                        t(
+                                            "viewAllProducts"
+                                        )
+                                    }
+
                                 </Link>
 
                             </div>
@@ -1139,15 +1699,19 @@ function ProductDetails() {
                                         relatedProduct => (
 
                                             <ProductCard
+
                                                 key={
                                                     relatedProduct.id
                                                 }
+
                                                 product={
                                                     relatedProduct
                                                 }
+
                                                 onAdd={
                                                     handleRelatedProductAdd
                                                 }
+
                                             />
 
                                         )
@@ -1164,30 +1728,41 @@ function ProductDetails() {
             }
 
 
+            {/* NOTIFICATION */}
+
             <AnimatePresence>
 
                 {
                     notification && (
 
                         <motion.div
+
                             className="product-details-toast"
+
                             initial={{
                                 opacity: 0,
                                 y: 20
                             }}
+
                             animate={{
                                 opacity: 1,
                                 y: 0
                             }}
+
                             exit={{
                                 opacity: 0,
                                 y: 15
                             }}
+
                         >
 
-                            <Check size={17} />
+                            <Check
+                                size={17}
+                            />
 
-                            {notification}
+                            {
+                                notification
+                            }
 
                         </motion.div>
 
@@ -1197,7 +1772,9 @@ function ProductDetails() {
             </AnimatePresence>
 
         </main>
+
     );
+
 }
 
 

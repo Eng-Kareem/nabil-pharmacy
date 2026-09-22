@@ -743,3 +743,27 @@
     }
 
 }
+/* =========================================================
+   ARABIC WEBSITE LOADER
+========================================================= */
+
+html[dir="rtl"] .website-loader {
+    font-family:
+        "Cairo",
+        "Manrope",
+        Arial,
+        sans-serif;
+}
+
+
+html[dir="rtl"] .website-loader-small-title,
+html[dir="rtl"] .website-loader-since strong,
+html[dir="rtl"] .website-loader-bottom {
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+
+html[dir="rtl"] .website-loader-brand h1 {
+    letter-spacing: 0;
+}

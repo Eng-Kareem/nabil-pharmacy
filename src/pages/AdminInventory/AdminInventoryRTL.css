@@ -1,0 +1,144 @@
+/* =========================================================
+   ADMIN INVENTORY RTL
+========================================================= */
+
+html[dir="rtl"]
+.admin-inventory-page {
+    direction: rtl;
+
+    font-family:
+        "Cairo",
+        "Manrope",
+        Arial,
+        sans-serif;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+html[dir="rtl"]
+.admin-inventory-header > div > span {
+    letter-spacing: 0;
+
+    text-transform: none;
+}
+
+
+html[dir="rtl"]
+.admin-inventory-header h1 {
+    letter-spacing: 0;
+}
+
+
+/* =========================================================
+   BRANCH
+========================================================= */
+
+html[dir="rtl"]
+.admin-inventory-branch-card,
+html[dir="rtl"]
+.admin-inventory-branch-info {
+    text-align: right;
+}
+
+
+html[dir="rtl"]
+.admin-inventory-branch-card select {
+    padding:
+        0 12px
+        0 36px;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+html[dir="rtl"]
+.admin-inventory-summary-card {
+    direction: rtl;
+
+    text-align: right;
+}
+
+
+html[dir="rtl"]
+.admin-inventory-summary-card strong {
+    letter-spacing: 0;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+html[dir="rtl"]
+.admin-inventory-search svg {
+    left: auto;
+
+    right: 15px;
+}
+
+
+html[dir="rtl"]
+.admin-inventory-search input {
+    padding:
+        0 44px
+        0 15px;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+html[dir="rtl"]
+.admin-inventory-table th {
+    text-align: right;
+
+    text-transform: none;
+
+    letter-spacing: 0;
+}
+
+
+html[dir="rtl"]
+.admin-inventory-table td {
+    text-align: right;
+}
+
+
+html[dir="rtl"]
+.admin-inventory-product {
+    direction: rtl;
+}
+
+
+/* =========================================================
+   STOCK CONTROLS
+========================================================= */
+
+html[dir="rtl"]
+.admin-stock-control {
+    direction: ltr;
+}
+
+
+/* =========================================================
+   REALTIME
+========================================================= */
+
+html[dir="rtl"]
+.admin-realtime-status,
+html[dir="rtl"]
+.admin-inventory-refresh,
+html[dir="rtl"]
+.admin-inventory-save {
+    direction: rtl;
+}

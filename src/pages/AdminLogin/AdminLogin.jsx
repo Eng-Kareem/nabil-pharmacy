@@ -23,6 +23,10 @@ import {
     supabase
 } from "../../lib/supabase.js";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
 import "./AdminLogin.css";
 
 
@@ -30,6 +34,11 @@ function AdminLogin() {
 
     const navigate =
         useNavigate();
+
+
+    const {
+        isArabic
+    } = useLanguage();
 
 
     const [
@@ -62,35 +71,368 @@ function AdminLogin() {
     ] = useState("");
 
 
+    const text =
+        isArabic
+            ? {
+
+                secureAdministration:
+                    "إدارة آمنة",
+
+                pharmacy:
+                    "صيدلية نبيل",
+
+                title:
+                    "تسجيل دخول المسؤول",
+
+                description:
+                    "سجل الدخول باستخدام حساب مسؤول مصرح له بإدارة الصيدلية.",
+
+                email:
+                    "البريد الإلكتروني",
+
+                emailPlaceholder:
+                    "admin@example.com",
+
+                password:
+                    "كلمة المرور",
+
+                passwordPlaceholder:
+                    "أدخل كلمة المرور",
+
+                hidePassword:
+                    "إخفاء كلمة المرور",
+
+                showPassword:
+                    "إظهار كلمة المرور",
+
+                invalidLogin:
+                    "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+
+                verificationError:
+                    "تعذر التحقق من حساب المسؤول.",
+
+                noAdminAccess:
+                    "هذا الحساب لا يمتلك صلاحيات المسؤول.",
+
+                generalError:
+                    "حدث خطأ أثناء تسجيل الدخول.",
+
+                checking:
+                    "جاري التحقق من الصلاحيات...",
+
+                enterDashboard:
+                    "الدخول إلى لوحة الإدارة",
+
+                security:
+                    "يتم التحقق من الصلاحيات باستخدام نظام مصادقة Supabase ودور المستخدم في قاعدة البيانات."
+
+            }
+            : {
+
+                secureAdministration:
+                    "Secure Administration",
+
+                pharmacy:
+                    "Nabil Pharmacy",
+
+                title:
+                    "Administrator Login",
+
+                description:
+                    "Sign in with an authorized pharmacy administrator account.",
+
+                email:
+                    "Email Address",
+
+                emailPlaceholder:
+                    "admin@example.com",
+
+                password:
+                    "Password",
+
+                passwordPlaceholder:
+                    "Enter your password",
+
+                hidePassword:
+                    "Hide password",
+
+                showPassword:
+                    "Show password",
+
+                invalidLogin:
+                    "Invalid email or password.",
+
+                verificationError:
+                    "We could not verify this administrator account.",
+
+                noAdminAccess:
+                    "This account does not have administrator access.",
+
+                generalError:
+                    "Something went wrong while signing in.",
+
+                checking:
+                    "Checking Access...",
+
+                enterDashboard:
+                    "Enter Admin Dashboard",
+
+                security:
+                    "Access is verified using Supabase Authentication and your database role."
+
+            };
+
+
     /*
-        If an admin is already logged in,
-        send them directly to dashboard.
+    ========================================================
+    ADMIN ROLE CHECK
+    ========================================================
+
+    BOTH of these roles may access the admin dashboard:
+
+    admin
+    super_admin
     */
 
-    useEffect(() => {
+    const hasAdminAccess = (
+        role
+    ) => {
 
-        const checkExistingSession =
-            async () => {
+        return (
+            role === "admin" ||
+            role === "super_admin"
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    EXISTING SESSION
+    ========================================================
+    */
+
+    useEffect(
+        () => {
+
+            let active =
+                true;
+
+
+            const checkExistingSession =
+                async () => {
+
+                    try {
+
+                        const {
+                            data: {
+                                user
+                            }
+                        } =
+                            await supabase
+                                .auth
+                                .getUser();
+
+
+                        if (
+                            !user ||
+                            !active
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        const {
+                            data: profile,
+                            error: profileError
+                        } =
+                            await supabase
+                                .from(
+                                    "profiles"
+                                )
+                                .select(
+                                    "role"
+                                )
+                                .eq(
+                                    "id",
+                                    user.id
+                                )
+                                .single();
+
+
+                        if (
+                            profileError
+                        ) {
+
+                            console.error(
+                                "Existing admin session check error:",
+                                profileError
+                            );
+
+                            return;
+
+                        }
+
+
+                        if (
+                            active &&
+                            hasAdminAccess(
+                                profile?.role
+                            )
+                        ) {
+
+                            navigate(
+                                "/admin",
+                                {
+                                    replace:
+                                        true
+                                }
+                            );
+
+                        }
+
+                    } catch (
+                        sessionError
+                    ) {
+
+                        console.error(
+                            "Admin session check error:",
+                            sessionError
+                        );
+
+                    }
+
+                };
+
+
+            checkExistingSession();
+
+
+            return () => {
+
+                active =
+                    false;
+
+            };
+
+        },
+        [
+            navigate
+        ]
+    );
+
+
+    /*
+    ========================================================
+    LOGIN
+    ========================================================
+    */
+
+    const handleSubmit =
+        async (
+            event
+        ) => {
+
+            event.preventDefault();
+
+
+            if (
+                loading
+            ) {
+
+                return;
+
+            }
+
+
+            setLoading(
+                true
+            );
+
+
+            setError(
+                ""
+            );
+
+
+            try {
+
+                /*
+                ============================================
+                AUTHENTICATE
+                ============================================
+                */
 
                 const {
-                    data: {
-                        user
-                    }
+                    data,
+                    error:
+                        loginError
                 } =
-                    await supabase.auth.getUser();
+                    await supabase
+                        .auth
+                        .signInWithPassword({
+
+                            email:
+                                email
+                                    .trim(),
+
+                            password
+
+                        });
 
 
-                if (!user) {
+                if (
+                    loginError
+                ) {
+
+                    setError(
+                        text.invalidLogin
+                    );
+
                     return;
+
                 }
 
 
+                const user =
+                    data?.user;
+
+
+                if (
+                    !user
+                ) {
+
+                    setError(
+                        text.verificationError
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                ============================================
+                LOAD DATABASE ROLE
+                ============================================
+                */
+
                 const {
-                    data: profile
+                    data: profile,
+                    error:
+                        profileError
                 } =
                     await supabase
-                        .from("profiles")
-                        .select("role")
+                        .from(
+                            "profiles"
+                        )
+                        .select(`
+                            id,
+                            full_name,
+                            role
+                        `)
                         .eq(
                             "id",
                             user.id
@@ -99,186 +441,175 @@ function AdminLogin() {
 
 
                 if (
-                    profile?.role ===
-                    "admin"
+                    profileError
                 ) {
 
-                    navigate(
-                        "/admin",
-                        {
-                            replace: true
-                        }
+                    console.error(
+                        "Admin profile verification error:",
+                        profileError
                     );
+
+
+                    await supabase
+                        .auth
+                        .signOut();
+
+
+                    setError(
+                        text.verificationError
+                    );
+
+                    return;
+
                 }
 
-            };
 
+                /*
+                ============================================
+                ADMIN / SUPER ADMIN ACCESS
+                ============================================
+                */
 
-        checkExistingSession();
-
-    }, [
-        navigate
-    ]);
-
-
-    const handleSubmit = async (
-        event
-    ) => {
-
-        event.preventDefault();
-
-        setLoading(true);
-        setError("");
-
-
-        try {
-
-            const {
-                data,
-                error:
-                    loginError
-            } =
-                await supabase.auth
-                    .signInWithPassword({
-                        email:
-                            email.trim(),
-
-                        password
-                    });
-
-
-            if (loginError) {
-
-                setError(
-                    "Invalid email or password."
-                );
-
-                return;
-            }
-
-
-            const user =
-                data.user;
-
-
-            const {
-                data: profile,
-                error:
-                    profileError
-            } =
-                await supabase
-                    .from("profiles")
-                    .select(`
-                        id,
-                        full_name,
-                        role
-                    `)
-                    .eq(
-                        "id",
-                        user.id
+                if (
+                    !hasAdminAccess(
+                        profile?.role
                     )
-                    .single();
+                ) {
+
+                    await supabase
+                        .auth
+                        .signOut();
 
 
-            if (profileError) {
+                    setError(
+                        text.noAdminAccess
+                    );
 
-                await supabase.auth
-                    .signOut();
+                    return;
+
+                }
 
 
-                setError(
-                    "We could not verify this administrator account."
+                /*
+                ============================================
+                SUCCESS
+                ============================================
+                */
+
+                navigate(
+                    "/admin",
+                    {
+                        replace:
+                            true
+                    }
                 );
 
-                return;
-            }
-
-
-            if (
-                profile.role !==
-                "admin"
+            } catch (
+                loginException
             ) {
 
-                await supabase.auth
-                    .signOut();
+                console.error(
+                    "Admin login error:",
+                    loginException
+                );
 
 
                 setError(
-                    "This account does not have administrator access."
+                    text.generalError
                 );
 
-                return;
+            } finally {
+
+                setLoading(
+                    false
+                );
+
             }
 
-
-            navigate(
-                "/admin",
-                {
-                    replace: true
-                }
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Admin login error:",
-                error
-            );
-
-
-            setError(
-                "Something went wrong while signing in."
-            );
-
-        } finally {
-
-            setLoading(false);
-        }
-    };
+        };
 
 
     return (
-        <main className="admin-login-page">
+
+        <main
+            className="admin-login-page"
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
+            }
+        >
 
             <motion.div
                 className="admin-login-card"
                 initial={{
-                    opacity: 0,
-                    y: 25,
-                    scale: 0.98
+                    opacity:
+                        0,
+
+                    y:
+                        25,
+
+                    scale:
+                        0.98
                 }}
                 animate={{
-                    opacity: 1,
-                    y: 0,
-                    scale: 1
+                    opacity:
+                        1,
+
+                    y:
+                        0,
+
+                    scale:
+                        1
                 }}
                 transition={{
-                    duration: 0.45
+                    duration:
+                        0.45
                 }}
             >
+
+
+                {/* =========================================
+                    BRAND
+                ========================================= */}
 
                 <div className="admin-login-brand">
 
                     <img
                         src="/nabil-logo.png"
-                        alt="Nabil Pharmacy"
+                        alt={
+                            text.pharmacy
+                        }
                     />
 
 
                     <div>
 
                         <span>
-                            Secure Administration
+
+                            {
+                                text.secureAdministration
+                            }
+
                         </span>
 
+
                         <h1>
-                            Nabil Pharmacy
+
+                            {
+                                text.pharmacy
+                            }
+
                         </h1>
 
                     </div>
 
                 </div>
 
+
+                {/* =========================================
+                    HEADING
+                ========================================= */}
 
                 <div className="admin-login-heading">
 
@@ -292,17 +623,28 @@ function AdminLogin() {
 
 
                     <h2>
-                        Administrator Login
+
+                        {
+                            text.title
+                        }
+
                     </h2>
 
 
                     <p>
-                        Sign in with an authorized
-                        pharmacy administrator account.
+
+                        {
+                            text.description
+                        }
+
                     </p>
 
                 </div>
 
+
+                {/* =========================================
+                    FORM
+                ========================================= */}
 
                 <form
                     onSubmit={
@@ -312,8 +654,14 @@ function AdminLogin() {
 
                     <div className="admin-login-field">
 
-                        <label htmlFor="admin-email">
-                            Email Address
+                        <label
+                            htmlFor="admin-email"
+                        >
+
+                            {
+                                text.email
+                            }
+
                         </label>
 
 
@@ -336,8 +684,11 @@ function AdminLogin() {
                                             event.target.value
                                         )
                                 }
-                                placeholder="admin@example.com"
+                                placeholder={
+                                    text.emailPlaceholder
+                                }
                                 autoComplete="email"
+                                dir="ltr"
                                 required
                             />
 
@@ -348,8 +699,14 @@ function AdminLogin() {
 
                     <div className="admin-login-field">
 
-                        <label htmlFor="admin-password">
-                            Password
+                        <label
+                            htmlFor="admin-password"
+                        >
+
+                            {
+                                text.password
+                            }
+
                         </label>
 
 
@@ -376,8 +733,11 @@ function AdminLogin() {
                                             event.target.value
                                         )
                                 }
-                                placeholder="Enter your password"
+                                placeholder={
+                                    text.passwordPlaceholder
+                                }
                                 autoComplete="current-password"
+                                dir="ltr"
                                 required
                             />
 
@@ -393,22 +753,26 @@ function AdminLogin() {
                                 }
                                 aria-label={
                                     showPassword
-                                        ? "Hide password"
-                                        : "Show password"
+                                        ? text.hidePassword
+                                        : text.showPassword
                                 }
                             >
 
                                 {
                                     showPassword
                                         ? (
+
                                             <EyeOff
                                                 size={18}
                                             />
+
                                         )
                                         : (
+
                                             <Eye
                                                 size={18}
                                             />
+
                                         )
                                 }
 
@@ -424,7 +788,9 @@ function AdminLogin() {
 
                             <div className="admin-login-error">
 
-                                {error}
+                                {
+                                    error
+                                }
 
                             </div>
 
@@ -447,8 +813,8 @@ function AdminLogin() {
 
                         {
                             loading
-                                ? "Checking Access..."
-                                : "Enter Admin Dashboard"
+                                ? text.checking
+                                : text.enterDashboard
                         }
 
                     </button>
@@ -456,16 +822,23 @@ function AdminLogin() {
                 </form>
 
 
+                {/* =========================================
+                    SECURITY MESSAGE
+                ========================================= */}
+
                 <div className="admin-login-security">
 
                     <ShieldCheck
                         size={16}
                     />
 
+
                     <span>
-                        Access is verified using
-                        Supabase Authentication and
-                        your database role.
+
+                        {
+                            text.security
+                        }
+
                     </span>
 
                 </div>
@@ -473,7 +846,9 @@ function AdminLogin() {
             </motion.div>
 
         </main>
+
     );
+
 }
 
 

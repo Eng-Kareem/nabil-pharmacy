@@ -1,0 +1,324 @@
+.profile-crop-backdrop {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 99999;
+
+    padding: 20px;
+
+    display: grid;
+
+    place-items: center;
+
+    background:
+        rgba(10, 10, 15, 0.72);
+
+    backdrop-filter:
+        blur(8px);
+}
+
+
+.profile-crop-modal {
+    width:
+        min(
+            580px,
+            100%
+        );
+
+    overflow: hidden;
+
+    border-radius: 22px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 35px 100px
+        rgba(0, 0, 0, 0.35);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.profile-crop-header {
+    padding:
+        21px 22px;
+
+    display: flex;
+
+    align-items:
+        flex-start;
+
+    justify-content:
+        space-between;
+
+    gap: 20px;
+
+    border-bottom:
+        1px solid
+        #eeeeef;
+}
+
+
+.profile-crop-header h2 {
+    margin: 0;
+
+    color: #19191d;
+
+    font-size: 1.12rem;
+}
+
+
+.profile-crop-header p {
+    max-width: 450px;
+
+    margin:
+        6px 0 0;
+
+    color: #74747c;
+
+    font-size: 0.62rem;
+
+    line-height: 1.7;
+}
+
+
+.profile-crop-close {
+    width: 39px;
+    height: 39px;
+
+    display: grid;
+
+    place-items: center;
+
+    flex-shrink: 0;
+
+    border:
+        1px solid
+        #e4e4e7;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   CROPPER
+========================================================= */
+
+.profile-crop-area {
+    position: relative;
+
+    width: 100%;
+
+    height: 430px;
+
+    overflow: hidden;
+
+    background:
+        #101014;
+}
+
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+.profile-crop-controls {
+    padding:
+        18px 22px;
+
+    display: flex;
+
+    align-items:
+        flex-end;
+
+    gap: 15px;
+
+    border-top:
+        1px solid
+        #eeeeef;
+}
+
+
+.profile-crop-controls label {
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 9px;
+}
+
+
+.profile-crop-controls label span {
+    color: #19191d;
+
+    font-size: 0.61rem;
+
+    font-weight: 900;
+}
+
+
+.profile-crop-controls input[type="range"] {
+    width: 100%;
+
+    accent-color:
+        #aa1018;
+}
+
+
+.profile-crop-reset {
+    min-height: 40px;
+
+    padding:
+        0 13px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    border:
+        1px solid
+        #dedee2;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    color: #19191d;
+
+    font: inherit;
+
+    font-size: 0.58rem;
+
+    font-weight: 900;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.profile-crop-actions {
+    padding:
+        0 22px
+        22px;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        1fr;
+
+    gap: 10px;
+}
+
+
+.profile-crop-actions button {
+    min-height: 48px;
+
+    border-radius: 11px;
+
+    font: inherit;
+
+    font-size: 0.64rem;
+
+    font-weight: 900;
+
+    cursor: pointer;
+}
+
+
+.profile-crop-cancel {
+    border:
+        1px solid
+        #dedee2;
+
+    background: #ffffff;
+
+    color: #19191d;
+}
+
+
+.profile-crop-save {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    border: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            #aa1018,
+            #780b10
+        );
+
+    color: #ffffff;
+}
+
+
+.profile-crop-save:disabled {
+    opacity: 0.6;
+
+    cursor: wait;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+    max-width: 600px
+) {
+
+    .profile-crop-backdrop {
+        padding: 10px;
+    }
+
+
+    .profile-crop-modal {
+        border-radius: 17px;
+    }
+
+
+    .profile-crop-area {
+        height:
+            min(
+                55vh,
+                430px
+            );
+    }
+
+
+    .profile-crop-controls {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+
+    .profile-crop-actions {
+        grid-template-columns:
+            1fr;
+    }
+
+}

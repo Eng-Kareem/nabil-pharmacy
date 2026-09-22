@@ -3,6 +3,10 @@ import {
     LoaderCircle
 } from "lucide-react";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
 import "./DoctorConfirmButton.css";
 
 
@@ -15,6 +19,39 @@ function DoctorConfirmButton({
 
 }) {
 
+    const {
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        isArabic
+            ? {
+
+                placing:
+                    "جاري تنفيذ الطلب...",
+
+                confirmed:
+                    "تم تأكيد الطلب",
+
+                confirm:
+                    "تأكيد الطلب"
+
+            }
+            : {
+
+                placing:
+                    "Placing Order...",
+
+                confirmed:
+                    "Order Confirmed",
+
+                confirm:
+                    "Confirm Order"
+
+            };
+
+
     const showDoctor =
         loading ||
         success;
@@ -26,15 +63,22 @@ function DoctorConfirmButton({
             type="button"
             className={[
                 "doctor-confirm-button",
+
                 showDoctor
                     ? "doctor-visible"
                     : "",
+
                 success
                     ? "doctor-success"
                     : ""
+
             ]
-                .filter(Boolean)
-                .join(" ")
+                .filter(
+                    Boolean
+                )
+                .join(
+                    " "
+                )
             }
             onClick={
                 onClick
@@ -43,6 +87,11 @@ function DoctorConfirmButton({
                 disabled ||
                 loading ||
                 success
+            }
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
             }
         >
 
@@ -67,7 +116,6 @@ function DoctorConfirmButton({
             </span>
 
 
-
             {/* =========================================
                 BUTTON TEXT
             ========================================= */}
@@ -80,32 +128,45 @@ function DoctorConfirmButton({
                 {
                     loading
                         ? (
+
                             <>
+
                                 <LoaderCircle
                                     size={18}
                                     className="doctor-button-spinner"
                                 />
 
-                                Placing Order...
+                                {
+                                    text.placing
+                                }
+
                             </>
+
                         )
                         : success
                             ? (
+
                                 <>
+
                                     <Check
                                         size={18}
                                     />
 
-                                    Order Confirmed
+                                    {
+                                        text.confirmed
+                                    }
+
                                 </>
+
                             )
                             : (
-                                "Confirm Order"
+
+                                text.confirm
+
                             )
                 }
 
             </span>
-
 
 
             {/* =========================================
@@ -136,7 +197,9 @@ function DoctorConfirmButton({
             </span>
 
         </button>
+
     );
+
 }
 
 

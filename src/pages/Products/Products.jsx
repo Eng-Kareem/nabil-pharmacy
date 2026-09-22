@@ -8,12 +8,10 @@ import {
     X
 } from "lucide-react";
 
-
 import {
     AnimatePresence,
     motion
 } from "framer-motion";
-
 
 import {
     useCallback,
@@ -23,22 +21,21 @@ import {
     useState
 } from "react";
 
-
 import ProductCard
     from "../../components/ProductCard/ProductCard.jsx";
-
 
 import LogoLoader
     from "../../components/LogoLoader/LogoLoader.jsx";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
 
 import {
     supabase
 } from "../../lib/supabase.js";
 
-
 import "./Products.css";
-
 
 
 const PAGE_SIZE =
@@ -46,7 +43,7 @@ const PAGE_SIZE =
 
 
 const FILTER_CACHE_KEY =
-    "nabil-product-filter-meta-v2";
+    "nabil-product-filter-meta-v3";
 
 
 const FILTER_CACHE_TIME =
@@ -55,14 +52,15 @@ const FILTER_CACHE_TIME =
     1000;
 
 
-
 function Products() {
 
-    /*
-    ========================================================
-    PRODUCT DATA
-    ========================================================
-    */
+    const {
+        language,
+        isArabic,
+        localize,
+        t
+    } = useLanguage();
+
 
     const [
         products,
@@ -82,13 +80,6 @@ function Products() {
     ] = useState([]);
 
 
-
-    /*
-    ========================================================
-    LOADING / ERROR
-    ========================================================
-    */
-
     const [
         loading,
         setLoading
@@ -106,13 +97,6 @@ function Products() {
         setError
     ] = useState("");
 
-
-
-    /*
-    ========================================================
-    FILTERS
-    ========================================================
-    */
 
     const [
         searchTerm,
@@ -182,13 +166,6 @@ function Products() {
     ] = useState(false);
 
 
-
-    /*
-    ========================================================
-    PAGINATION
-    ========================================================
-    */
-
     const [
         page,
         setPage
@@ -201,144 +178,59 @@ function Products() {
     ] = useState(0);
 
 
-
-    /*
-    ========================================================
-    NOTIFICATION
-    ========================================================
-    */
-
     const [
         notification,
         setNotification
     ] = useState("");
 
 
-
-    /*
-    ========================================================
-    REQUEST RACE PROTECTION
-    ========================================================
-    */
-
     const requestIdRef =
         useRef(0);
 
 
-
     /*
     ========================================================
-    FORMAT PRODUCT FROM DATABASE VIEW
+    NUMBER FORMAT
     ========================================================
     */
 
-    const formatProduct = (
-        product
+    const formatNumber = (
+        value
     ) => {
 
-        const stockQuantity =
-            Number(
-                product.stock_quantity ||
-                0
+        return Number(
+            value ||
+            0
+        ).toLocaleString(
+            isArabic
+                ? "ar-EG"
+                : "en-US"
+        );
+
+    };
+
+
+    const formatMoney = (
+        value
+    ) => {
+
+        const number =
+            formatNumber(
+                value
             );
 
 
-        return {
+        return isArabic
+            ? `${number} ج.م`
+            : `EGP ${number}`;
 
-            id:
-                product.id,
-
-            slug:
-                product.slug,
-
-            name:
-                product.name,
-
-            category:
-                product.category_name ||
-                "Other",
-
-            categorySlug:
-                product.category_slug ||
-                "",
-
-            categoryId:
-                product.category_id,
-
-            brand:
-                product.brand ||
-                "Nabil Pharmacy",
-
-            description:
-                product.description ||
-                "",
-
-            price:
-                Number(
-                    product.price
-                ) ||
-                0,
-
-            oldPrice:
-                product.old_price
-                    ? Number(
-                        product.old_price
-                    )
-                    : null,
-
-            offer:
-                product.badge_text ||
-                null,
-
-            imageUrl:
-                product.image_url ||
-                null,
-
-            prescriptionRequired:
-                Boolean(
-                    product.prescription_required
-                ),
-
-            featured:
-                Boolean(
-                    product.featured
-                ),
-
-            stockQuantity,
-
-            inStock:
-                stockQuantity >
-                0,
-
-            lowStock:
-                stockQuantity >
-                0 &&
-                stockQuantity <=
-                5,
-
-            discountAmount:
-                Number(
-                    product.discount_amount ||
-                    0
-                ),
-
-            createdAt:
-                product.created_at
-        };
     };
-
 
 
     /*
     ========================================================
-    LOAD FILTER METADATA
+    LOAD FILTER DATA
     ========================================================
-
-    Categories + brands + highest price are cached for
-    ten minutes in the customer's browser.
-
-    Navigating away and returning to Products therefore
-    does not immediately repeat these metadata requests.
     */
 
     const loadFilterMetadata =
@@ -348,9 +240,10 @@ function Products() {
                 try {
 
                     const cached =
-                        sessionStorage.getItem(
-                            FILTER_CACHE_KEY
-                        );
+                        sessionStorage
+                            .getItem(
+                                FILTER_CACHE_KEY
+                            );
 
 
                     if (
@@ -363,19 +256,17 @@ function Products() {
                             );
 
 
-                        const cacheStillFresh =
-
+                        const valid =
                             Date.now() -
                             Number(
                                 parsed.savedAt ||
                                 0
                             ) <
-
                             FILTER_CACHE_TIME;
 
 
                         if (
-                            cacheStillFresh
+                            valid
                         ) {
 
                             setCategories(
@@ -390,7 +281,7 @@ function Products() {
                             );
 
 
-                            const cachedMaximum =
+                            const maximum =
                                 Number(
                                     parsed.highestAvailablePrice
                                 ) ||
@@ -398,34 +289,32 @@ function Products() {
 
 
                             setHighestAvailablePrice(
-                                cachedMaximum
+                                maximum
                             );
-
 
                             setMaxPrice(
-                                cachedMaximum
+                                maximum
                             );
-
 
                             setDebouncedMaxPrice(
-                                cachedMaximum
+                                maximum
                             );
-
 
                             setFiltersReady(
                                 true
                             );
 
-
                             return;
+
                         }
+
                     }
 
 
-
                     const [
-                        categoriesResponse,
-                        metadataResponse
+                        categoryResponse,
+                        metaResponse,
+                        brandArabicResponse
                     ] =
                         await Promise.all([
 
@@ -436,7 +325,10 @@ function Products() {
                                 .select(`
                                     id,
                                     name,
-                                    slug
+                                    name_ar,
+                                    slug,
+                                    description,
+                                    description_ar
                                 `)
                                 .eq(
                                     "is_active",
@@ -454,49 +346,108 @@ function Products() {
                             supabase
                                 .rpc(
                                     "get_product_filter_meta"
+                                ),
+
+
+                            supabase
+                                .from(
+                                    "products"
+                                )
+                                .select(`
+                                    brand,
+                                    brand_ar
+                                `)
+                                .eq(
+                                    "is_active",
+                                    true
                                 )
 
                         ]);
 
 
-
                     if (
-                        categoriesResponse.error
+                        categoryResponse.error
                     ) {
 
-                        throw (
-                            categoriesResponse.error
-                        );
+                        throw categoryResponse.error;
+
                     }
 
 
                     if (
-                        metadataResponse.error
+                        metaResponse.error
                     ) {
 
-                        throw (
-                            metadataResponse.error
-                        );
-                    }
+                        throw metaResponse.error;
 
+                    }
 
 
                     const loadedCategories =
-                        categoriesResponse.data ||
+                        categoryResponse.data ||
                         [];
 
 
                     const metadata =
-                        metadataResponse.data ||
+                        metaResponse.data ||
                         {};
 
 
-                    const loadedBrands =
+                    const rawBrands =
                         Array.isArray(
                             metadata.brands
                         )
                             ? metadata.brands
                             : [];
+
+
+                    const arabicBrandMap =
+                        new Map();
+
+
+                    if (
+                        !brandArabicResponse.error
+                    ) {
+
+                        (
+                            brandArabicResponse.data ||
+                            []
+                        ).forEach(
+                            row => {
+
+                                if (
+                                    row.brand
+                                ) {
+
+                                    arabicBrandMap.set(
+                                        row.brand,
+                                        row.brand_ar ||
+                                        row.brand
+                                    );
+
+                                }
+
+                            }
+                        );
+
+                    }
+
+
+                    const loadedBrands =
+                        rawBrands.map(
+                            brand => ({
+
+                                value:
+                                    brand,
+
+                                labelAr:
+                                    arabicBrandMap.get(
+                                        brand
+                                    ) ||
+                                    brand
+
+                            })
+                        );
 
 
                     const rawMaximum =
@@ -524,26 +475,21 @@ function Products() {
                         loadedCategories
                     );
 
-
                     setBrands(
                         loadedBrands
                     );
-
 
                     setHighestAvailablePrice(
                         roundedMaximum
                     );
 
-
                     setMaxPrice(
                         roundedMaximum
                     );
 
-
                     setDebouncedMaxPrice(
                         roundedMaximum
                     );
-
 
 
                     sessionStorage.setItem(
@@ -578,30 +524,21 @@ function Products() {
                     );
 
 
-                    /*
-                    The Products page can still load
-                    using safe default filters.
-                    */
-
                     setCategories(
                         []
                     );
-
 
                     setBrands(
                         []
                     );
 
-
                     setHighestAvailablePrice(
                         1000
                     );
 
-
                     setMaxPrice(
                         1000
                     );
-
 
                     setDebouncedMaxPrice(
                         1000
@@ -612,11 +549,12 @@ function Products() {
                     setFiltersReady(
                         true
                     );
+
                 }
+
             },
             []
         );
-
 
 
     useEffect(
@@ -631,25 +569,10 @@ function Products() {
     );
 
 
-
     /*
     ========================================================
-    DEBOUNCE PRODUCT SEARCH
+    SEARCH DEBOUNCE
     ========================================================
-
-    Without this, typing:
-
-    p
-    pa
-    pan
-    pana
-    panad
-    panado
-    panadol
-
-    could create seven database requests.
-
-    Now we wait briefly for the customer to stop typing.
     */
 
     useEffect(
@@ -660,8 +583,7 @@ function Products() {
                     () => {
 
                         setDebouncedSearchTerm(
-                            searchTerm
-                                .trim()
+                            searchTerm.trim()
                         );
 
                     },
@@ -669,12 +591,10 @@ function Products() {
                 );
 
 
-            return () => {
-
+            return () =>
                 window.clearTimeout(
                     timer
                 );
-            };
 
         },
         [
@@ -683,10 +603,9 @@ function Products() {
     );
 
 
-
     /*
     ========================================================
-    DEBOUNCE PRICE SLIDER
+    PRICE DEBOUNCE
     ========================================================
     */
 
@@ -706,12 +625,10 @@ function Products() {
                 );
 
 
-            return () => {
-
+            return () =>
                 window.clearTimeout(
                     timer
                 );
-            };
 
         },
         [
@@ -720,10 +637,9 @@ function Products() {
     );
 
 
-
     /*
     ========================================================
-    RESET PAGE WHEN FILTER CHANGES
+    RESET PAGE
     ========================================================
     */
 
@@ -747,10 +663,135 @@ function Products() {
     );
 
 
+    /*
+    ========================================================
+    ARABIC SEARCH IDS
+    ========================================================
+    */
+
+    const findArabicMatches =
+        async (
+            search
+        ) => {
+
+            if (
+                !isArabic ||
+                !search
+            ) {
+
+                return {
+                    productIds: [],
+                    categoryIds: []
+                };
+
+            }
+
+
+            try {
+
+                const [
+                    productResponse,
+                    categoryResponse
+                ] =
+                    await Promise.all([
+
+                        supabase
+                            .from(
+                                "products"
+                            )
+                            .select(
+                                "id"
+                            )
+                            .eq(
+                                "is_active",
+                                true
+                            )
+                            .or(
+                                [
+                                    `name_ar.ilike.%${search}%`,
+                                    `brand_ar.ilike.%${search}%`,
+                                    `description_ar.ilike.%${search}%`,
+                                    `badge_text_ar.ilike.%${search}%`
+                                ].join(
+                                    ","
+                                )
+                            )
+                            .limit(
+                                200
+                            ),
+
+
+                        supabase
+                            .from(
+                                "categories"
+                            )
+                            .select(
+                                "id"
+                            )
+                            .eq(
+                                "is_active",
+                                true
+                            )
+                            .or(
+                                [
+                                    `name_ar.ilike.%${search}%`,
+                                    `description_ar.ilike.%${search}%`
+                                ].join(
+                                    ","
+                                )
+                            )
+                            .limit(
+                                100
+                            )
+
+                    ]);
+
+
+                return {
+
+                    productIds:
+                        (
+                            productResponse.data ||
+                            []
+                        ).map(
+                            row =>
+                                row.id
+                        ),
+
+                    categoryIds:
+                        (
+                            categoryResponse.data ||
+                            []
+                        ).map(
+                            row =>
+                                row.id
+                        )
+
+                };
+
+            } catch (
+                searchError
+            ) {
+
+                console.error(
+                    "Arabic search error:",
+                    searchError
+                );
+
+
+                return {
+                    productIds: [],
+                    categoryIds: []
+                };
+
+            }
+
+        };
+
 
     /*
     ========================================================
-    LOAD ONE PRODUCT PAGE
+    LOAD PRODUCTS
     ========================================================
     */
 
@@ -763,6 +804,7 @@ function Products() {
                 ) {
 
                     return;
+
                 }
 
 
@@ -778,7 +820,6 @@ function Products() {
                 setLoading(
                     true
                 );
-
 
                 setError(
                     ""
@@ -800,6 +841,24 @@ function Products() {
                         PAGE_SIZE -
                         1;
 
+
+                    const safeSearch =
+                        debouncedSearchTerm
+                            .replace(
+                                /[^\p{L}\p{N}\s-]/gu,
+                                " "
+                            )
+                            .replace(
+                                /\s+/g,
+                                " "
+                            )
+                            .trim();
+
+
+                    const arabicMatches =
+                        await findArabicMatches(
+                            safeSearch
+                        );
 
 
                     let query =
@@ -839,46 +898,62 @@ function Products() {
                             );
 
 
-
                     /*
                     =========================================
                     SEARCH
                     =========================================
                     */
 
-                    const safeSearch =
-                        debouncedSearchTerm
-                            .replace(
-                                /[(),%]/g,
-                                " "
-                            )
-                            .replace(
-                                /\s+/g,
-                                " "
-                            )
-                            .trim();
-
-
                     if (
                         safeSearch
                     ) {
 
+                        const searchParts = [
+
+                            `name.ilike.%${safeSearch}%`,
+                            `brand.ilike.%${safeSearch}%`,
+                            `description.ilike.%${safeSearch}%`,
+                            `category_name.ilike.%${safeSearch}%`
+
+                        ];
+
+
+                        if (
+                            arabicMatches
+                                .productIds
+                                .length >
+                            0
+                        ) {
+
+                            searchParts.push(
+                                `id.in.(${arabicMatches.productIds.join(",")})`
+                            );
+
+                        }
+
+
+                        if (
+                            arabicMatches
+                                .categoryIds
+                                .length >
+                            0
+                        ) {
+
+                            searchParts.push(
+                                `category_id.in.(${arabicMatches.categoryIds.join(",")})`
+                            );
+
+                        }
+
+
                         query =
                             query.or(
-
-                                [
-                                    `name.ilike.%${safeSearch}%`,
-                                    `brand.ilike.%${safeSearch}%`,
-                                    `description.ilike.%${safeSearch}%`,
-                                    `category_name.ilike.%${safeSearch}%`
-                                ]
-                                    .join(
-                                        ","
-                                    )
-
+                                searchParts.join(
+                                    ","
+                                )
                             );
-                    }
 
+                    }
 
 
                     /*
@@ -897,8 +972,8 @@ function Products() {
                                 "category_id",
                                 selectedCategory
                             );
-                    }
 
+                    }
 
 
                     /*
@@ -917,8 +992,8 @@ function Products() {
                                 "brand",
                                 selectedBrand
                             );
-                    }
 
+                    }
 
 
                     /*
@@ -932,7 +1007,6 @@ function Products() {
                             "price",
                             debouncedMaxPrice
                         );
-
 
 
                     /*
@@ -950,8 +1024,8 @@ function Products() {
                                 "stock_quantity",
                                 0
                             );
-                    }
 
+                    }
 
 
                     /*
@@ -968,8 +1042,8 @@ function Products() {
                             query.or(
                                 "badge_text.not.is.null,old_price.not.is.null"
                             );
-                    }
 
+                    }
 
 
                     /*
@@ -1078,22 +1152,15 @@ function Products() {
                                                 false
                                         }
                                     );
+
                     }
 
-
-
-                    /*
-                    =========================================
-                    PAGINATION
-                    =========================================
-                    */
 
                     query =
                         query.range(
                             from,
                             to
                         );
-
 
 
                     const {
@@ -1105,33 +1172,97 @@ function Products() {
                         await query;
 
 
-
-                    /*
-                    A newer search/filter request finished
-                    before this one.
-
-                    Ignore the old response.
-                    */
-
                     if (
                         requestId !==
                         requestIdRef.current
                     ) {
 
                         return;
-                    }
 
+                    }
 
 
                     if (
                         queryError
                     ) {
 
-                        throw (
-                            queryError
-                        );
+                        throw queryError;
+
                     }
 
+
+                    /*
+                    =========================================
+                    ARABIC PRODUCT CONTENT
+                    =========================================
+                    */
+
+                    let arabicMap =
+                        new Map();
+
+
+                    if (
+                        isArabic &&
+                        (
+                            data ||
+                            []
+                        ).length >
+                        0
+                    ) {
+
+                        const ids =
+                            (
+                                data ||
+                                []
+                            ).map(
+                                item =>
+                                    item.id
+                            );
+
+
+                        const {
+                            data:
+                                arabicRows,
+                            error:
+                                arabicError
+                        } =
+                            await supabase
+                                .from(
+                                    "products"
+                                )
+                                .select(`
+                                    id,
+                                    name_ar,
+                                    brand_ar,
+                                    description_ar,
+                                    badge_text_ar
+                                `)
+                                .in(
+                                    "id",
+                                    ids
+                                );
+
+
+                        if (
+                            !arabicError
+                        ) {
+
+                            arabicMap =
+                                new Map(
+                                    (
+                                        arabicRows ||
+                                        []
+                                    ).map(
+                                        item => [
+                                            item.id,
+                                            item
+                                        ]
+                                    )
+                                );
+
+                        }
+
+                    }
 
 
                     const numberOfProducts =
@@ -1141,7 +1272,7 @@ function Products() {
                         );
 
 
-                    const totalPages =
+                    const numberOfPages =
                         Math.max(
 
                             1,
@@ -1154,25 +1285,185 @@ function Products() {
                         );
 
 
-
-                    /*
-                    If a filter reduces the number of pages
-                    while the customer is on a later page,
-                    automatically move to the last valid page.
-                    */
-
                     if (
                         page >
-                        totalPages
+                        numberOfPages
                     ) {
 
                         setPage(
-                            totalPages
+                            numberOfPages
                         );
 
                         return;
+
                     }
 
+
+                    const formatted =
+                        (
+                            data ||
+                            []
+                        ).map(
+                            item => {
+
+                                const arabic =
+                                    arabicMap.get(
+                                        item.id
+                                    ) ||
+                                    {};
+
+
+                                const categoryObject =
+                                    categories.find(
+                                        category =>
+                                            category.id ===
+                                            item.category_id
+                                    ) ||
+                                    {};
+
+
+                                const stockQuantity =
+                                    Number(
+                                        item.stock_quantity ||
+                                        0
+                                    );
+
+
+                                return {
+
+                                    id:
+                                        item.id,
+
+                                    slug:
+                                        item.slug,
+
+                                    name:
+                                        isArabic
+                                            ? (
+                                                arabic.name_ar ||
+                                                item.name
+                                            )
+                                            : item.name,
+
+                                    category:
+                                        isArabic
+                                            ? (
+                                                categoryObject.name_ar ||
+                                                item.category_name ||
+                                                t(
+                                                    "other"
+                                                )
+                                            )
+                                            : (
+                                                item.category_name ||
+                                                t(
+                                                    "other"
+                                                )
+                                            ),
+
+                                    categoryOriginal:
+                                        item.category_name ||
+                                        "",
+
+                                    categorySlug:
+                                        item.category_slug ||
+                                        "",
+
+                                    categoryId:
+                                        item.category_id,
+
+                                    brand:
+                                        isArabic
+                                            ? (
+                                                arabic.brand_ar ||
+                                                item.brand ||
+                                                t(
+                                                    "nabilPharmacy"
+                                                )
+                                            )
+                                            : (
+                                                item.brand ||
+                                                t(
+                                                    "nabilPharmacy"
+                                                )
+                                            ),
+
+                                    description:
+                                        isArabic
+                                            ? (
+                                                arabic.description_ar ||
+                                                item.description ||
+                                                ""
+                                            )
+                                            : (
+                                                item.description ||
+                                                ""
+                                            ),
+
+                                    price:
+                                        Number(
+                                            item.price
+                                        ) ||
+                                        0,
+
+                                    oldPrice:
+                                        item.old_price
+                                            ? Number(
+                                                item.old_price
+                                            )
+                                            : null,
+
+                                    offer:
+                                        isArabic
+                                            ? (
+                                                arabic.badge_text_ar ||
+                                                item.badge_text ||
+                                                null
+                                            )
+                                            : (
+                                                item.badge_text ||
+                                                null
+                                            ),
+
+                                    imageUrl:
+                                        item.image_url ||
+                                        null,
+
+                                    prescriptionRequired:
+                                        Boolean(
+                                            item.prescription_required
+                                        ),
+
+                                    featured:
+                                        Boolean(
+                                            item.featured
+                                        ),
+
+                                    stockQuantity,
+
+                                    inStock:
+                                        stockQuantity >
+                                        0,
+
+                                    lowStock:
+                                        stockQuantity >
+                                        0 &&
+                                        stockQuantity <=
+                                        5,
+
+                                    discountAmount:
+                                        Number(
+                                            item.discount_amount ||
+                                            0
+                                        ),
+
+                                    createdAt:
+                                        item.created_at
+
+                                };
+
+                            }
+                        );
 
 
                     setTotalCount(
@@ -1181,15 +1472,7 @@ function Products() {
 
 
                     setProducts(
-
-                        (
-                            data ||
-                            []
-                        )
-                            .map(
-                                formatProduct
-                            )
-
+                        formatted
                     );
 
                 } catch (
@@ -1202,6 +1485,7 @@ function Products() {
                     ) {
 
                         return;
+
                     }
 
 
@@ -1222,7 +1506,9 @@ function Products() {
 
 
                     setError(
-                        "We could not load the pharmacy products. Please try again."
+                        t(
+                            "productsLoadError"
+                        )
                     );
 
                 } finally {
@@ -1235,8 +1521,11 @@ function Products() {
                         setLoading(
                             false
                         );
+
                     }
+
                 }
+
             },
             [
                 filtersReady,
@@ -1247,10 +1536,13 @@ function Products() {
                 debouncedMaxPrice,
                 inStockOnly,
                 offersOnly,
-                sortBy
+                sortBy,
+                isArabic,
+                language,
+                categories,
+                t
             ]
         );
-
 
 
     useEffect(
@@ -1265,10 +1557,9 @@ function Products() {
     );
 
 
-
     /*
     ========================================================
-    RESET FILTERS
+    RESET
     ========================================================
     */
 
@@ -1279,57 +1570,52 @@ function Products() {
                 ""
             );
 
-
             setDebouncedSearchTerm(
                 ""
             );
-
 
             setSelectedCategory(
                 "All"
             );
 
-
             setSelectedBrand(
                 "All"
             );
-
 
             setMaxPrice(
                 highestAvailablePrice
             );
 
-
             setDebouncedMaxPrice(
                 highestAvailablePrice
             );
-
 
             setInStockOnly(
                 false
             );
 
-
             setOffersOnly(
                 false
             );
-
 
             setSortBy(
                 "recommended"
             );
 
-
             setPage(
                 1
             );
-        };
 
+            setFiltersOpen(
+                false
+            );
+
+        };
 
 
     /*
     ========================================================
-    CART NOTIFICATION
+    CART MESSAGE
     ========================================================
     */
 
@@ -1337,20 +1623,27 @@ function Products() {
         product
     ) => {
 
-        if (
-            !product.inStock
-        ) {
+        setNotification(
 
-            setNotification(
-                `${product.name} is currently out of stock`
-            );
+            product.inStock
 
-        } else {
+                ? t(
+                    "addedToCart",
+                    {
+                        product:
+                            product.name
+                    }
+                )
 
-            setNotification(
-                `${product.name} added to your cart`
-            );
-        }
+                : t(
+                    "productOutOfStock",
+                    {
+                        product:
+                            product.name
+                    }
+                )
+
+        );
 
 
         window.setTimeout(
@@ -1363,13 +1656,13 @@ function Products() {
             },
             2200
         );
-    };
 
+    };
 
 
     /*
     ========================================================
-    PAGINATION INFORMATION
+    PAGINATION
     ========================================================
     */
 
@@ -1411,7 +1704,6 @@ function Products() {
         );
 
 
-
     const visiblePages =
         useMemo(
             () => {
@@ -1433,6 +1725,7 @@ function Products() {
                             index +
                             1
                     );
+
                 }
 
 
@@ -1464,6 +1757,7 @@ function Products() {
                             end -
                             4
                         );
+
                 }
 
 
@@ -1490,13 +1784,6 @@ function Products() {
         );
 
 
-
-    /*
-    ========================================================
-    CHANGE PAGE
-    ========================================================
-    */
-
     const changePage = (
         newPage
     ) => {
@@ -1511,6 +1798,7 @@ function Products() {
         ) {
 
             return;
+
         }
 
 
@@ -1539,8 +1827,20 @@ function Products() {
             },
             50
         );
+
     };
 
+
+    const PreviousIcon =
+        isArabic
+            ? ChevronRight
+            : ChevronLeft;
+
+
+    const NextIcon =
+        isArabic
+            ? ChevronLeft
+            : ChevronRight;
 
 
     /*
@@ -1554,10 +1854,6 @@ function Products() {
         <main className="products-page">
 
 
-            {/* =========================================
-                HERO
-            ========================================= */}
-
             <section className="products-hero">
 
                 <div className="container">
@@ -1565,37 +1861,50 @@ function Products() {
                     <motion.div
 
                         initial={{
-                            opacity:
-                                0,
-                            y:
-                                20
+                            opacity: 0,
+                            y: 20
                         }}
 
                         animate={{
-                            opacity:
-                                1,
-                            y:
-                                0
+                            opacity: 1,
+                            y: 0
                         }}
 
                         transition={{
-                            duration:
-                                0.5
+                            duration: 0.5
                         }}
 
                     >
 
                         <span className="section-label">
-                            Nabil Pharmacy
+
+                            {
+                                t(
+                                    "nabilPharmacy"
+                                )
+                            }
+
                         </span>
 
 
                         <h1>
 
-                            Pharmacy essentials
+                            {
+                                t(
+                                    "pharmacyEssentials"
+                                )
+                            }
 
                             <span>
-                                {" "}for everyday care.
+
+                                {" "}
+
+                                {
+                                    t(
+                                        "forEverydayCare"
+                                    )
+                                }
+
                             </span>
 
                         </h1>
@@ -1603,11 +1912,11 @@ function Products() {
 
                         <p>
 
-                            Browse medicines,
-                            vitamins, personal care,
-                            baby care and health
-                            products available through
-                            Nabil Pharmacy.
+                            {
+                                t(
+                                    "productsHeroDescription"
+                                )
+                            }
 
                         </p>
 
@@ -1618,19 +1927,10 @@ function Products() {
             </section>
 
 
-
-            {/* =========================================
-                PRODUCTS
-            ========================================= */}
-
             <section className="products-content">
 
                 <div className="container">
 
-
-                    {/* =====================================
-                        SEARCH TOOLBAR
-                    ===================================== */}
 
                     <div className="products-toolbar">
 
@@ -1645,7 +1945,11 @@ function Products() {
 
                                 type="search"
 
-                                placeholder="Search products, brands or categories..."
+                                placeholder={
+                                    t(
+                                        "searchProductsPlaceholder"
+                                    )
+                                }
 
                                 value={
                                     searchTerm
@@ -1668,14 +1972,17 @@ function Products() {
 
                                         type="button"
 
-                                        onClick={
-                                            () =>
-                                                setSearchTerm(
-                                                    ""
-                                                )
+                                        onClick={() =>
+                                            setSearchTerm(
+                                                ""
+                                            )
                                         }
 
-                                        aria-label="Clear search"
+                                        aria-label={
+                                            t(
+                                                "clearSearch"
+                                            )
+                                        }
 
                                     >
 
@@ -1697,12 +2004,11 @@ function Products() {
 
                             className="products-mobile-filter-button"
 
-                            onClick={
-                                () =>
-                                    setFiltersOpen(
-                                        current =>
-                                            !current
-                                    )
+                            onClick={() =>
+                                setFiltersOpen(
+                                    current =>
+                                        !current
+                                )
                             }
 
                         >
@@ -1711,20 +2017,19 @@ function Products() {
                                 size={18}
                             />
 
-                            Filters
+                            {
+                                t(
+                                    "filters"
+                                )
+                            }
 
                         </button>
 
                     </div>
 
 
-
                     <div className="products-layout">
 
-
-                        {/* =================================
-                            FILTERS
-                        ================================= */}
 
                         <aside
                             className={
@@ -1739,12 +2044,24 @@ function Products() {
                                 <div>
 
                                     <span>
-                                        Refine
+
+                                        {
+                                            t(
+                                                "refine"
+                                            )
+                                        }
+
                                     </span>
 
 
                                     <h2>
-                                        Filters
+
+                                        {
+                                            t(
+                                                "filters"
+                                            )
+                                        }
+
                                     </h2>
 
                                 </div>
@@ -1756,19 +2073,28 @@ function Products() {
                                         resetFilters
                                     }
                                 >
-                                    Reset
+
+                                    {
+                                        t(
+                                            "reset"
+                                        )
+                                    }
+
                                 </button>
 
                             </div>
 
 
-
-                            {/* CATEGORY */}
-
                             <div className="products-filter-group">
 
                                 <label>
-                                    Category
+
+                                    {
+                                        t(
+                                            "category"
+                                        )
+                                    }
+
                                 </label>
 
 
@@ -1785,15 +2111,20 @@ function Products() {
                                                 : ""
                                         }
 
-                                        onClick={
-                                            () =>
-                                                setSelectedCategory(
-                                                    "All"
-                                                )
+                                        onClick={() =>
+                                            setSelectedCategory(
+                                                "All"
+                                            )
                                         }
 
                                     >
-                                        All
+
+                                        {
+                                            t(
+                                                "all"
+                                            )
+                                        }
+
                                     </button>
 
 
@@ -1816,17 +2147,20 @@ function Products() {
                                                             : ""
                                                     }
 
-                                                    onClick={
-                                                        () =>
-                                                            setSelectedCategory(
-                                                                category.id
-                                                            )
+                                                    onClick={() =>
+                                                        setSelectedCategory(
+                                                            category.id
+                                                        )
                                                     }
 
                                                 >
 
                                                     {
-                                                        category.name
+                                                        localize(
+                                                            category,
+                                                            "name",
+                                                            category.name
+                                                        )
                                                     }
 
                                                 </button>
@@ -1840,13 +2174,16 @@ function Products() {
                             </div>
 
 
-
-                            {/* BRAND */}
-
                             <div className="products-filter-group">
 
                                 <label htmlFor="brand-filter">
-                                    Brand
+
+                                    {
+                                        t(
+                                            "brand"
+                                        )
+                                    }
+
                                 </label>
 
 
@@ -1868,7 +2205,13 @@ function Products() {
                                 >
 
                                     <option value="All">
-                                        All
+
+                                        {
+                                            t(
+                                                "all"
+                                            )
+                                        }
+
                                     </option>
 
 
@@ -1878,15 +2221,17 @@ function Products() {
 
                                                 <option
                                                     key={
-                                                        brand
+                                                        brand.value
                                                     }
                                                     value={
-                                                        brand
+                                                        brand.value
                                                     }
                                                 >
 
                                                     {
-                                                        brand
+                                                        isArabic
+                                                            ? brand.labelAr
+                                                            : brand.value
                                                     }
 
                                                 </option>
@@ -1900,27 +2245,27 @@ function Products() {
                             </div>
 
 
-
-                            {/* PRICE */}
-
                             <div className="products-filter-group">
 
                                 <div className="products-price-heading">
 
                                     <label htmlFor="price-filter">
-                                        Maximum Price
+
+                                        {
+                                            t(
+                                                "maximumPrice"
+                                            )
+                                        }
+
                                     </label>
 
 
                                     <strong>
 
-                                        EGP{" "}
-
                                         {
-                                            Number(
+                                            formatMoney(
                                                 maxPrice
                                             )
-                                                .toLocaleString()
                                         }
 
                                     </strong>
@@ -1960,9 +2305,6 @@ function Products() {
                             </div>
 
 
-
-                            {/* STOCK */}
-
                             <label className="products-check-filter">
 
                                 <input
@@ -1984,14 +2326,17 @@ function Products() {
 
 
                                 <span>
-                                    In stock only
+
+                                    {
+                                        t(
+                                            "inStockOnly"
+                                        )
+                                    }
+
                                 </span>
 
                             </label>
 
-
-
-                            {/* OFFERS */}
 
                             <label className="products-check-filter">
 
@@ -2014,18 +2359,19 @@ function Products() {
 
 
                                 <span>
-                                    Offers only
+
+                                    {
+                                        t(
+                                            "offersOnly"
+                                        )
+                                    }
+
                                 </span>
 
                             </label>
 
                         </aside>
 
-
-
-                        {/* =================================
-                            RESULTS
-                        ================================= */}
 
                         <div className="products-results">
 
@@ -2035,7 +2381,13 @@ function Products() {
                                 <div>
 
                                     <span>
-                                        Showing
+
+                                        {
+                                            t(
+                                                "showing"
+                                            )
+                                        }
+
                                     </span>
 
 
@@ -2043,11 +2395,33 @@ function Products() {
 
                                         {
                                             loading
-                                                ? "Loading..."
+                                                ? t(
+                                                    "loading"
+                                                )
                                                 : totalCount ===
                                                     0
-                                                    ? "0 products"
-                                                    : `${firstVisibleProduct}-${lastVisibleProduct} of ${totalCount} products`
+                                                    ? t(
+                                                        "zeroProducts"
+                                                    )
+                                                    : t(
+                                                        "productRange",
+                                                        {
+                                                            first:
+                                                                formatNumber(
+                                                                    firstVisibleProduct
+                                                                ),
+
+                                                            last:
+                                                                formatNumber(
+                                                                    lastVisibleProduct
+                                                                ),
+
+                                                            total:
+                                                                formatNumber(
+                                                                    totalCount
+                                                                )
+                                                        }
+                                                    )
                                         }
 
                                     </strong>
@@ -2057,7 +2431,11 @@ function Products() {
 
                                 <select
 
-                                    aria-label="Sort products"
+                                    aria-label={
+                                        t(
+                                            "sortProducts"
+                                        )
+                                    }
 
                                     value={
                                         sortBy
@@ -2073,32 +2451,68 @@ function Products() {
                                 >
 
                                     <option value="recommended">
-                                        Recommended
+
+                                        {
+                                            t(
+                                                "recommended"
+                                            )
+                                        }
+
                                     </option>
 
 
                                     <option value="newest">
-                                        Newest
+
+                                        {
+                                            t(
+                                                "newest"
+                                            )
+                                        }
+
                                     </option>
 
 
                                     <option value="price-low">
-                                        Price: Low to High
+
+                                        {
+                                            t(
+                                                "priceLowHigh"
+                                            )
+                                        }
+
                                     </option>
 
 
                                     <option value="price-high">
-                                        Price: High to Low
+
+                                        {
+                                            t(
+                                                "priceHighLow"
+                                            )
+                                        }
+
                                     </option>
 
 
                                     <option value="name">
-                                        Name A-Z
+
+                                        {
+                                            t(
+                                                "nameAZ"
+                                            )
+                                        }
+
                                     </option>
 
 
                                     <option value="discount">
-                                        Biggest Discount
+
+                                        {
+                                            t(
+                                                "biggestDiscount"
+                                            )
+                                        }
+
                                     </option>
 
                                 </select>
@@ -2106,26 +2520,20 @@ function Products() {
                             </div>
 
 
-
-                            {/* =================================
-                                LOADER
-                            ================================= */}
-
                             {
                                 loading && (
 
                                     <LogoLoader
-                                        text="Loading products"
+                                        text={
+                                            t(
+                                                "loadingProducts"
+                                            )
+                                        }
                                     />
 
                                 )
                             }
 
-
-
-                            {/* =================================
-                                ERROR
-                            ================================= */}
 
                             {
                                 !loading &&
@@ -2139,7 +2547,13 @@ function Products() {
 
 
                                         <h3>
-                                            Products unavailable
+
+                                            {
+                                                t(
+                                                    "productsUnavailable"
+                                                )
+                                            }
+
                                         </h3>
 
 
@@ -2164,7 +2578,11 @@ function Products() {
                                                 size={17}
                                             />
 
-                                            Try Again
+                                            {
+                                                t(
+                                                    "tryAgain"
+                                                )
+                                            }
 
                                         </button>
 
@@ -2173,11 +2591,6 @@ function Products() {
                                 )
                             }
 
-
-
-                            {/* =================================
-                                PRODUCT GRID
-                            ================================= */}
 
                             {
                                 !loading &&
@@ -2212,33 +2625,24 @@ function Products() {
                                                                 }
 
                                                                 initial={{
-                                                                    opacity:
-                                                                        0,
-                                                                    y:
-                                                                        20,
-                                                                    scale:
-                                                                        0.98
+                                                                    opacity: 0,
+                                                                    y: 20,
+                                                                    scale: 0.98
                                                                 }}
 
                                                                 animate={{
-                                                                    opacity:
-                                                                        1,
-                                                                    y:
-                                                                        0,
-                                                                    scale:
-                                                                        1
+                                                                    opacity: 1,
+                                                                    y: 0,
+                                                                    scale: 1
                                                                 }}
 
                                                                 exit={{
-                                                                    opacity:
-                                                                        0,
-                                                                    scale:
-                                                                        0.96
+                                                                    opacity: 0,
+                                                                    scale: 0.96
                                                                 }}
 
                                                                 transition={{
-                                                                    duration:
-                                                                        0.25
+                                                                    duration: 0.25
                                                                 }}
 
                                                             >
@@ -2266,21 +2670,19 @@ function Products() {
                                         </motion.div>
 
 
-
-                                        {/* =============================
-                                            PAGINATION
-                                        ============================= */}
-
                                         {
                                             totalPages >
                                             1 && (
 
                                                 <nav
 
-                                                    aria-label="Product pages"
+                                                    aria-label={
+                                                        t(
+                                                            "productPages"
+                                                        )
+                                                    }
 
                                                     style={{
-
                                                         marginTop:
                                                             "34px",
 
@@ -2298,7 +2700,6 @@ function Products() {
 
                                                         gap:
                                                             "8px"
-
                                                     }}
 
                                                 >
@@ -2307,12 +2708,11 @@ function Products() {
 
                                                         type="button"
 
-                                                        onClick={
-                                                            () =>
-                                                                changePage(
-                                                                    page -
-                                                                    1
-                                                                )
+                                                        onClick={() =>
+                                                            changePage(
+                                                                page -
+                                                                1
+                                                            )
                                                         }
 
                                                         disabled={
@@ -2329,14 +2729,17 @@ function Products() {
 
                                                     >
 
-                                                        <ChevronLeft
+                                                        <PreviousIcon
                                                             size={17}
                                                         />
 
-                                                        Previous
+                                                        {
+                                                            t(
+                                                                "previous"
+                                                            )
+                                                        }
 
                                                     </button>
-
 
 
                                                     {
@@ -2351,11 +2754,10 @@ function Products() {
                                                                         pageNumber
                                                                     }
 
-                                                                    onClick={
-                                                                        () =>
-                                                                            changePage(
-                                                                                pageNumber
-                                                                            )
+                                                                    onClick={() =>
+                                                                        changePage(
+                                                                            pageNumber
+                                                                        )
                                                                     }
 
                                                                     aria-current={
@@ -2375,7 +2777,9 @@ function Products() {
                                                                 >
 
                                                                     {
-                                                                        pageNumber
+                                                                        formatNumber(
+                                                                            pageNumber
+                                                                        )
                                                                     }
 
                                                                 </button>
@@ -2385,17 +2789,15 @@ function Products() {
                                                     }
 
 
-
                                                     <button
 
                                                         type="button"
 
-                                                        onClick={
-                                                            () =>
-                                                                changePage(
-                                                                    page +
-                                                                    1
-                                                                )
+                                                        onClick={() =>
+                                                            changePage(
+                                                                page +
+                                                                1
+                                                            )
                                                         }
 
                                                         disabled={
@@ -2412,9 +2814,13 @@ function Products() {
 
                                                     >
 
-                                                        Next
+                                                        {
+                                                            t(
+                                                                "next"
+                                                            )
+                                                        }
 
-                                                        <ChevronRight
+                                                        <NextIcon
                                                             size={17}
                                                         />
 
@@ -2431,11 +2837,6 @@ function Products() {
                             }
 
 
-
-                            {/* =================================
-                                EMPTY
-                            ================================= */}
-
                             {
                                 !loading &&
                                 !error &&
@@ -2450,14 +2851,23 @@ function Products() {
 
 
                                         <h3>
-                                            No products found
+
+                                            {
+                                                t(
+                                                    "noProductsFound"
+                                                )
+                                            }
+
                                         </h3>
 
 
                                         <p>
 
-                                            Try changing your
-                                            search or filters.
+                                            {
+                                                t(
+                                                    "changeSearchFilters"
+                                                )
+                                            }
 
                                         </p>
 
@@ -2474,7 +2884,11 @@ function Products() {
 
                                         >
 
-                                            Reset Filters
+                                            {
+                                                t(
+                                                    "resetFilters"
+                                                )
+                                            }
 
                                         </button>
 
@@ -2492,11 +2906,6 @@ function Products() {
             </section>
 
 
-
-            {/* =========================================
-                CART NOTIFICATION
-            ========================================= */}
-
             <AnimatePresence>
 
                 {
@@ -2507,24 +2916,18 @@ function Products() {
                             className="products-toast"
 
                             initial={{
-                                opacity:
-                                    0,
-                                y:
-                                    20
+                                opacity: 0,
+                                y: 20
                             }}
 
                             animate={{
-                                opacity:
-                                    1,
-                                y:
-                                    0
+                                opacity: 1,
+                                y: 0
                             }}
 
                             exit={{
-                                opacity:
-                                    0,
-                                y:
-                                    15
+                                opacity: 0,
+                                y: 15
                             }}
 
                         >
@@ -2541,19 +2944,11 @@ function Products() {
             </AnimatePresence>
 
         </main>
+
     );
+
 }
 
-
-
-/*
-========================================================
-PAGINATION STYLES
-
-Kept inside this file so you do NOT need to manually
-modify Products.css.
-========================================================
-*/
 
 function paginationArrowStyle(
     disabled
@@ -2615,8 +3010,8 @@ function paginationArrowStyle(
                 : 1
 
     };
-}
 
+}
 
 
 function paginationNumberStyle(
@@ -2673,6 +3068,7 @@ function paginationNumberStyle(
                 : "none"
 
     };
+
 }
 
 

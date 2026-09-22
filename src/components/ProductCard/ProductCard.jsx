@@ -19,6 +19,10 @@ import {
     useCart
 } from "../../context/CartContext.jsx";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
 import "./ProductCard.css";
 
 
@@ -26,42 +30,66 @@ function ProductIcon({
     category
 }) {
 
+    const normalizedCategory =
+        String(
+            category ||
+            ""
+        );
+
+
     if (
-        category === "Medicine"
+        normalizedCategory ===
+        "Medicine"
     ) {
-        return <Pill size={48} />;
+
+        return (
+            <Pill
+                size={48}
+            />
+        );
+
     }
 
 
     if (
-        category === "Vitamins"
+        normalizedCategory ===
+        "Vitamins"
     ) {
+
         return (
             <HeartPulse
                 size={48}
             />
         );
+
     }
 
 
     if (
-        category === "Baby Care"
+        normalizedCategory ===
+        "Baby Care"
     ) {
+
         return (
-            <Baby size={48} />
+            <Baby
+                size={48}
+            />
         );
+
     }
 
 
     if (
-        category ===
+        normalizedCategory ===
         "Health Devices"
     ) {
+
         return (
             <Activity
                 size={48}
             />
         );
+
     }
 
 
@@ -70,16 +98,7 @@ function ProductIcon({
             size={48}
         />
     );
-}
 
-
-function formatPrice(
-    price
-) {
-
-    return (
-        `EGP ${price.toLocaleString()}`
-    );
 }
 
 
@@ -93,59 +112,130 @@ function ProductCard({
     } = useCart();
 
 
-    const handleAdd = () => {
+    const {
+        language,
+        t
+    } = useLanguage();
 
-        addToCart(
-            product,
-            1
+
+    const formatPrice = (
+        price
+    ) => {
+
+        const safePrice =
+            Number(
+                price ||
+                0
+            );
+
+
+        if (
+            language ===
+            "ar"
+        ) {
+
+            return (
+                `${safePrice.toLocaleString(
+                    "ar-EG"
+                )} ج.م`
+            );
+
+        }
+
+
+        return (
+            `EGP ${safePrice.toLocaleString(
+                "en-US"
+            )}`
         );
 
-
-        if (onAdd) {
-            onAdd(product);
-        }
     };
 
 
+    const handleAdd =
+        () => {
+
+            addToCart(
+                product,
+                1
+            );
+
+
+            if (
+                onAdd
+            ) {
+
+                onAdd(
+                    product
+                );
+
+            }
+
+        };
+
+
     return (
+
         <motion.article
+
             className="product-card"
+
             initial={{
                 opacity: 0,
                 y: 30
             }}
+
             whileInView={{
                 opacity: 1,
                 y: 0
             }}
+
             viewport={{
                 once: true,
                 amount: 0.2
             }}
+
             whileHover={{
                 y: -10
             }}
+
             transition={{
                 duration: 0.45
             }}
+
         >
 
-            {product.offer && (
 
-                <span className="product-offer">
-                    {product.offer}
-                </span>
+            {
+                product.offer && (
 
-            )}
+                    <span className="product-offer">
+
+                        {
+                            product.offer
+                        }
+
+                    </span>
+
+                )
+            }
 
 
-            {!product.inStock && (
+            {
+                !product.inStock && (
 
-                <span className="product-stock-badge">
-                    Out of stock
-                </span>
+                    <span className="product-stock-badge">
 
-            )}
+                        {
+                            t(
+                                "outOfStock"
+                            )
+                        }
+
+                    </span>
+
+                )
+            }
 
 
             <Link
@@ -157,21 +247,41 @@ function ProductCard({
 
                 <div className="product-image-area">
 
-                    <motion.div
-                        className="product-icon-box"
-                        whileHover={{
-                            scale: 1.12,
-                            rotate: -4
-                        }}
-                    >
+                    {
+                        product.imageUrl
+                            ? (
 
-                        <ProductIcon
-                            category={
-                                product.category
-                            }
-                        />
+                                <img
+                                    src={
+                                        product.imageUrl
+                                    }
+                                    alt={
+                                        product.name
+                                    }
+                                />
 
-                    </motion.div>
+                            )
+                            : (
+
+                                <motion.div
+                                    className="product-icon-box"
+                                    whileHover={{
+                                        scale: 1.12,
+                                        rotate: -4
+                                    }}
+                                >
+
+                                    <ProductIcon
+                                        category={
+                                            product.categoryOriginal ||
+                                            product.category
+                                        }
+                                    />
+
+                                </motion.div>
+
+                            )
+                    }
 
                 </div>
 
@@ -180,13 +290,22 @@ function ProductCard({
 
             <div className="product-info">
 
+
                 <span className="product-category">
-                    {product.category}
+
+                    {
+                        product.category
+                    }
+
                 </span>
 
 
                 <span className="product-brand">
-                    {product.brand}
+
+                    {
+                        product.brand
+                    }
+
                 </span>
 
 
@@ -198,54 +317,81 @@ function ProductCard({
                 >
 
                     <h3>
-                        {product.name}
+
+                        {
+                            product.name
+                        }
+
                     </h3>
 
                 </Link>
 
 
-                <p>
-                    {product.description}
-                </p>
+                {
+                    product.description && (
+
+                        <p>
+
+                            {
+                                product.description
+                            }
+
+                        </p>
+
+                    )
+                }
 
 
                 <div className="product-bottom">
 
+
                     <div className="product-price">
 
+
                         <strong>
+
                             {
                                 formatPrice(
                                     product.price
                                 )
                             }
+
                         </strong>
 
 
-                        {product.oldPrice && (
+                        {
+                            product.oldPrice && (
 
-                            <span>
-                                {
-                                    formatPrice(
-                                        product.oldPrice
-                                    )
-                                }
-                            </span>
+                                <span>
 
-                        )}
+                                    {
+                                        formatPrice(
+                                            product.oldPrice
+                                        )
+                                    }
+
+                                </span>
+
+                            )
+                        }
 
                     </div>
 
 
                     <motion.button
+
                         type="button"
+
                         className="product-add-button"
+
                         disabled={
                             !product.inStock
                         }
+
                         onClick={
                             handleAdd
                         }
+
                         whileHover={
                             product.inStock
                                 ? {
@@ -253,6 +399,7 @@ function ProductCard({
                                 }
                                 : {}
                         }
+
                         whileTap={
                             product.inStock
                                 ? {
@@ -260,14 +407,30 @@ function ProductCard({
                                 }
                                 : {}
                         }
+
                         aria-label={
                             product.inStock
-                                ? `Add ${product.name} to cart`
-                                : `${product.name} is out of stock`
+                                ? t(
+                                    "addProductToCart",
+                                    {
+                                        product:
+                                            product.name
+                                    }
+                                )
+                                : t(
+                                    "productOutOfStock",
+                                    {
+                                        product:
+                                            product.name
+                                    }
+                                )
                         }
+
                     >
 
-                        <Plus size={21} />
+                        <Plus
+                            size={21}
+                        />
 
                     </motion.button>
 
@@ -276,7 +439,9 @@ function ProductCard({
             </div>
 
         </motion.article>
+
     );
+
 }
 
 

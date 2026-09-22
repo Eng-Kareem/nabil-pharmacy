@@ -2,6 +2,7 @@ import {
     AlertTriangle,
     Boxes,
     CheckCircle2,
+    ChevronLeft,
     ChevronRight,
     CircleDollarSign,
     Clock3,
@@ -28,10 +29,37 @@ import {
     supabase
 } from "../../lib/supabase.js";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import adminTranslations
+    from "../../i18n/adminTranslations.js";
+
 import "./AdminDashboard.css";
+import "./AdminDashboardRTL.css";
 
 
 function AdminDashboard() {
+
+    const {
+        language,
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        adminTranslations[
+            language
+        ] ||
+        adminTranslations.en;
+
+
+    const ArrowIcon =
+        isArabic
+            ? ChevronLeft
+            : ChevronRight;
+
 
     const [
         products,
@@ -77,7 +105,284 @@ function AdminDashboard() {
 
     /*
     ========================================================
-    LOAD DASHBOARD DATA
+    REPLACE TRANSLATION VARIABLES
+    ========================================================
+    */
+
+    const replaceText = (
+        value,
+        replacements = {}
+    ) => {
+
+        let result =
+            value;
+
+
+        Object.entries(
+            replacements
+        ).forEach(
+            ([
+                key,
+                replacement
+            ]) => {
+
+                result =
+                    result.replaceAll(
+                        `{${key}}`,
+                        String(
+                            replacement
+                        )
+                    );
+
+            }
+        );
+
+
+        return result;
+
+    };
+
+
+    /*
+    ========================================================
+    FORMAT NUMBER
+    ========================================================
+    */
+
+    const formatNumber = (
+        value
+    ) => {
+
+        return Number(
+            value ||
+            0
+        ).toLocaleString(
+            isArabic
+                ? "ar-EG"
+                : "en-US"
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    FORMAT PRICE
+    ========================================================
+    */
+
+    const formatPrice = (
+        value
+    ) => {
+
+        const formatted =
+            Number(
+                value ||
+                0
+            ).toLocaleString(
+                isArabic
+                    ? "ar-EG"
+                    : "en-US"
+            );
+
+
+        return isArabic
+            ? `${formatted} ج.م`
+            : `EGP ${formatted}`;
+
+    };
+
+
+    /*
+    ========================================================
+    FORMAT DATE
+    ========================================================
+    */
+
+    const formatDate = (
+        value
+    ) => {
+
+        if (
+            !value
+        ) {
+
+            return "-";
+
+        }
+
+
+        return new Date(
+            value
+        ).toLocaleString(
+            isArabic
+                ? "ar-EG"
+                : "en-US",
+            {
+                month:
+                    "short",
+
+                day:
+                    "numeric",
+
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit"
+            }
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    PRODUCT LANGUAGE
+    ========================================================
+    */
+
+    const productName = (
+        product
+    ) => {
+
+        if (
+            isArabic &&
+            product?.name_ar
+        ) {
+
+            return product.name_ar;
+
+        }
+
+
+        return (
+            product?.name ||
+            "-"
+        );
+
+    };
+
+
+    const productBrand = (
+        product
+    ) => {
+
+        if (
+            isArabic &&
+            product?.brand_ar
+        ) {
+
+            return product.brand_ar;
+
+        }
+
+
+        return (
+            product?.brand ||
+            text.noBrand
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    STATUS LANGUAGE
+    ========================================================
+    */
+
+    const translateStatus = (
+        status
+    ) => {
+
+        const value =
+            String(
+                status ||
+                "pending"
+            )
+                .toLowerCase()
+                .trim();
+
+
+        const map = {
+
+            pending:
+                text.pending,
+
+            confirmed:
+                text.confirmed,
+
+            preparing:
+                text.preparing,
+
+            ready:
+                text.ready,
+
+            out_for_delivery:
+                text.outForDelivery,
+
+            delivered:
+                text.delivered,
+
+            completed:
+                text.completed,
+
+            cancelled:
+                text.cancelled
+
+        };
+
+
+        return (
+            map[value] ||
+            value.replaceAll(
+                "_",
+                " "
+            )
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    ORDER NUMBER
+    ========================================================
+    */
+
+    const orderNumber = (
+        order
+    ) => {
+
+        if (
+            !order?.id
+        ) {
+
+            return "NAB-ORDER";
+
+        }
+
+
+        return (
+            `NAB-${order.id
+                .replaceAll(
+                    "-",
+                    ""
+                )
+                .slice(
+                    0,
+                    8
+                )
+                .toUpperCase()}`
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    LOAD DASHBOARD
     ========================================================
     */
 
@@ -90,11 +395,17 @@ function AdminDashboard() {
                 if (
                     showLoader
                 ) {
-                    setRefreshing(true);
+
+                    setRefreshing(
+                        true
+                    );
+
                 }
 
 
-                setError("");
+                setError(
+                    ""
+                );
 
 
                 try {
@@ -103,94 +414,97 @@ function AdminDashboard() {
                         productsResponse,
                         stockResponse,
                         ordersResponse
-                    ] = await Promise.all([
+                    ] =
+                        await Promise.all([
 
 
-                        /*
-                        PRODUCTS
-                        */
-
-                        supabase
-                            .from("products")
-                            .select(`
-                                id,
-                                name,
-                                brand,
-                                image_url,
-                                price,
-                                is_active,
-                                featured,
-                                created_at
-                            `)
-                            .order(
-                                "created_at",
-                                {
-                                    ascending: false
-                                }
-                            ),
-
-
-
-                        /*
-                        INVENTORY
-                        */
-
-                        supabase
-                            .from("branch_stock")
-                            .select(`
-                                id,
-                                branch_id,
-                                product_id,
-                                quantity
-                            `),
+                            supabase
+                                .from(
+                                    "products"
+                                )
+                                .select(`
+                                    id,
+                                    name,
+                                    name_ar,
+                                    brand,
+                                    brand_ar,
+                                    image_url,
+                                    price,
+                                    is_active,
+                                    featured,
+                                    created_at
+                                `)
+                                .order(
+                                    "created_at",
+                                    {
+                                        ascending:
+                                            false
+                                    }
+                                ),
 
 
+                            supabase
+                                .from(
+                                    "branch_stock"
+                                )
+                                .select(`
+                                    id,
+                                    branch_id,
+                                    product_id,
+                                    quantity
+                                `),
 
-                        /*
-                        ORDERS
-                        */
 
-                        supabase
-                            .from("orders")
-                            .select(`
-                                id,
-                                full_name,
-                                phone,
-                                total,
-                                status,
-                                payment_status,
-                                payment_method,
-                                delivery_method,
-                                created_at
-                            `)
-                            .order(
-                                "created_at",
-                                {
-                                    ascending: false
-                                }
-                            )
+                            supabase
+                                .from(
+                                    "orders"
+                                )
+                                .select(`
+                                    id,
+                                    full_name,
+                                    phone,
+                                    total,
+                                    status,
+                                    payment_status,
+                                    payment_method,
+                                    delivery_method,
+                                    created_at
+                                `)
+                                .order(
+                                    "created_at",
+                                    {
+                                        ascending:
+                                            false
+                                    }
+                                )
 
-                    ]);
+                        ]);
 
 
                     if (
                         productsResponse.error
                     ) {
+
                         throw productsResponse.error;
+
                     }
 
 
                     if (
                         stockResponse.error
                     ) {
+
                         throw stockResponse.error;
+
                     }
 
 
                     if (
                         ordersResponse.error
                     ) {
+
                         throw ordersResponse.error;
+
                     }
 
 
@@ -211,27 +525,43 @@ function AdminDashboard() {
                         []
                     );
 
-                } catch (error) {
+                } catch (
+                    dashboardError
+                ) {
 
                     console.error(
                         "Admin dashboard error:",
-                        error
+                        dashboardError
                     );
 
 
                     setError(
-                        error?.message ||
-                        "Could not load dashboard information."
+                        isArabic
+                            ? text.dashboardLoadError
+                            : (
+                                dashboardError?.message ||
+                                text.dashboardLoadError
+                            )
                     );
 
                 } finally {
 
-                    setLoading(false);
+                    setLoading(
+                        false
+                    );
 
-                    setRefreshing(false);
+
+                    setRefreshing(
+                        false
+                    );
+
                 }
+
             },
-            []
+            [
+                isArabic,
+                text.dashboardLoadError
+            ]
         );
 
 
@@ -241,92 +571,115 @@ function AdminDashboard() {
     ========================================================
     */
 
-    useEffect(() => {
+    useEffect(
+        () => {
 
-        loadDashboard();
+            loadDashboard();
 
-    }, [
-        loadDashboard
-    ]);
+        },
+        [
+            loadDashboard
+        ]
+    );
 
 
     /*
     ========================================================
-    REALTIME DASHBOARD
+    REALTIME
     ========================================================
     */
 
-    useEffect(() => {
+    useEffect(
+        () => {
 
-        const channel =
-            supabase
-                .channel(
-                    "admin-dashboard-live"
-                )
+            const channel =
+                supabase
+                    .channel(
+                        "admin-dashboard-live"
+                    )
 
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table: "orders"
-                    },
-                    () => {
+                    .on(
+                        "postgres_changes",
+                        {
+                            event:
+                                "*",
 
-                        loadDashboard();
+                            schema:
+                                "public",
 
-                    }
-                )
+                            table:
+                                "orders"
+                        },
+                        () => {
 
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table: "branch_stock"
-                    },
-                    () => {
+                            loadDashboard();
 
-                        loadDashboard();
+                        }
+                    )
 
-                    }
-                )
+                    .on(
+                        "postgres_changes",
+                        {
+                            event:
+                                "*",
 
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table: "products"
-                    },
-                    () => {
+                            schema:
+                                "public",
 
-                        loadDashboard();
+                            table:
+                                "branch_stock"
+                        },
+                        () => {
 
-                    }
-                )
+                            loadDashboard();
 
-                .subscribe(
-                    status => {
+                        }
+                    )
 
-                        setRealtimeConnected(
-                            status ===
-                            "SUBSCRIBED"
-                        );
-                    }
+                    .on(
+                        "postgres_changes",
+                        {
+                            event:
+                                "*",
+
+                            schema:
+                                "public",
+
+                            table:
+                                "products"
+                        },
+                        () => {
+
+                            loadDashboard();
+
+                        }
+                    )
+
+                    .subscribe(
+                        status => {
+
+                            setRealtimeConnected(
+                                status ===
+                                "SUBSCRIBED"
+                            );
+
+                        }
+                    );
+
+
+            return () => {
+
+                supabase.removeChannel(
+                    channel
                 );
 
+            };
 
-        return () => {
-
-            supabase.removeChannel(
-                channel
-            );
-        };
-
-    }, [
-        loadDashboard
-    ]);
+        },
+        [
+            loadDashboard
+        ]
+    );
 
 
     /*
@@ -356,12 +709,6 @@ function AdminDashboard() {
                 stockRows.forEach(
                     row => {
 
-                        const quantity =
-                            Number(
-                                row.quantity
-                            ) || 0;
-
-
                         map[
                             row.product_id
                         ] =
@@ -371,7 +718,10 @@ function AdminDashboard() {
                                 ] ||
                                 0
                             ) +
-                            quantity;
+                            Number(
+                                row.quantity ||
+                                0
+                            );
 
                     }
                 );
@@ -389,7 +739,7 @@ function AdminDashboard() {
 
     /*
     ========================================================
-    DASHBOARD STATISTICS
+    STATISTICS
     ========================================================
     */
 
@@ -407,18 +757,18 @@ function AdminDashboard() {
                 const totalStock =
                     Object.values(
                         productStock
-                    )
-                        .reduce(
-                            (
-                                total,
-                                quantity
-                            ) =>
-                                total +
-                                Number(
-                                    quantity
-                                ),
-                            0
-                        );
+                    ).reduce(
+                        (
+                            sum,
+                            quantity
+                        ) =>
+                            sum +
+                            Number(
+                                quantity ||
+                                0
+                            ),
+                        0
+                    );
 
 
                 const lowStock =
@@ -428,13 +778,17 @@ function AdminDashboard() {
                             const quantity =
                                 productStock[
                                     product.id
-                                ] || 0;
+                                ] ||
+                                0;
 
 
                             return (
-                                quantity >= 1 &&
-                                quantity <= 5
+                                quantity >=
+                                    1 &&
+                                quantity <=
+                                    5
                             );
+
                         }
                     );
 
@@ -447,7 +801,8 @@ function AdminDashboard() {
                                     product.id
                                 ] ||
                                 0
-                            ) === 0
+                            ) ===
+                            0
                     );
 
 
@@ -556,7 +911,7 @@ function AdminDashboard() {
 
     /*
     ========================================================
-    STOCK ALERT PRODUCTS
+    STOCK ALERTS
     ========================================================
     */
 
@@ -565,12 +920,10 @@ function AdminDashboard() {
             () => {
 
                 return products
-
                     .filter(
                         product =>
                             product.is_active
                     )
-
                     .map(
                         product => ({
 
@@ -579,16 +932,16 @@ function AdminDashboard() {
                             stock:
                                 productStock[
                                     product.id
-                                ] || 0
+                                ] ||
+                                0
 
                         })
                     )
-
                     .filter(
                         product =>
-                            product.stock <= 5
+                            product.stock <=
+                            5
                     )
-
                     .sort(
                         (
                             a,
@@ -597,7 +950,6 @@ function AdminDashboard() {
                             a.stock -
                             b.stock
                     )
-
                     .slice(
                         0,
                         6
@@ -619,14 +971,11 @@ function AdminDashboard() {
 
     const recentOrders =
         useMemo(
-            () => {
-
-                return orders.slice(
+            () =>
+                orders.slice(
                     0,
                     6
-                );
-
-            },
+                ),
             [
                 orders
             ]
@@ -684,7 +1033,6 @@ function AdminDashboard() {
 
                     const total =
                         orders
-
                             .filter(
                                 order => {
 
@@ -694,6 +1042,7 @@ function AdminDashboard() {
                                     ) {
 
                                         return false;
+
                                     }
 
 
@@ -704,12 +1053,14 @@ function AdminDashboard() {
 
 
                                     return (
-                                        created >= date &&
-                                        created < nextDate
+                                        created >=
+                                            date &&
+                                        created <
+                                            nextDate
                                     );
+
                                 }
                             )
-
                             .reduce(
                                 (
                                     sum,
@@ -728,7 +1079,9 @@ function AdminDashboard() {
 
                         label:
                             date.toLocaleDateString(
-                                undefined,
+                                isArabic
+                                    ? "ar-EG"
+                                    : "en-US",
                                 {
                                     weekday:
                                         "short"
@@ -738,6 +1091,7 @@ function AdminDashboard() {
                         total
 
                     });
+
                 }
 
 
@@ -745,119 +1099,26 @@ function AdminDashboard() {
 
             },
             [
-                orders
+                orders,
+                isArabic
             ]
         );
 
 
     const maximumDailySales =
         useMemo(
-            () => {
-
-                return Math.max(
+            () =>
+                Math.max(
                     1,
                     ...salesData.map(
                         day =>
                             day.total
                     )
-                );
-
-            },
+                ),
             [
                 salesData
             ]
         );
-
-
-    /*
-    ========================================================
-    FORMAT PRICE
-    ========================================================
-    */
-
-    const formatPrice = (
-        value
-    ) => {
-
-        return (
-            `EGP ${Number(
-                value ||
-                0
-            ).toLocaleString()}`
-        );
-    };
-
-
-    /*
-    ========================================================
-    FORMAT ORDER NUMBER
-    ========================================================
-    */
-
-    const orderNumber = (
-        order
-    ) => {
-
-        if (
-            !order?.id
-        ) {
-
-            return "NAB-ORDER";
-        }
-
-
-        return (
-            `NAB-${order.id
-                .replaceAll(
-                    "-",
-                    ""
-                )
-                .slice(
-                    0,
-                    8
-                )
-                .toUpperCase()}`
-        );
-    };
-
-
-    /*
-    ========================================================
-    FORMAT DATE
-    ========================================================
-    */
-
-    const formatDate = (
-        value
-    ) => {
-
-        if (
-            !value
-        ) {
-
-            return "-";
-        }
-
-
-        return new Date(
-            value
-        ).toLocaleString(
-            undefined,
-            {
-                month:
-                    "short",
-
-                day:
-                    "numeric",
-
-                hour:
-                    "2-digit",
-
-                minute:
-                    "2-digit"
-            }
-        );
-    };
 
 
     /*
@@ -872,7 +1133,14 @@ function AdminDashboard() {
 
         return (
 
-            <main className="admin-dashboard-page">
+            <main
+                className="admin-dashboard-page"
+                dir={
+                    isArabic
+                        ? "rtl"
+                        : "ltr"
+                }
+            >
 
                 <div className="container">
 
@@ -885,7 +1153,11 @@ function AdminDashboard() {
 
 
                         <span>
-                            Loading pharmacy dashboard...
+
+                            {
+                                text.loadingDashboard
+                            }
+
                         </span>
 
                     </div>
@@ -893,7 +1165,9 @@ function AdminDashboard() {
                 </div>
 
             </main>
+
         );
+
     }
 
 
@@ -905,35 +1179,49 @@ function AdminDashboard() {
 
     return (
 
-        <main className="admin-dashboard-page">
+        <main
+            className="admin-dashboard-page"
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
+            }
+        >
 
             <div className="container">
 
 
-                {/* =================================================
+                {/* =========================================
                     HEADER
-                ================================================= */}
+                ========================================= */}
 
                 <header className="admin-dashboard-header">
-
 
                     <div>
 
                         <span className="admin-dashboard-label">
-                            Administration
+
+                            {
+                                text.administration
+                            }
+
                         </span>
 
 
                         <h1>
-                            Pharmacy Dashboard
+
+                            {
+                                text.pharmacyDashboard
+                            }
+
                         </h1>
 
 
                         <p>
 
-                            Monitor pharmacy products,
-                            inventory, orders and sales
-                            from one place.
+                            {
+                                text.dashboardDescription
+                            }
 
                         </p>
 
@@ -957,8 +1245,8 @@ function AdminDashboard() {
 
                             {
                                 realtimeConnected
-                                    ? "Live Data"
-                                    : "Connecting..."
+                                    ? text.liveData
+                                    : text.connecting
                             }
 
                         </div>
@@ -989,8 +1277,8 @@ function AdminDashboard() {
 
                             {
                                 refreshing
-                                    ? "Refreshing"
-                                    : "Refresh"
+                                    ? text.refreshing
+                                    : text.refresh
                             }
 
                         </button>
@@ -1000,10 +1288,9 @@ function AdminDashboard() {
                 </header>
 
 
-
-                {/* =================================================
+                {/* =========================================
                     ERROR
-                ================================================= */}
+                ========================================= */}
 
                 {
                     error && (
@@ -1014,7 +1301,9 @@ function AdminDashboard() {
                                 size={18}
                             />
 
-                            {error}
+                            {
+                                error
+                            }
 
                         </div>
 
@@ -1022,10 +1311,9 @@ function AdminDashboard() {
                 }
 
 
-
-                {/* =================================================
+                {/* =========================================
                     MAIN STATS
-                ================================================= */}
+                ========================================= */}
 
                 <section className="admin-dashboard-stat-grid">
 
@@ -1034,15 +1322,30 @@ function AdminDashboard() {
                         icon={
                             <Package />
                         }
-                        label="Active Products"
+                        label={
+                            text.activeProducts
+                        }
                         value={
-                            stats.products
+                            formatNumber(
+                                stats.products
+                            )
                         }
                         helper={
-                            `${stats.totalProducts} total products`
+                            replaceText(
+                                text.totalProductsHelper,
+                                {
+                                    count:
+                                        formatNumber(
+                                            stats.totalProducts
+                                        )
+                                }
+                            )
                         }
                         link="/admin/products"
                         className="products"
+                        ArrowIcon={
+                            ArrowIcon
+                        }
                     />
 
 
@@ -1050,13 +1353,22 @@ function AdminDashboard() {
                         icon={
                             <Boxes />
                         }
-                        label="Stock Units"
-                        value={
-                            stats.totalStock
+                        label={
+                            text.stockUnits
                         }
-                        helper="Across pharmacy inventory"
+                        value={
+                            formatNumber(
+                                stats.totalStock
+                            )
+                        }
+                        helper={
+                            text.acrossInventory
+                        }
                         link="/admin/inventory"
                         className="stock"
+                        ArrowIcon={
+                            ArrowIcon
+                        }
                     />
 
 
@@ -1064,15 +1376,30 @@ function AdminDashboard() {
                         icon={
                             <AlertTriangle />
                         }
-                        label="Low Stock"
+                        label={
+                            text.lowStock
+                        }
                         value={
-                            stats.lowStock
+                            formatNumber(
+                                stats.lowStock
+                            )
                         }
                         helper={
-                            `${stats.outOfStock} out of stock`
+                            replaceText(
+                                text.outOfStockHelper,
+                                {
+                                    count:
+                                        formatNumber(
+                                            stats.outOfStock
+                                        )
+                                }
+                            )
                         }
                         link="/admin/inventory"
                         className="warning"
+                        ArrowIcon={
+                            ArrowIcon
+                        }
                     />
 
 
@@ -1080,15 +1407,30 @@ function AdminDashboard() {
                         icon={
                             <ShoppingBag />
                         }
-                        label="Total Orders"
+                        label={
+                            text.totalOrders
+                        }
                         value={
-                            stats.orders
+                            formatNumber(
+                                stats.orders
+                            )
                         }
                         helper={
-                            `${stats.pending} waiting`
+                            replaceText(
+                                text.waitingOrders,
+                                {
+                                    count:
+                                        formatNumber(
+                                            stats.pending
+                                        )
+                                }
+                            )
                         }
                         link="/admin/orders"
                         className="orders"
+                        ArrowIcon={
+                            ArrowIcon
+                        }
                     />
 
 
@@ -1096,53 +1438,72 @@ function AdminDashboard() {
                         icon={
                             <CircleDollarSign />
                         }
-                        label="Delivered Sales"
+                        label={
+                            text.deliveredSales
+                        }
                         value={
                             formatPrice(
                                 stats.revenue
                             )
                         }
                         helper={
-                            `${stats.delivered} delivered orders`
+                            replaceText(
+                                text.deliveredOrdersHelper,
+                                {
+                                    count:
+                                        formatNumber(
+                                            stats.delivered
+                                        )
+                                }
+                            )
                         }
                         link="/admin/orders"
                         className="revenue"
+                        ArrowIcon={
+                            ArrowIcon
+                        }
                     />
 
                 </section>
 
 
-
-                {/* =================================================
+                {/* =========================================
                     ORDER PIPELINE
-                ================================================= */}
+                ========================================= */}
 
                 <section className="admin-dashboard-order-pipeline">
-
 
                     <div className="admin-dashboard-section-heading">
 
                         <div>
 
                             <span>
-                                Fulfilment
+
+                                {
+                                    text.fulfilment
+                                }
+
                             </span>
 
 
                             <h2>
-                                Order Pipeline
+
+                                {
+                                    text.orderPipeline
+                                }
+
                             </h2>
 
                         </div>
 
 
-                        <Link
-                            to="/admin/orders"
-                        >
+                        <Link to="/admin/orders">
 
-                            Manage Orders
+                            {
+                                text.manageOrders
+                            }
 
-                            <ChevronRight
+                            <ArrowIcon
                                 size={16}
                             />
 
@@ -1158,9 +1519,13 @@ function AdminDashboard() {
                             icon={
                                 <Clock3 />
                             }
-                            label="Pending"
+                            label={
+                                text.pending
+                            }
                             value={
-                                stats.pending
+                                formatNumber(
+                                    stats.pending
+                                )
                             }
                             className="pending"
                         />
@@ -1170,9 +1535,13 @@ function AdminDashboard() {
                             icon={
                                 <Package />
                             }
-                            label="Preparing"
+                            label={
+                                text.preparing
+                            }
                             value={
-                                stats.preparing
+                                formatNumber(
+                                    stats.preparing
+                                )
                             }
                             className="preparing"
                         />
@@ -1182,9 +1551,13 @@ function AdminDashboard() {
                             icon={
                                 <PackageCheck />
                             }
-                            label="Ready"
+                            label={
+                                text.ready
+                            }
                             value={
-                                stats.ready
+                                formatNumber(
+                                    stats.ready
+                                )
                             }
                             className="ready"
                         />
@@ -1194,22 +1567,25 @@ function AdminDashboard() {
                             icon={
                                 <CheckCircle2 />
                             }
-                            label="Delivered"
+                            label={
+                                text.delivered
+                            }
                             value={
-                                stats.delivered
+                                formatNumber(
+                                    stats.delivered
+                                )
                             }
                             className="delivered"
                         />
 
-                </div>
+                    </div>
 
                 </section>
 
 
-
-                {/* =================================================
+                {/* =========================================
                     SALES + STOCK
-                ================================================= */}
+                ========================================= */}
 
                 <div className="admin-dashboard-middle-grid">
 
@@ -1223,12 +1599,20 @@ function AdminDashboard() {
                             <div>
 
                                 <span>
-                                    Performance
+
+                                    {
+                                        text.performance
+                                    }
+
                                 </span>
 
 
                                 <h2>
-                                    Last 7 Days Sales
+
+                                    {
+                                        text.lastSevenDaysSales
+                                    }
+
                                 </h2>
 
                             </div>
@@ -1268,11 +1652,13 @@ function AdminDashboard() {
 
                                                     {
                                                         day.total >
-                                                            0
+                                                        0
                                                             ? formatPrice(
                                                                 day.total
                                                             )
-                                                            : "0"
+                                                            : formatNumber(
+                                                                0
+                                                            )
                                                     }
 
                                                 </div>
@@ -1299,14 +1685,17 @@ function AdminDashboard() {
 
 
                                                 <span>
+
                                                     {
                                                         day.label
                                                     }
+
                                                 </span>
 
                                             </div>
 
                                         );
+
                                     }
                                 )
                             }
@@ -1316,8 +1705,7 @@ function AdminDashboard() {
                     </section>
 
 
-
-                    {/* STOCK ALERTS */}
+                    {/* STOCK */}
 
                     <section className="admin-dashboard-panel">
 
@@ -1326,24 +1714,32 @@ function AdminDashboard() {
                             <div>
 
                                 <span>
-                                    Inventory
+
+                                    {
+                                        text.inventory
+                                    }
+
                                 </span>
 
 
                                 <h2>
-                                    Stock Alerts
+
+                                    {
+                                        text.stockAlerts
+                                    }
+
                                 </h2>
 
                             </div>
 
 
-                            <Link
-                                to="/admin/inventory"
-                            >
+                            <Link to="/admin/inventory">
 
-                                Inventory
+                                {
+                                    text.inventory
+                                }
 
-                                <ChevronRight
+                                <ArrowIcon
                                     size={16}
                                 />
 
@@ -1356,7 +1752,7 @@ function AdminDashboard() {
 
                             {
                                 stockAlerts.length >
-                                    0
+                                0
                                     ? (
 
                                         stockAlerts.map(
@@ -1380,7 +1776,9 @@ function AdminDashboard() {
                                                                             product.image_url
                                                                         }
                                                                         alt={
-                                                                            product.name
+                                                                            productName(
+                                                                                product
+                                                                            )
                                                                         }
                                                                     />
 
@@ -1402,7 +1800,9 @@ function AdminDashboard() {
                                                         <strong>
 
                                                             {
-                                                                product.name
+                                                                productName(
+                                                                    product
+                                                                )
                                                             }
 
                                                         </strong>
@@ -1411,8 +1811,9 @@ function AdminDashboard() {
                                                         <span>
 
                                                             {
-                                                                product.brand ||
-                                                                "No brand"
+                                                                productBrand(
+                                                                    product
+                                                                )
                                                             }
 
                                                         </span>
@@ -1431,9 +1832,17 @@ function AdminDashboard() {
 
                                                         {
                                                             product.stock ===
-                                                                0
-                                                                ? "Out"
-                                                                : `${product.stock} left`
+                                                            0
+                                                                ? text.out
+                                                                : replaceText(
+                                                                    text.unitsLeft,
+                                                                    {
+                                                                        count:
+                                                                            formatNumber(
+                                                                                product.stock
+                                                                            )
+                                                                    }
+                                                                )
                                                         }
 
                                                     </div>
@@ -1454,14 +1863,19 @@ function AdminDashboard() {
 
 
                                             <strong>
-                                                Inventory looks healthy
+
+                                                {
+                                                    text.inventoryHealthy
+                                                }
+
                                             </strong>
 
 
                                             <span>
 
-                                                No products currently
-                                                have low stock.
+                                                {
+                                                    text.noLowStock
+                                                }
 
                                             </span>
 
@@ -1477,37 +1891,43 @@ function AdminDashboard() {
                 </div>
 
 
-
-                {/* =================================================
+                {/* =========================================
                     RECENT ORDERS
-                ================================================= */}
+                ========================================= */}
 
                 <section className="admin-dashboard-recent">
-
 
                     <div className="admin-dashboard-section-heading">
 
                         <div>
 
                             <span>
-                                Latest Activity
+
+                                {
+                                    text.latestActivity
+                                }
+
                             </span>
 
 
                             <h2>
-                                Recent Orders
+
+                                {
+                                    text.recentOrders
+                                }
+
                             </h2>
 
                         </div>
 
 
-                        <Link
-                            to="/admin/orders"
-                        >
+                        <Link to="/admin/orders">
 
-                            View All
+                            {
+                                text.viewAll
+                            }
 
-                            <ChevronRight
+                            <ArrowIcon
                                 size={16}
                             />
 
@@ -1518,7 +1938,7 @@ function AdminDashboard() {
 
                     {
                         recentOrders.length >
-                            0
+                        0
                             ? (
 
                                 <div className="admin-dashboard-order-table-wrapper">
@@ -1530,27 +1950,27 @@ function AdminDashboard() {
                                             <tr>
 
                                                 <th>
-                                                    Order
+                                                    {text.order}
                                                 </th>
 
                                                 <th>
-                                                    Customer
+                                                    {text.customer}
                                                 </th>
 
                                                 <th>
-                                                    Date
+                                                    {text.date}
                                                 </th>
 
                                                 <th>
-                                                    Total
+                                                    {text.total}
                                                 </th>
 
                                                 <th>
-                                                    Status
+                                                    {text.status}
                                                 </th>
 
                                                 <th>
-                                                    Receipt
+                                                    {text.receipt}
                                                 </th>
 
                                             </tr>
@@ -1572,7 +1992,9 @@ function AdminDashboard() {
 
                                                             <td>
 
-                                                                <strong>
+                                                                <strong
+                                                                    dir="ltr"
+                                                                >
 
                                                                     {
                                                                         orderNumber(
@@ -1593,13 +2015,15 @@ function AdminDashboard() {
 
                                                                         {
                                                                             order.full_name ||
-                                                                            "Guest Customer"
+                                                                            text.guestCustomer
                                                                         }
 
                                                                     </strong>
 
 
-                                                                    <span>
+                                                                    <span
+                                                                        dir="ltr"
+                                                                    >
 
                                                                         {
                                                                             order.phone ||
@@ -1643,13 +2067,17 @@ function AdminDashboard() {
 
                                                                 <span
                                                                     className={
-                                                                        `admin-dashboard-order-status ${order.status || "pending"}`
+                                                                        `admin-dashboard-order-status ${
+                                                                            order.status ||
+                                                                            "pending"
+                                                                        }`
                                                                     }
                                                                 >
 
                                                                     {
-                                                                        order.status ||
-                                                                        "pending"
+                                                                        translateStatus(
+                                                                            order.status
+                                                                        )
                                                                     }
 
                                                                 </span>
@@ -1664,7 +2092,9 @@ function AdminDashboard() {
                                                                         `/receipt/${order.id}`
                                                                     }
                                                                     className="admin-dashboard-receipt"
-                                                                    aria-label="Open receipt"
+                                                                    aria-label={
+                                                                        text.openReceipt
+                                                                    }
                                                                 >
 
                                                                     <ReceiptText
@@ -1698,14 +2128,19 @@ function AdminDashboard() {
 
 
                                     <strong>
-                                        No orders yet
+
+                                        {
+                                            text.noOrdersYet
+                                        }
+
                                     </strong>
 
 
                                     <span>
 
-                                        Customer orders will
-                                        appear here automatically.
+                                        {
+                                            text.ordersAppearHere
+                                        }
 
                                     </span>
 
@@ -1717,17 +2152,14 @@ function AdminDashboard() {
                 </section>
 
 
-
-                {/* =================================================
+                {/* =========================================
                     QUICK ACTIONS
-                ================================================= */}
+                ========================================= */}
 
                 <section className="admin-dashboard-quick-actions">
 
 
-                    <Link
-                        to="/admin/products"
-                    >
+                    <Link to="/admin/products">
 
                         <Package
                             size={22}
@@ -1737,26 +2169,31 @@ function AdminDashboard() {
                         <div>
 
                             <strong>
-                                Manage Products
+
+                                {
+                                    text.manageProducts
+                                }
+
                             </strong>
 
 
                             <span>
-                                Add, edit and publish products
+
+                                {
+                                    text.manageProductsDescription
+                                }
+
                             </span>
 
                         </div>
 
 
-                        <ChevronRight />
+                        <ArrowIcon />
 
                     </Link>
 
 
-
-                    <Link
-                        to="/admin/inventory"
-                    >
+                    <Link to="/admin/inventory">
 
                         <Boxes
                             size={22}
@@ -1766,26 +2203,31 @@ function AdminDashboard() {
                         <div>
 
                             <strong>
-                                Manage Inventory
+
+                                {
+                                    text.manageInventory
+                                }
+
                             </strong>
 
 
                             <span>
-                                Update pharmacy stock
+
+                                {
+                                    text.manageInventoryDescription
+                                }
+
                             </span>
 
                         </div>
 
 
-                        <ChevronRight />
+                        <ArrowIcon />
 
                     </Link>
 
 
-
-                    <Link
-                        to="/admin/orders"
-                    >
+                    <Link to="/admin/orders">
 
                         <ShoppingBag
                             size={22}
@@ -1795,18 +2237,26 @@ function AdminDashboard() {
                         <div>
 
                             <strong>
-                                Manage Orders
+
+                                {
+                                    text.manageOrders
+                                }
+
                             </strong>
 
 
                             <span>
-                                Process customer orders
+
+                                {
+                                    text.manageOrdersDescription
+                                }
+
                             </span>
 
                         </div>
 
 
-                        <ChevronRight />
+                        <ArrowIcon />
 
                     </Link>
 
@@ -1815,30 +2265,27 @@ function AdminDashboard() {
             </div>
 
         </main>
-    );
-}
 
+    );
+
+}
 
 
 /*
 ========================================================
-MAIN STAT CARD
+STAT CARD
 ========================================================
 */
 
 function DashboardStat({
 
     icon,
-
     label,
-
     value,
-
     helper,
-
     link,
-
-    className
+    className,
+    ArrowIcon
 
 }) {
 
@@ -1879,15 +2326,15 @@ function DashboardStat({
             </div>
 
 
-            <ChevronRight
+            <ArrowIcon
                 className="admin-dashboard-stat-arrow"
             />
 
         </Link>
 
     );
-}
 
+}
 
 
 /*
@@ -1899,11 +2346,8 @@ PIPELINE CARD
 function PipelineCard({
 
     icon,
-
     label,
-
     value,
-
     className
 
 }) {
@@ -1917,9 +2361,7 @@ function PipelineCard({
         >
 
             <div>
-
                 {icon}
-
             </div>
 
 
@@ -1935,6 +2377,7 @@ function PipelineCard({
         </div>
 
     );
+
 }
 
 

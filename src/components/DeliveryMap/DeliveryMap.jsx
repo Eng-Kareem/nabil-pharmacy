@@ -26,6 +26,13 @@ import {
     useState
 } from "react";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import checkoutTranslations
+    from "../../i18n/checkoutTranslations.js";
+
 import "leaflet/dist/leaflet.css";
 import "./DeliveryMap.css";
 
@@ -56,12 +63,13 @@ function normalizeText(
     )
         .trim()
         .toLowerCase();
+
 }
 
 
 /*
 ========================================================
-CHECK IF A VALUE IS ACTUALLY A LANDMARK / BUSINESS
+CHECK LANDMARK / BUSINESS
 ========================================================
 */
 
@@ -82,6 +90,7 @@ function isLandmarkLike(
     ) {
 
         return false;
+
     }
 
 
@@ -122,6 +131,7 @@ function isLandmarkLike(
         .includes(
             normalizedValue
         );
+
 }
 
 
@@ -150,12 +160,13 @@ function detectCity(
         ""
 
     );
+
 }
 
 
 /*
 ========================================================
-DETECT AREA / DISTRICT
+DETECT AREA
 ========================================================
 */
 
@@ -207,6 +218,7 @@ function detectArea(
         ) {
 
             continue;
+
         }
 
 
@@ -219,14 +231,17 @@ function detectArea(
         ) {
 
             continue;
+
         }
 
 
         return candidate;
+
     }
 
 
     return "";
+
 }
 
 
@@ -269,12 +284,13 @@ function detectStreet(
             " "
         )
         .trim();
+
 }
 
 
 /*
 ========================================================
-CLICK ANYWHERE ON MAP
+MAP CLICK
 ========================================================
 */
 
@@ -299,18 +315,20 @@ function MapClickHandler({
                 lat,
                 lng
             );
+
         }
 
     });
 
 
     return null;
+
 }
 
 
 /*
 ========================================================
-AUTOMATICALLY MOVE MAP
+AUTO MOVE MAP
 ========================================================
 */
 
@@ -332,6 +350,7 @@ function MapAutoMove({
             ) {
 
                 return;
+
             }
 
 
@@ -357,6 +376,7 @@ function MapAutoMove({
             ) {
 
                 return;
+
             }
 
 
@@ -385,12 +405,13 @@ function MapAutoMove({
 
 
     return null;
+
 }
 
 
 /*
 ========================================================
-FIX MAP SIZE AFTER ANIMATED CHECKOUT APPEARS
+MAP SIZE FIX
 ========================================================
 */
 
@@ -430,6 +451,7 @@ function MapSizeFix() {
 
 
     return null;
+
 }
 
 
@@ -440,7 +462,8 @@ CENTER BUTTON
 */
 
 function MapController({
-    position
+    position,
+    ariaLabel
 }) {
 
     const map =
@@ -466,6 +489,7 @@ function MapController({
             }
 
         );
+
     };
 
 
@@ -477,7 +501,9 @@ function MapController({
             onClick={
                 moveMap
             }
-            aria-label="Center map on delivery pin"
+            aria-label={
+                ariaLabel
+            }
         >
 
             <Navigation
@@ -485,7 +511,9 @@ function MapController({
             />
 
         </button>
+
     );
+
 }
 
 
@@ -500,6 +528,25 @@ function DeliveryMap({
     setFormData,
     handleChange
 }) {
+
+    const {
+        language,
+        isArabic
+    } = useLanguage();
+
+
+    const text =
+        checkoutTranslations[
+            language
+        ] ||
+        checkoutTranslations.en;
+
+
+    const countryName =
+        isArabic
+            ? "مصر"
+            : "Egypt";
+
 
     /*
     ====================================================
@@ -637,7 +684,7 @@ function DeliveryMap({
 
     /*
     ====================================================
-    CUSTOM MARKER
+    MARKER
     ====================================================
     */
 
@@ -703,15 +750,9 @@ function DeliveryMap({
         ) {
 
             return;
+
         }
 
-
-        /*
-        This changes position state.
-
-        MapAutoMove sees this change
-        and automatically calls flyTo().
-        */
 
         setPosition([
 
@@ -733,12 +774,13 @@ function DeliveryMap({
 
             })
         );
+
     };
 
 
     /*
     ====================================================
-    APPLY GEOCODED ADDRESS DATA
+    APPLY ADDRESS DATA
     ====================================================
     */
 
@@ -781,15 +823,6 @@ function DeliveryMap({
 
         setFormData(
             current => {
-
-                /*
-                If the old Area value is actually
-                the name of a business / landmark,
-                remove it.
-
-                Example:
-                Omar Afandy should NOT become Area.
-                */
 
                 const safeExistingArea =
                     isLandmarkLike(
@@ -835,20 +868,16 @@ function DeliveryMap({
                     longitude
 
                 };
+
             }
         );
+
     };
 
 
     /*
     ====================================================
     REVERSE GEOCODE
-    ====================================================
-
-    Used when:
-    - customer clicks map
-    - customer drags pin
-    - customer uses current location
     ====================================================
     */
 
@@ -879,6 +908,7 @@ function DeliveryMap({
         ) {
 
             return;
+
         }
 
 
@@ -888,6 +918,7 @@ function DeliveryMap({
 
             reverseAbortControllerRef.current
                 .abort();
+
         }
 
 
@@ -904,7 +935,9 @@ function DeliveryMap({
         );
 
 
-        setLocationError("");
+        setLocationError(
+            ""
+        );
 
 
         try {
@@ -932,7 +965,9 @@ function DeliveryMap({
                         "1",
 
                     "accept-language":
-                        "en"
+                        isArabic
+                            ? "ar,en"
+                            : "en"
 
                 });
 
@@ -969,6 +1004,7 @@ function DeliveryMap({
                 throw new Error(
                     "Reverse address lookup failed."
                 );
+
             }
 
 
@@ -989,7 +1025,6 @@ function DeliveryMap({
 
             });
 
-
         } catch (
             error
         ) {
@@ -1000,6 +1035,7 @@ function DeliveryMap({
             ) {
 
                 return;
+
             }
 
 
@@ -1009,13 +1045,8 @@ function DeliveryMap({
             );
 
 
-            /*
-            Coordinates are still valid,
-            even if address lookup failed.
-            */
-
             setLocationError(
-                "The pin was moved successfully, but we could not automatically read the street details. You can enter them manually."
+                text.reverseFailed
             );
 
         } finally {
@@ -1023,13 +1054,15 @@ function DeliveryMap({
             setReverseSearching(
                 false
             );
+
         }
+
     };
 
 
     /*
     ====================================================
-    LOCATION PICKED FROM MAP
+    MAP LOCATION PICKED
     ====================================================
     */
 
@@ -1062,6 +1095,7 @@ function DeliveryMap({
                 lat,
                 lng
             );
+
         };
 
 
@@ -1092,6 +1126,7 @@ function DeliveryMap({
                 lat,
                 lng
             );
+
         };
 
 
@@ -1122,10 +1157,11 @@ function DeliveryMap({
             ) {
 
                 setLocationError(
-                    "Location is not supported by this browser."
+                    text.locationUnsupported
                 );
 
                 return;
+
             }
 
 
@@ -1165,19 +1201,21 @@ function DeliveryMap({
                         setLocating(
                             false
                         );
+
                     },
 
 
                     () => {
 
                         setLocationError(
-                            "We could not access your location. Search for your address or place the pin manually."
+                            text.locationDenied
                         );
 
 
                         setLocating(
                             false
                         );
+
                     },
 
 
@@ -1195,26 +1233,13 @@ function DeliveryMap({
                     }
 
                 );
+
         };
 
 
     /*
     ====================================================
-    BUILD MULTIPLE SEARCH QUERIES
-    ====================================================
-
-    Important:
-    We do NOT depend on the Area field for
-    the first search because an old/wrong
-    landmark value could make the search fail.
-
-    Example:
-    Address = Palestine Street
-    Area = Omar Afandy  <-- wrong
-    City = Bilqas
-
-    First search becomes:
-    Palestine Street, Bilqas, Egypt
+    BUILD SEARCH QUERIES
     ====================================================
     */
 
@@ -1241,15 +1266,10 @@ function DeliveryMap({
 
             const queries = [
 
-                /*
-                BEST:
-                street + city
-                */
-
                 [
                     street,
                     city,
-                    "Egypt"
+                    countryName
                 ]
                     .filter(
                         Boolean
@@ -1257,17 +1277,12 @@ function DeliveryMap({
                     .join(
                         ", "
                     ),
-
-
-                /*
-                More specific if Area is useful.
-                */
 
                 [
                     street,
                     area,
                     city,
-                    "Egypt"
+                    countryName
                 ]
                     .filter(
                         Boolean
@@ -1275,16 +1290,10 @@ function DeliveryMap({
                     .join(
                         ", "
                     ),
-
-
-                /*
-                Fallback:
-                street only
-                */
 
                 [
                     street,
-                    "Egypt"
+                    countryName
                 ]
                     .filter(
                         Boolean
@@ -1293,15 +1302,9 @@ function DeliveryMap({
                         ", "
                     ),
 
-
-                /*
-                Final fallback:
-                city
-                */
-
                 [
                     city,
-                    "Egypt"
+                    countryName
                 ]
                     .filter(
                         Boolean
@@ -1327,7 +1330,9 @@ function DeliveryMap({
 
                             return (
                                 normalized !==
-                                "egypt"
+                                normalizeText(
+                                    countryName
+                                )
                             );
 
                         }
@@ -1335,12 +1340,13 @@ function DeliveryMap({
                 )
 
             ];
+
         };
 
 
     /*
     ====================================================
-    FETCH NOMINATIM SEARCH
+    FETCH ADDRESS RESULTS
     ====================================================
     */
 
@@ -1372,7 +1378,9 @@ function DeliveryMap({
                         "1",
 
                     "accept-language":
-                        "en"
+                        isArabic
+                            ? "ar,en"
+                            : "en"
 
                 });
 
@@ -1408,6 +1416,7 @@ function DeliveryMap({
                 throw new Error(
                     "Address search failed."
                 );
+
             }
 
 
@@ -1421,12 +1430,13 @@ function DeliveryMap({
             )
                 ? results
                 : [];
+
         };
 
 
     /*
     ====================================================
-    SELECT SEARCH RESULT
+    SELECT RESULT
     ====================================================
     */
 
@@ -1463,26 +1473,15 @@ function DeliveryMap({
         ) {
 
             return;
+
         }
 
-
-        /*
-        This immediately changes position
-        and MapAutoMove flies to it.
-        */
 
         updatePosition(
             latitude,
             longitude
         );
 
-
-        /*
-        Keep customer's typed street text.
-
-        This stops a nearby shop or POI from
-        replacing what the customer typed.
-        */
 
         applyAddressDetails({
 
@@ -1505,12 +1504,14 @@ function DeliveryMap({
             setSearchResults(
                 []
             );
+
         }
 
 
         setSearchError(
             ""
         );
+
     };
 
 
@@ -1533,10 +1534,11 @@ function DeliveryMap({
             ) {
 
                 setSearchError(
-                    "Enter your street/address and city first."
+                    text.addressRequiredForSearch
                 );
 
                 return;
+
             }
 
 
@@ -1567,6 +1569,7 @@ function DeliveryMap({
 
                 searchAbortControllerRef.current
                     .abort();
+
             }
 
 
@@ -1583,13 +1586,6 @@ function DeliveryMap({
                 let results =
                     [];
 
-
-                /*
-                Try multiple address formats.
-
-                This makes searches much more
-                forgiving.
-                */
 
                 for (
                     const query
@@ -1612,7 +1608,9 @@ function DeliveryMap({
                     ) {
 
                         break;
+
                     }
+
                 }
 
 
@@ -1622,25 +1620,13 @@ function DeliveryMap({
                 ) {
 
                     setSearchError(
-                        "We could not find that address. Try entering the street and city, for example: Palestine Street, Bilqas."
+                        text.addressNotFound
                     );
 
                     return;
+
                 }
 
-
-                /*
-                =================================================
-                IMPORTANT FIX
-                =================================================
-
-                OLD CODE:
-                only moved map when:
-                results.length === 1
-
-                NEW CODE:
-                ALWAYS select the best/first result.
-                */
 
                 const bestResult =
                     results[0];
@@ -1659,11 +1645,6 @@ function DeliveryMap({
                 );
 
 
-                /*
-                Keep alternative results available
-                if Nominatim found several places.
-                */
-
                 if (
                     results.length >
                     1
@@ -1675,7 +1656,7 @@ function DeliveryMap({
 
 
                     setSearchMessage(
-                        "We moved the pin to the best match. If it is not correct, choose another result below."
+                        text.bestMatch
                     );
 
                 } else {
@@ -1686,8 +1667,9 @@ function DeliveryMap({
 
 
                     setSearchMessage(
-                        "Address found. The map pin has been moved to your location."
+                        text.addressFound
                     );
+
                 }
 
             } catch (
@@ -1700,6 +1682,7 @@ function DeliveryMap({
                 ) {
 
                     return;
+
                 }
 
 
@@ -1710,7 +1693,7 @@ function DeliveryMap({
 
 
                 setSearchError(
-                    "Address search is temporarily unavailable. You can still click the map or drag the pin manually."
+                    text.searchUnavailable
                 );
 
             } finally {
@@ -1718,7 +1701,9 @@ function DeliveryMap({
                 setSearching(
                     false
                 );
+
             }
+
         };
 
 
@@ -1738,6 +1723,7 @@ function DeliveryMap({
         ) {
 
             return;
+
         }
 
 
@@ -1745,12 +1731,13 @@ function DeliveryMap({
 
 
         searchAddress();
+
     };
 
 
     /*
     ====================================================
-    ADDRESS FIELD CHANGE
+    FIELD CHANGE
     ====================================================
     */
 
@@ -1771,12 +1758,13 @@ function DeliveryMap({
         setSearchError(
             ""
         );
+
     };
 
 
     /*
     ====================================================
-    CLEAR SEARCH RESULTS
+    CLEAR RESULTS
     ====================================================
     */
 
@@ -1794,6 +1782,7 @@ function DeliveryMap({
             setSearchMessage(
                 ""
             );
+
         };
 
 
@@ -1814,6 +1803,7 @@ function DeliveryMap({
 
                     searchAbortControllerRef.current
                         .abort();
+
                 }
 
 
@@ -1823,6 +1813,7 @@ function DeliveryMap({
 
                     reverseAbortControllerRef.current
                         .abort();
+
                 }
 
             };
@@ -1843,9 +1834,9 @@ function DeliveryMap({
         <div className="delivery-map-wrapper">
 
 
-            {/* =========================================
+            {/* =================================================
                 MAP SIDE
-            ========================================= */}
+            ================================================= */}
 
             <div className="delivery-map-visual">
 
@@ -1855,12 +1846,20 @@ function DeliveryMap({
                     <div>
 
                         <span className="section-label">
-                            Delivery Location
+
+                            {
+                                text.deliveryLocation
+                            }
+
                         </span>
 
 
                         <h3>
-                            Pin your location
+
+                            {
+                                text.chooseExactLocation
+                            }
+
                         </h3>
 
                     </div>
@@ -1887,11 +1886,8 @@ function DeliveryMap({
                                 ? (
 
                                     <LoaderCircle
-
                                         size={17}
-
                                         className="delivery-map-spinner"
-
                                     />
 
                                 )
@@ -1907,8 +1903,8 @@ function DeliveryMap({
 
                         {
                             locating
-                                ? "Locating..."
-                                : "Use My Location"
+                                ? text.locating
+                                : text.useMyLocation
                         }
 
                     </button>
@@ -1918,18 +1914,16 @@ function DeliveryMap({
 
                 <p className="delivery-map-help">
 
-                    Search your written address,
-                    click anywhere on the map or
-                    drag the red pin to choose the
-                    exact delivery point.
+                    {
+                        text.mapHelp
+                    }
 
                 </p>
 
 
-
-                {/* =====================================
+                {/* =================================================
                     MAP
-                ===================================== */}
+                ================================================= */}
 
                 <div className="delivery-map-container">
 
@@ -1949,7 +1943,11 @@ function DeliveryMap({
 
                         <TileLayer
 
-                            attribution='&copy; OpenStreetMap contributors'
+                            attribution={
+                                isArabic
+                                    ? "© مساهمو OpenStreetMap"
+                                    : "© OpenStreetMap contributors"
+                            }
 
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 
@@ -1981,6 +1979,10 @@ function DeliveryMap({
 
                             position={
                                 position
+                            }
+
+                            ariaLabel={
+                                text.centerMap
                             }
 
                         />
@@ -2017,11 +2019,8 @@ function DeliveryMap({
                                 ? (
 
                                     <LoaderCircle
-
                                         size={15}
-
                                         className="delivery-map-spinner"
-
                                     />
 
                                 )
@@ -2037,19 +2036,14 @@ function DeliveryMap({
 
                         {
                             reverseSearching
-                                ? "Reading location..."
-                                : "Drag pin for exact location"
+                                ? text.readingLocation
+                                : text.dragPin
                         }
 
                     </div>
 
                 </div>
 
-
-
-                {/* =====================================
-                    LOCATION ERROR
-                ===================================== */}
 
                 {
                     locationError && (
@@ -2066,10 +2060,9 @@ function DeliveryMap({
                 }
 
 
-
-                {/* =====================================
+                {/* =================================================
                     COORDINATES
-                ===================================== */}
+                ================================================= */}
 
                 <div className="delivery-map-coordinates">
 
@@ -2079,11 +2072,17 @@ function DeliveryMap({
 
 
                     <span>
-                        Selected location:
+
+                        {
+                            text.selectedLocation
+                        }
+
                     </span>
 
 
-                    <strong>
+                    <strong
+                        dir="ltr"
+                    >
 
                         {
                             Number(
@@ -2110,11 +2109,6 @@ function DeliveryMap({
                 </div>
 
 
-
-                {/* =====================================
-                    SELECTED ADDRESS
-                ===================================== */}
-
                 {
                     selectedAddress && (
 
@@ -2128,7 +2122,11 @@ function DeliveryMap({
                             <div>
 
                                 <span>
-                                    Map location
+
+                                    {
+                                        text.mapLocation
+                                    }
+
                                 </span>
 
 
@@ -2150,37 +2148,40 @@ function DeliveryMap({
             </div>
 
 
-
-            {/* =========================================
+            {/* =================================================
                 ADDRESS FORM
-            ========================================= */}
+            ================================================= */}
 
             <div className="delivery-map-form">
 
                 <span className="section-label">
-                    Delivery Address
+
+                    {
+                        text.deliveryAddress
+                    }
+
                 </span>
 
 
                 <h3>
-                    Where should we deliver?
+
+                    {
+                        text.whereDeliver
+                    }
+
                 </h3>
 
 
                 <p>
 
-                    Enter your street and city,
-                    then press Find on Map.
-                    We'll automatically move the
-                    map to the best matching location.
+                    {
+                        text.addressInstructions
+                    }
 
                 </p>
 
 
-
-                {/* =====================================
-                    FULL ADDRESS
-                ===================================== */}
+                {/* FULL ADDRESS */}
 
                 <div className="delivery-map-field">
 
@@ -2190,7 +2191,9 @@ function DeliveryMap({
                             size={15}
                         />
 
-                        Full Address
+                        {
+                            text.fullAddress
+                        }
 
                     </label>
 
@@ -2215,7 +2218,9 @@ function DeliveryMap({
                             handleAddressKeyDown
                         }
 
-                        placeholder="Street, building, floor, apartment"
+                        placeholder={
+                            text.fullAddressPlaceholder
+                        }
 
                         autoComplete="street-address"
 
@@ -2226,28 +2231,28 @@ function DeliveryMap({
 
                     <small className="delivery-map-field-help">
 
-                        Example: Palestine Street,
-                        Building 12
+                        {
+                            text.fullAddressExample
+                        }
 
                     </small>
 
                 </div>
 
 
-
-                {/* =====================================
-                    AREA + CITY
-                ===================================== */}
+                {/* AREA + CITY */}
 
                 <div className="delivery-map-form-row">
 
 
-                    {/* AREA */}
-
                     <div className="delivery-map-field">
 
                         <label htmlFor="area">
-                            Area / District
+
+                            {
+                                text.areaDistrict
+                            }
+
                         </label>
 
 
@@ -2271,7 +2276,9 @@ function DeliveryMap({
                                 handleAddressKeyDown
                             }
 
-                            placeholder="Neighbourhood or district"
+                            placeholder={
+                                text.areaPlaceholder
+                            }
 
                             autoComplete="address-level3"
 
@@ -2280,20 +2287,23 @@ function DeliveryMap({
 
                         <small className="delivery-map-field-help">
 
-                            Not a shop or nearby landmark.
+                            {
+                                text.areaHelp
+                            }
 
                         </small>
 
                     </div>
 
 
-
-                    {/* CITY */}
-
                     <div className="delivery-map-field">
 
                         <label htmlFor="city">
-                            City
+
+                            {
+                                text.city
+                            }
+
                         </label>
 
 
@@ -2317,7 +2327,9 @@ function DeliveryMap({
                                 handleAddressKeyDown
                             }
 
-                            placeholder="Bilqas"
+                            placeholder={
+                                text.cityPlaceholder
+                            }
 
                             autoComplete="address-level2"
 
@@ -2330,10 +2342,7 @@ function DeliveryMap({
                 </div>
 
 
-
-                {/* =====================================
-                    FIND ON MAP
-                ===================================== */}
+                {/* FIND ON MAP */}
 
                 <button
 
@@ -2356,11 +2365,8 @@ function DeliveryMap({
                             ? (
 
                                 <LoaderCircle
-
                                     size={18}
-
                                     className="delivery-map-spinner"
-
                                 />
 
                             )
@@ -2376,17 +2382,14 @@ function DeliveryMap({
 
                     {
                         searching
-                            ? "Finding Address..."
-                            : "Find on Map"
+                            ? text.findingAddress
+                            : text.findOnMap
                     }
 
                 </button>
 
 
-
-                {/* =====================================
-                    SUCCESS MESSAGE
-                ===================================== */}
+                {/* SUCCESS */}
 
                 {
                     searchMessage && (
@@ -2412,10 +2415,7 @@ function DeliveryMap({
                 }
 
 
-
-                {/* =====================================
-                    SEARCH RESULTS
-                ===================================== */}
+                {/* SEARCH RESULTS */}
 
                 {
                     searchResults.length >
@@ -2423,20 +2423,25 @@ function DeliveryMap({
 
                         <div className="delivery-search-results">
 
+
                             <div className="delivery-search-results-heading">
 
                                 <div>
 
                                     <strong>
-                                        Other possible locations
+
+                                        {
+                                            text.otherLocations
+                                        }
+
                                     </strong>
 
 
                                     <span>
 
-                                        Choose another result
-                                        if the automatic pin
-                                        is not correct.
+                                        {
+                                            text.otherLocationsDescription
+                                        }
 
                                     </span>
 
@@ -2451,7 +2456,9 @@ function DeliveryMap({
                                         clearSearchResults
                                     }
 
-                                    aria-label="Close search results"
+                                    aria-label={
+                                        text.closeSearchResults
+                                    }
 
                                 >
 
@@ -2493,7 +2500,7 @@ function DeliveryMap({
 
 
                                                         setSearchMessage(
-                                                            "Location changed. The map pin has been moved to the selected address."
+                                                            text.locationChanged
                                                         );
 
                                                     }
@@ -2520,7 +2527,7 @@ function DeliveryMap({
                                                                 ?.split(
                                                                     ","
                                                                 )[0] ||
-                                                            "Location"
+                                                            text.location
                                                         }
 
                                                     </strong>
@@ -2550,11 +2557,6 @@ function DeliveryMap({
                 }
 
 
-
-                {/* =====================================
-                    SEARCH ERROR
-                ===================================== */}
-
                 {
                     searchError && (
 
@@ -2570,10 +2572,9 @@ function DeliveryMap({
                 }
 
 
-
-                {/* =====================================
+                {/* =================================================
                     LIVE SUMMARY
-                ===================================== */}
+                ================================================= */}
 
                 <div className="delivery-map-summary">
 
@@ -2589,7 +2590,11 @@ function DeliveryMap({
                     <div>
 
                         <span>
-                            Delivering to
+
+                            {
+                                text.deliveringTo
+                            }
+
                         </span>
 
 
@@ -2597,7 +2602,7 @@ function DeliveryMap({
 
                             {
                                 formData.address ||
-                                "Choose your location"
+                                text.chooseLocation
                             }
 
                         </strong>
@@ -2619,7 +2624,7 @@ function DeliveryMap({
                                     {
                                         formData.area &&
                                         formData.city
-                                            ? ", "
+                                            ? "، "
                                             : ""
                                     }
 
@@ -2640,7 +2645,9 @@ function DeliveryMap({
             </div>
 
         </div>
+
     );
+
 }
 
 

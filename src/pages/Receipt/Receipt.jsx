@@ -1,5 +1,6 @@
 import {
     ArrowLeft,
+    ArrowRight,
     Check,
     Package,
     Printer,
@@ -23,6 +24,13 @@ import {
     supabase
 } from "../../lib/supabase.js";
 
+import {
+    useLanguage
+} from "../../context/LanguageContext.jsx";
+
+import receiptTranslations
+    from "../../i18n/receiptTranslations.js";
+
 import "./Receipt.css";
 
 
@@ -30,30 +38,61 @@ function Receipt() {
 
     const {
         orderId
-    } = useParams();
+    } =
+        useParams();
 
 
     const [
         searchParams
-    ] = useSearchParams();
+    ] =
+        useSearchParams();
+
+
+    const {
+        language,
+        isArabic
+    } =
+        useLanguage();
+
+
+    const text =
+        receiptTranslations[
+            language
+        ] ||
+        receiptTranslations.en;
+
+
+    const BackIcon =
+        isArabic
+            ? ArrowRight
+            : ArrowLeft;
 
 
     const [
         receipt,
         setReceipt
-    ] = useState(null);
+    ] =
+        useState(
+            null
+        );
 
 
     const [
         loading,
         setLoading
-    ] = useState(true);
+    ] =
+        useState(
+            true
+        );
 
 
     const [
         error,
         setError
-    ] = useState("");
+    ] =
+        useState(
+            ""
+        );
 
 
     const receiptToken =
@@ -64,77 +103,401 @@ function Receipt() {
 
     /*
     ========================================================
+    ORDER STATUS TRANSLATION
+    ========================================================
+    */
+
+    const translateOrderStatus = (
+        status
+    ) => {
+
+        const normalized =
+            String(
+                status ||
+                "pending"
+            )
+                .trim()
+                .toLowerCase();
+
+
+        const statusMap = {
+
+            pending:
+                text.statusPending,
+
+            confirmed:
+                text.statusConfirmed,
+
+            preparing:
+                text.statusPreparing,
+
+            ready:
+                text.statusReady,
+
+            out_for_delivery:
+                text.statusOutForDelivery,
+
+            delivered:
+                text.statusDelivered,
+
+            cancelled:
+                text.statusCancelled,
+
+            completed:
+                text.statusCompleted
+
+        };
+
+
+        return (
+            statusMap[
+                normalized
+            ] ||
+            normalized
+                .replaceAll(
+                    "_",
+                    " "
+                )
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    PAYMENT STATUS TRANSLATION
+    ========================================================
+    */
+
+    const translatePaymentStatus = (
+        status
+    ) => {
+
+        const normalized =
+            String(
+                status ||
+                "pending"
+            )
+                .trim()
+                .toLowerCase();
+
+
+        const statusMap = {
+
+            paid:
+                text.paid,
+
+            pending:
+                text.pending,
+
+            failed:
+                text.failed,
+
+            refunded:
+                text.refunded
+
+        };
+
+
+        return (
+            statusMap[
+                normalized
+            ] ||
+            normalized
+        );
+
+    };
+
+
+    /*
+    ========================================================
+    LOAD ARABIC PRODUCT NAMES
+    ========================================================
+
+    Existing order snapshots contain the product name that
+    was stored when the order was created.
+
+    For Arabic display, we look up matching products and
+    use name_ar without modifying the receipt/order itself.
+    ========================================================
+    */
+
+    const addArabicProductNames =
+        async (
+            receiptData
+        ) => {
+
+            if (
+                !isArabic ||
+                !receiptData ||
+                !Array.isArray(
+                    receiptData.items
+                ) ||
+                receiptData.items.length ===
+                    0
+            ) {
+
+                return receiptData;
+
+            }
+
+
+            const englishNames =
+                [
+                    ...new Set(
+
+                        receiptData
+                            .items
+                            .map(
+                                item =>
+                                    item.product_name
+                            )
+                            .filter(
+                                Boolean
+                            )
+
+                    )
+                ];
+
+
+            if (
+                englishNames.length ===
+                0
+            ) {
+
+                return receiptData;
+
+            }
+
+
+            try {
+
+                const {
+                    data,
+                    error:
+                        productError
+                } =
+                    await supabase
+                        .from(
+                            "products"
+                        )
+                        .select(
+                            "name, name_ar"
+                        )
+                        .in(
+                            "name",
+                            englishNames
+                        );
+
+
+                if (
+                    productError
+                ) {
+
+                    console.error(
+                        "Arabic receipt product name error:",
+                        productError
+                    );
+
+
+                    return receiptData;
+
+                }
+
+
+                const translationMap =
+                    new Map(
+                        (
+                            data ||
+                            []
+                        ).map(
+                            product => [
+
+                                product.name,
+
+                                product.name_ar ||
+                                product.name
+
+                            ]
+                        )
+                    );
+
+
+                return {
+
+                    ...receiptData,
+
+                    items:
+                        receiptData
+                            .items
+                            .map(
+                                item => ({
+
+                                    ...item,
+
+                                    product_name_display:
+                                        translationMap.get(
+                                            item.product_name
+                                        ) ||
+                                        item.product_name
+
+                                })
+                            )
+
+                };
+
+            } catch (
+                lookupError
+            ) {
+
+                console.error(
+                    "Arabic receipt lookup error:",
+                    lookupError
+                );
+
+
+                return receiptData;
+
+            }
+
+        };
+
+
+    /*
+    ========================================================
     LOAD RECEIPT
     ========================================================
     */
 
-    useEffect(() => {
+    useEffect(
+        () => {
 
-        const loadReceipt =
-            async () => {
-
-                setLoading(true);
-
-                setError("");
+            let mounted =
+                true;
 
 
-                try {
+            const loadReceipt =
+                async () => {
 
-                    const {
-                        data,
-                        error
-                    } =
-                        await supabase
-                            .rpc(
-                                "get_order_receipt",
-                                {
-
-                                    p_order_id:
-                                        orderId,
-
-                                    p_checkout_token:
-                                        receiptToken ||
-                                        null
-
-                                }
-                            );
-
-
-                    if (error) {
-                        throw error;
-                    }
-
-
-                    setReceipt(
-                        data
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "Receipt load error:",
-                        error
+                    setLoading(
+                        true
                     );
 
 
                     setError(
-                        error?.message ||
-                        "Could not load this receipt."
+                        ""
                     );
 
-                } finally {
 
-                    setLoading(false);
-                }
+                    try {
+
+                        const {
+                            data,
+                            error:
+                                receiptError
+                        } =
+                            await supabase
+                                .rpc(
+                                    "get_order_receipt",
+                                    {
+
+                                        p_order_id:
+                                            orderId,
+
+                                        p_checkout_token:
+                                            receiptToken ||
+                                            null
+
+                                    }
+                                );
+
+
+                        if (
+                            receiptError
+                        ) {
+
+                            throw receiptError;
+
+                        }
+
+
+                        const translatedReceipt =
+                            await addArabicProductNames(
+                                data
+                            );
+
+
+                        if (
+                            mounted
+                        ) {
+
+                            setReceipt(
+                                translatedReceipt
+                            );
+
+                        }
+
+                    } catch (
+                        loadError
+                    ) {
+
+                        console.error(
+                            "Receipt load error:",
+                            loadError
+                        );
+
+
+                        if (
+                            mounted
+                        ) {
+
+                            setError(
+
+                                isArabic
+                                    ? text.couldNotLoad
+                                    : (
+                                        loadError?.message ||
+                                        text.couldNotLoad
+                                    )
+
+                            );
+
+                        }
+
+                    } finally {
+
+                        if (
+                            mounted
+                        ) {
+
+                            setLoading(
+                                false
+                            );
+
+                        }
+
+                    }
+
+                };
+
+
+            loadReceipt();
+
+
+            return () => {
+
+                mounted =
+                    false;
+
             };
 
-
-        loadReceipt();
-
-    }, [
-        orderId,
-        receiptToken
-    ]);
+        },
+        [
+            orderId,
+            receiptToken,
+            language
+        ]
+    );
 
 
     /*
@@ -147,17 +510,56 @@ function Receipt() {
         value
     ) => {
 
-        return (
-            `EGP ${Number(
-                value || 0
-            ).toLocaleString(
-                undefined,
+        const amount =
+            Number(
+                value ||
+                0
+            );
+
+
+        const formatted =
+            amount.toLocaleString(
+                isArabic
+                    ? "ar-EG"
+                    : "en-US",
                 {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+
+                    minimumFractionDigits:
+                        2,
+
+                    maximumFractionDigits:
+                        2
+
                 }
-            )}`
+            );
+
+
+        return isArabic
+            ? `${formatted} ج.م`
+            : `EGP ${formatted}`;
+
+    };
+
+
+    /*
+    ========================================================
+    NUMBER
+    ========================================================
+    */
+
+    const formatNumber = (
+        value
+    ) => {
+
+        return Number(
+            value ||
+            0
+        ).toLocaleString(
+            isArabic
+                ? "ar-EG"
+                : "en-US"
         );
+
     };
 
 
@@ -171,22 +573,28 @@ function Receipt() {
         value
     ) => {
 
-        if (!value) {
+        if (
+            !value
+        ) {
+
             return "-";
+
         }
 
 
         return new Date(
             value
         ).toLocaleString(
-            undefined,
+            isArabic
+                ? "ar-EG"
+                : "en-US",
             {
 
                 year:
                     "numeric",
 
                 month:
-                    "short",
+                    "long",
 
                 day:
                     "numeric",
@@ -199,6 +607,7 @@ function Receipt() {
 
             }
         );
+
     };
 
 
@@ -208,29 +617,34 @@ function Receipt() {
     ========================================================
     */
 
-    const getReceiptNumber = () => {
+    const getReceiptNumber =
+        () => {
 
-        if (
-            !receipt?.id
-        ) {
+            if (
+                !receipt?.id
+            ) {
 
-            return "";
-        }
+                return "";
+
+            }
 
 
-        return (
-            `NAB-${receipt.id
-                .replaceAll(
-                    "-",
-                    ""
-                )
-                .slice(
-                    0,
-                    10
-                )
-                .toUpperCase()}`
-        );
-    };
+            return (
+
+                `NAB-${receipt.id
+                    .replaceAll(
+                        "-",
+                        ""
+                    )
+                    .slice(
+                        0,
+                        10
+                    )
+                    .toUpperCase()}`
+
+            );
+
+        };
 
 
     /*
@@ -245,7 +659,14 @@ function Receipt() {
 
         return (
 
-            <main className="receipt-page">
+            <main
+                className="receipt-page"
+                dir={
+                    isArabic
+                        ? "rtl"
+                        : "ltr"
+                }
+            >
 
                 <div className="receipt-state">
 
@@ -255,13 +676,19 @@ function Receipt() {
 
 
                     <h1>
-                        Loading receipt...
+
+                        {
+                            text.loadingReceipt
+                        }
+
                     </h1>
 
                 </div>
 
             </main>
+
         );
+
     }
 
 
@@ -278,7 +705,14 @@ function Receipt() {
 
         return (
 
-            <main className="receipt-page">
+            <main
+                className="receipt-page"
+                dir={
+                    isArabic
+                        ? "rtl"
+                        : "ltr"
+                }
+            >
 
                 <div className="receipt-state error">
 
@@ -288,7 +722,11 @@ function Receipt() {
 
 
                     <h1>
-                        Receipt unavailable
+
+                        {
+                            text.receiptUnavailable
+                        }
+
                     </h1>
 
 
@@ -296,7 +734,7 @@ function Receipt() {
 
                         {
                             error ||
-                            "This receipt could not be found."
+                            text.receiptNotFound
                         }
 
                     </p>
@@ -307,20 +745,37 @@ function Receipt() {
                         className="receipt-back-home"
                     >
 
-                        Back Home
+                        {
+                            text.backHome
+                        }
 
                     </Link>
 
                 </div>
 
             </main>
+
         );
+
     }
 
 
+    /*
+    ========================================================
+    RECEIPT
+    ========================================================
+    */
+
     return (
 
-        <main className="receipt-page">
+        <main
+            className="receipt-page"
+            dir={
+                isArabic
+                    ? "rtl"
+                    : "ltr"
+            }
+        >
 
 
             {/* =================================================
@@ -331,44 +786,55 @@ function Receipt() {
 
 
                 <button
+
                     type="button"
+
                     className="receipt-back-button"
+
                     onClick={() =>
                         window.history.back()
                     }
+
                 >
 
-                    <ArrowLeft
+                    <BackIcon
                         size={17}
                     />
 
-                    Back
+                    {
+                        text.back
+                    }
 
                 </button>
 
 
                 <button
+
                     type="button"
+
                     className="receipt-print-button"
+
                     onClick={() =>
                         window.print()
                     }
+
                 >
 
                     <Printer
                         size={18}
                     />
 
-                    Print Receipt
+                    {
+                        text.printReceipt
+                    }
 
                 </button>
 
             </div>
 
 
-
             {/* =================================================
-                RECEIPT
+                PAPER
             ================================================= */}
 
             <section className="receipt-paper">
@@ -378,27 +844,40 @@ function Receipt() {
 
                 <header className="receipt-header">
 
-
                     <img
                         src="/nabil-logo.png"
-                        alt="Nabil Pharmacy"
+                        alt={
+                            text.nabilPharmacy
+                        }
                     />
 
 
                     <div>
 
                         <span>
-                            Since 1975
+
+                            {
+                                text.since1975
+                            }
+
                         </span>
 
 
                         <h1>
-                            Nabil Pharmacy
+
+                            {
+                                text.nabilPharmacy
+                            }
+
                         </h1>
 
 
                         <p>
-                            Official Pharmacy Order Receipt
+
+                            {
+                                text.officialReceipt
+                            }
+
                         </p>
 
                     </div>
@@ -406,13 +885,13 @@ function Receipt() {
                 </header>
 
 
-
                 <div className="receipt-divider">
                 </div>
 
 
-
-                {/* INFORMATION */}
+                {/* =================================================
+                    INFORMATION
+                ================================================= */}
 
                 <section className="receipt-information">
 
@@ -420,11 +899,17 @@ function Receipt() {
                     <div>
 
                         <span>
-                            Receipt Number
+
+                            {
+                                text.receiptNumber
+                            }
+
                         </span>
 
 
-                        <strong>
+                        <strong
+                            dir="ltr"
+                        >
 
                             {
                                 getReceiptNumber()
@@ -438,7 +923,11 @@ function Receipt() {
                     <div>
 
                         <span>
-                            Date
+
+                            {
+                                text.date
+                            }
+
                         </span>
 
 
@@ -458,26 +947,27 @@ function Receipt() {
                     <div>
 
                         <span>
-                            Order Status
+
+                            {
+                                text.orderStatus
+                            }
+
                         </span>
 
 
                         <strong
                             className={
-                                `receipt-status ${receipt.status}`
+                                `receipt-status ${
+                                    receipt.status ||
+                                    "pending"
+                                }`
                             }
                         >
 
                             {
-                                (
-                                    receipt.status ||
-                                    "pending"
+                                translateOrderStatus(
+                                    receipt.status
                                 )
-                                    .replaceAll(
-                                        "_",
-                                        " "
-                                    )
-                                    .toUpperCase()
                             }
 
                         </strong>
@@ -488,7 +978,11 @@ function Receipt() {
                     <div>
 
                         <span>
-                            Payment
+
+                            {
+                                text.payment
+                            }
+
                         </span>
 
 
@@ -502,10 +996,9 @@ function Receipt() {
                         >
 
                             {
-                                receipt.payment_status ===
-                                    "paid"
-                                    ? "PAID"
-                                    : "PENDING"
+                                translatePaymentStatus(
+                                    receipt.payment_status
+                                )
                             }
 
                         </strong>
@@ -515,22 +1008,27 @@ function Receipt() {
                 </section>
 
 
-
-                {/* CUSTOMER */}
+                {/* =================================================
+                    CUSTOMER
+                ================================================= */}
 
                 <section className="receipt-section">
 
-
                     <h2>
-                        Customer
+
+                        {
+                            text.customer
+                        }
+
                     </h2>
 
 
                     <div className="receipt-detail-grid">
 
-
                         <ReceiptDetail
-                            label="Name"
+                            label={
+                                text.name
+                            }
                             value={
                                 receipt.full_name
                             }
@@ -538,18 +1036,28 @@ function Receipt() {
 
 
                         <ReceiptDetail
-                            label="Phone"
+                            label={
+                                text.phone
+                            }
                             value={
                                 receipt.phone
                             }
+                            ltr
                         />
 
 
                         <ReceiptDetail
-                            label="Email"
+                            label={
+                                text.email
+                            }
                             value={
                                 receipt.email ||
-                                "Not provided"
+                                text.notProvided
+                            }
+                            ltr={
+                                Boolean(
+                                    receipt.email
+                                )
                             }
                         />
 
@@ -558,14 +1066,18 @@ function Receipt() {
                 </section>
 
 
-
-                {/* DELIVERY */}
+                {/* =================================================
+                    DELIVERY
+                ================================================= */}
 
                 <section className="receipt-section">
 
-
                     <h2>
-                        Fulfilment
+
+                        {
+                            text.fulfilment
+                        }
+
                     </h2>
 
 
@@ -595,8 +1107,8 @@ function Receipt() {
                                 {
                                     receipt.delivery_method ===
                                         "pickup"
-                                        ? "Pharmacy Pickup"
-                                        : "Home Delivery"
+                                        ? text.pharmacyPickup
+                                        : text.homeDelivery
                                 }
 
                             </strong>
@@ -608,17 +1120,29 @@ function Receipt() {
                                     receipt.delivery_method ===
                                         "pickup"
                                         ? (
-                                            receipt.branch_name ||
-                                            "Nabil Pharmacy"
+                                            isArabic
+                                                ? text.nabilPharmacy
+                                                : (
+                                                    receipt.branch_name ||
+                                                    text.nabilPharmacy
+                                                )
                                         )
                                         : (
+
                                             [
                                                 receipt.address,
                                                 receipt.area,
                                                 receipt.city
                                             ]
-                                                .filter(Boolean)
-                                                .join(", ")
+                                                .filter(
+                                                    Boolean
+                                                )
+                                                .join(
+                                                    isArabic
+                                                        ? "، "
+                                                        : ", "
+                                                )
+
                                         )
                                 }
 
@@ -631,14 +1155,18 @@ function Receipt() {
                 </section>
 
 
-
-                {/* ITEMS */}
+                {/* =================================================
+                    ITEMS
+                ================================================= */}
 
                 <section className="receipt-section">
 
-
                     <h2>
-                        Items
+
+                        {
+                            text.items
+                        }
+
                     </h2>
 
 
@@ -648,19 +1176,19 @@ function Receipt() {
                         <div className="receipt-product-header">
 
                             <span>
-                                Product
+                                {text.product}
                             </span>
 
                             <span>
-                                Qty
+                                {text.quantity}
                             </span>
 
                             <span>
-                                Unit Price
+                                {text.unitPrice}
                             </span>
 
                             <span>
-                                Total
+                                {text.total}
                             </span>
 
                         </div>
@@ -671,12 +1199,16 @@ function Receipt() {
                                 receipt.items ||
                                 []
                             ).map(
-                                item => (
+                                (
+                                    item,
+                                    index
+                                ) => (
 
                                     <div
                                         className="receipt-product-row"
                                         key={
-                                            item.id
+                                            item.id ||
+                                            `${item.product_name}-${index}`
                                         }
                                     >
 
@@ -690,6 +1222,7 @@ function Receipt() {
                                             <strong>
 
                                                 {
+                                                    item.product_name_display ||
                                                     item.product_name
                                                 }
 
@@ -698,10 +1231,17 @@ function Receipt() {
                                         </div>
 
 
-                                        <span>
+                                        <span
+                                            className="receipt-product-quantity"
+                                            data-label={
+                                                text.quantity
+                                            }
+                                        >
 
                                             {
-                                                item.quantity
+                                                formatNumber(
+                                                    item.quantity
+                                                )
                                             }
 
                                         </span>
@@ -739,8 +1279,9 @@ function Receipt() {
                 </section>
 
 
-
-                {/* TOTALS */}
+                {/* =================================================
+                    TOTALS
+                ================================================= */}
 
                 <section className="receipt-totals">
 
@@ -748,7 +1289,11 @@ function Receipt() {
                     <div>
 
                         <span>
-                            Subtotal
+
+                            {
+                                text.subtotal
+                            }
+
                         </span>
 
 
@@ -768,7 +1313,11 @@ function Receipt() {
                     <div>
 
                         <span>
-                            Delivery Fee
+
+                            {
+                                text.deliveryFee
+                            }
+
                         </span>
 
 
@@ -788,7 +1337,11 @@ function Receipt() {
                     <div className="receipt-grand-total">
 
                         <span>
-                            Total
+
+                            {
+                                text.total
+                            }
+
                         </span>
 
 
@@ -807,8 +1360,9 @@ function Receipt() {
                 </section>
 
 
-
-                {/* PAYMENT */}
+                {/* =================================================
+                    PAYMENT
+                ================================================= */}
 
                 <section className="receipt-payment-box">
 
@@ -835,8 +1389,8 @@ function Receipt() {
                             {
                                 receipt.payment_method ===
                                     "cash"
-                                    ? "Cash on Delivery"
-                                    : "Card Payment"
+                                    ? text.cashOnDelivery
+                                    : text.cardPayment
                             }
 
                         </strong>
@@ -847,8 +1401,14 @@ function Receipt() {
                             {
                                 receipt.payment_status ===
                                     "paid"
-                                    ? "Payment completed"
-                                    : "Payment pending"
+                                    ? text.paymentCompleted
+                                    : receipt.payment_status ===
+                                        "failed"
+                                        ? text.paymentFailed
+                                        : receipt.payment_status ===
+                                            "refunded"
+                                            ? text.paymentRefunded
+                                            : text.paymentPending
                             }
 
                         </span>
@@ -858,17 +1418,21 @@ function Receipt() {
                 </section>
 
 
-
-                {/* NOTES */}
+                {/* =================================================
+                    NOTES
+                ================================================= */}
 
                 {
                     receipt.notes && (
 
                         <section className="receipt-notes">
 
-
                             <strong>
-                                Order Notes
+
+                                {
+                                    text.orderNotes
+                                }
+
                             </strong>
 
 
@@ -886,24 +1450,36 @@ function Receipt() {
                 }
 
 
-
-                {/* FOOTER */}
+                {/* =================================================
+                    FOOTER
+                ================================================= */}
 
                 <footer className="receipt-footer">
 
-
                     <strong>
-                        Thank you for choosing Nabil Pharmacy
+
+                        {
+                            text.thankYou
+                        }
+
                     </strong>
 
 
                     <span>
-                        Since 1975
+
+                        {
+                            text.since1975
+                        }
+
                     </span>
 
 
                     <p>
-                        Please keep this receipt for your records.
+
+                        {
+                            text.keepReceipt
+                        }
+
                     </p>
 
                 </footer>
@@ -911,9 +1487,10 @@ function Receipt() {
             </section>
 
         </main>
-    );
-}
 
+    );
+
+}
 
 
 /*
@@ -925,8 +1502,8 @@ RECEIPT DETAIL
 function ReceiptDetail({
 
     label,
-
-    value
+    value,
+    ltr = false
 
 }) {
 
@@ -935,11 +1512,21 @@ function ReceiptDetail({
         <div>
 
             <span>
-                {label}
+
+                {
+                    label
+                }
+
             </span>
 
 
-            <strong>
+            <strong
+                dir={
+                    ltr
+                        ? "ltr"
+                        : undefined
+                }
+            >
 
                 {
                     value ||
@@ -951,6 +1538,7 @@ function ReceiptDetail({
         </div>
 
     );
+
 }
 
 

@@ -25,6 +25,11 @@ import {
 } from "./context/CartContext.jsx";
 
 
+import {
+    LanguageProvider
+} from "./context/LanguageContext.jsx";
+
+
 import "./styles/variables.css";
 import "./styles/global.css";
 import "./styles/animations.css";
@@ -40,15 +45,19 @@ createRoot(
 
         <BrowserRouter>
 
-            <AuthProvider>
+            <LanguageProvider>
 
-                <CartProvider>
+                <AuthProvider>
 
-                    <App />
+                    <CartProvider>
 
-                </CartProvider>
+                        <App />
 
-            </AuthProvider>
+                    </CartProvider>
+
+                </AuthProvider>
+
+            </LanguageProvider>
 
         </BrowserRouter>
 
