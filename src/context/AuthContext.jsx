@@ -1,4 +1,4 @@
-import {
+﻿import {
     createContext,
     useContext,
     useEffect,
@@ -31,18 +31,6 @@ export function AuthProvider({
     ] = useState(true);
 
 
-    /*
-    ========================================================
-    INITIAL SESSION
-    ========================================================
-
-    Read the locally persisted Supabase session.
-
-    We do not repeatedly call getUser() from multiple
-    components. Supabase handles token refreshing itself.
-    ========================================================
-    */
-
     useEffect(
         () => {
 
@@ -50,95 +38,10 @@ export function AuthProvider({
                 true;
 
 
-            const loadSession =
-                async () => {
-
-                    try {
-
-                        const {
-                            data,
-                            error
-                        } =
-                            await supabase
-                                .auth
-                                .getSession();
-
-
-                        if (
-                            error
-                        ) {
-
-                            console.warn(
-                                "Session check:",
-                                error.message
-                            );
-
-                        }
-
-
-                        if (
-                            !mounted
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        setUser(
-                            data
-                                ?.session
-                                ?.user ||
-                            null
-                        );
-
-
-                        setAuthLoading(
-                            false
-                        );
-
-                    } catch (
-                        error
-                    ) {
-
-                        console.error(
-                            "Initial session error:",
-                            error
-                        );
-
-
-                        if (
-                            mounted
-                        ) {
-
-                            setUser(
-                                null
-                            );
-
-
-                            setAuthLoading(
-                                false
-                            );
-
-                        }
-
-                    }
-
-                };
-
-
-            loadSession();
-
-
-            /*
-            ====================================================
-            CENTRAL AUTH LISTENER
-            ====================================================
-            */
-
             const {
-                data:
-                    authListener
+                data: {
+                    subscription
+                }
             } =
                 supabase
                     .auth
@@ -185,14 +88,37 @@ export function AuthProvider({
                     );
 
 
+            const loadingFallback =
+                window.setTimeout(
+                    () => {
+
+                        if (
+                            mounted
+                        ) {
+
+                            setAuthLoading(
+                                false
+                            );
+
+                        }
+
+                    },
+                    5000
+                );
+
+
             return () => {
 
                 mounted =
                     false;
 
 
-                authListener
-                    ?.subscription
+                window.clearTimeout(
+                    loadingFallback
+                );
+
+
+                subscription
                     ?.unsubscribe();
 
             };
@@ -202,12 +128,6 @@ export function AuthProvider({
     );
 
 
-    /*
-    ========================================================
-    LOGOUT
-    ========================================================
-    */
-
     const signOut =
         async () => {
 
@@ -216,7 +136,10 @@ export function AuthProvider({
             } =
                 await supabase
                     .auth
-                    .signOut();
+                    .signOut({
+                        scope:
+                            "local"
+                    });
 
 
             if (
@@ -234,12 +157,6 @@ export function AuthProvider({
 
         };
 
-
-    /*
-    ========================================================
-    CONTEXT VALUE
-    ========================================================
-    */
 
     const value =
         useMemo(

@@ -1,4 +1,4 @@
-import {
+﻿import {
     createClient
 } from "@supabase/supabase-js";
 
@@ -19,7 +19,12 @@ if (
     throw new Error(
         "Missing Supabase environment variables."
     );
+
 }
+
+
+const authStorageKey =
+    "nabil-pharmacy-auth-v2";
 
 
 export const supabase =
@@ -30,7 +35,9 @@ export const supabase =
             auth: {
                 persistSession: true,
                 autoRefreshToken: true,
-                detectSessionInUrl: true
+                detectSessionInUrl: true,
+                storageKey:
+                    authStorageKey
             }
         }
     );
