@@ -1,4 +1,4 @@
-﻿import {
+import {
     createContext,
     useContext,
     useEffect,
@@ -30,6 +30,21 @@ export function AuthProvider({
         setAuthLoading
     ] = useState(true);
 
+
+    /*
+    ========================================================
+    SINGLE AUTH LISTENER
+    ========================================================
+
+    Supabase automatically initializes its browser session.
+
+    INITIAL_SESSION is delivered through onAuthStateChange,
+    so we do not manually call getSession() or getUser()
+    here.
+
+    This prevents unnecessary refresh-token requests.
+    ========================================================
+    */
 
     useEffect(
         () => {
@@ -88,6 +103,18 @@ export function AuthProvider({
                     );
 
 
+            /*
+            ====================================================
+            SAFETY FALLBACK
+            ====================================================
+
+            INITIAL_SESSION normally happens immediately.
+
+            This only prevents the site from being stuck on
+            the loading screen if browser storage fails.
+            ====================================================
+            */
+
             const loadingFallback =
                 window.setTimeout(
                     () => {
@@ -128,6 +155,17 @@ export function AuthProvider({
     );
 
 
+    /*
+    ========================================================
+    LOGOUT
+    ========================================================
+
+    Logout only this browser session.
+
+    Do not revoke the user's sessions on all devices.
+    ========================================================
+    */
+
     const signOut =
         async () => {
 
@@ -157,6 +195,12 @@ export function AuthProvider({
 
         };
 
+
+    /*
+    ========================================================
+    CONTEXT
+    ========================================================
+    */
 
     const value =
         useMemo(

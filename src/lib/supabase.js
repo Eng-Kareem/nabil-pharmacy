@@ -1,4 +1,4 @@
-﻿import {
+import {
     createClient
 } from "@supabase/supabase-js";
 
@@ -22,6 +22,21 @@ if (
 
 }
 
+
+/*
+========================================================
+AUTH STORAGE
+========================================================
+
+Use a new app-specific storage key.
+
+This prevents the website from loading the old broken
+refresh-token session stored by previous deployments.
+
+All users will simply need to log in once again after
+this deployment.
+========================================================
+*/
 
 const authStorageKey =
     "nabil-pharmacy-auth-v2";

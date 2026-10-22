@@ -6,12 +6,15 @@ import {
     ChevronRight,
     CircleDollarSign,
     Clock3,
+    Eye,
+    FileText,
     Package,
     PackageCheck,
     ReceiptText,
     RefreshCw,
     ShoppingBag,
-    TrendingUp
+    TrendingUp,
+    XCircle
 } from "lucide-react";
 
 import {
@@ -55,6 +58,60 @@ function AdminDashboard() {
         adminTranslations.en;
 
 
+    const prescriptionText =
+        isArabic
+            ? {
+                section:
+                    "الروشتات",
+
+                title:
+                    "طلبات الروشتات",
+
+                manage:
+                    "مراجعة الروشتات",
+
+                total:
+                    "إجمالي الروشتات",
+
+                pending:
+                    "قيد الانتظار",
+
+                reviewing:
+                    "قيد المراجعة",
+
+                approved:
+                    "تمت الموافقة",
+
+                rejected:
+                    "مرفوض"
+            }
+            : {
+                section:
+                    "PRESCRIPTIONS",
+
+                title:
+                    "Prescription Pipeline",
+
+                manage:
+                    "Review Prescriptions",
+
+                total:
+                    "Total Prescriptions",
+
+                pending:
+                    "Pending",
+
+                reviewing:
+                    "Reviewing",
+
+                approved:
+                    "Approved",
+
+                rejected:
+                    "Rejected"
+            };
+
+
     const ArrowIcon =
         isArabic
             ? ChevronLeft
@@ -76,6 +133,12 @@ function AdminDashboard() {
     const [
         orders,
         setOrders
+    ] = useState([]);
+
+
+    const [
+        prescriptions,
+        setPrescriptions
     ] = useState([]);
 
 
@@ -335,7 +398,9 @@ function AdminDashboard() {
 
 
         return (
-            map[value] ||
+            map[
+                value
+            ] ||
             value.replaceAll(
                 "_",
                 " "
@@ -413,7 +478,8 @@ function AdminDashboard() {
                     const [
                         productsResponse,
                         stockResponse,
-                        ordersResponse
+                        ordersResponse,
+                        prescriptionsResponse
                     ] =
                         await Promise.all([
 
@@ -476,6 +542,27 @@ function AdminDashboard() {
                                         ascending:
                                             false
                                     }
+                                ),
+
+
+                            supabase
+                                .from(
+                                    "prescription_requests"
+                                )
+                                .select(`
+                                    id,
+                                    full_name,
+                                    phone,
+                                    status,
+                                    created_at,
+                                    updated_at
+                                `)
+                                .order(
+                                    "created_at",
+                                    {
+                                        ascending:
+                                            false
+                                    }
                                 )
 
                         ]);
@@ -508,6 +595,15 @@ function AdminDashboard() {
                     }
 
 
+                    if (
+                        prescriptionsResponse.error
+                    ) {
+
+                        throw prescriptionsResponse.error;
+
+                    }
+
+
                     setProducts(
                         productsResponse.data ||
                         []
@@ -522,6 +618,12 @@ function AdminDashboard() {
 
                     setOrders(
                         ordersResponse.data ||
+                        []
+                    );
+
+
+                    setPrescriptions(
+                        prescriptionsResponse.data ||
                         []
                     );
 
@@ -655,6 +757,25 @@ function AdminDashboard() {
                         }
                     )
 
+                    .on(
+                        "postgres_changes",
+                        {
+                            event:
+                                "*",
+
+                            schema:
+                                "public",
+
+                            table:
+                                "prescription_requests"
+                        },
+                        () => {
+
+                            loadDashboard();
+
+                        }
+                    )
+
                     .subscribe(
                         status => {
 
@@ -739,7 +860,7 @@ function AdminDashboard() {
 
     /*
     ========================================================
-    STATISTICS
+    ORDER STATISTICS
     ========================================================
     */
 
@@ -905,6 +1026,70 @@ function AdminDashboard() {
                 products,
                 productStock,
                 orders
+            ]
+        );
+
+
+    /*
+    ========================================================
+    PRESCRIPTION STATISTICS
+    ========================================================
+    */
+
+    const prescriptionStats =
+        useMemo(
+            () => {
+
+                const pending =
+                    prescriptions.filter(
+                        request =>
+                            request.status ===
+                            "pending"
+                    ).length;
+
+
+                const reviewing =
+                    prescriptions.filter(
+                        request =>
+                            request.status ===
+                            "reviewing"
+                    ).length;
+
+
+                const approved =
+                    prescriptions.filter(
+                        request =>
+                            request.status ===
+                            "approved"
+                    ).length;
+
+
+                const rejected =
+                    prescriptions.filter(
+                        request =>
+                            request.status ===
+                            "rejected"
+                    ).length;
+
+
+                return {
+
+                    total:
+                        prescriptions.length,
+
+                    pending,
+
+                    reviewing,
+
+                    approved,
+
+                    rejected
+
+                };
+
+            },
+            [
+                prescriptions
             ]
         );
 
@@ -1229,7 +1414,6 @@ function AdminDashboard() {
 
 
                     <div className="admin-dashboard-header-actions">
-
 
                         <div
                             className={
@@ -1576,6 +1760,130 @@ function AdminDashboard() {
                                 )
                             }
                             className="delivered"
+                        />
+
+                    </div>
+
+                </section>
+
+
+                {/* =========================================
+                    PRESCRIPTION PIPELINE
+                ========================================= */}
+
+                <section className="admin-dashboard-order-pipeline">
+
+                    <div className="admin-dashboard-section-heading">
+
+                        <div>
+
+                            <span>
+
+                                {
+                                    prescriptionText.section
+                                }
+
+                            </span>
+
+
+                            <h2>
+
+                                {
+                                    prescriptionText.title
+                                }
+
+                                {" · "}
+
+                                {
+                                    formatNumber(
+                                        prescriptionStats.total
+                                    )
+                                }
+
+                            </h2>
+
+                        </div>
+
+
+                        <Link to="/admin/prescriptions">
+
+                            {
+                                prescriptionText.manage
+                            }
+
+                            <ArrowIcon
+                                size={16}
+                            />
+
+                        </Link>
+
+                    </div>
+
+
+                    <div className="admin-dashboard-pipeline-grid">
+
+
+                        <PipelineCard
+                            icon={
+                                <Clock3 />
+                            }
+                            label={
+                                prescriptionText.pending
+                            }
+                            value={
+                                formatNumber(
+                                    prescriptionStats.pending
+                                )
+                            }
+                            className="pending"
+                        />
+
+
+                        <PipelineCard
+                            icon={
+                                <Eye />
+                            }
+                            label={
+                                prescriptionText.reviewing
+                            }
+                            value={
+                                formatNumber(
+                                    prescriptionStats.reviewing
+                                )
+                            }
+                            className="preparing"
+                        />
+
+
+                        <PipelineCard
+                            icon={
+                                <CheckCircle2 />
+                            }
+                            label={
+                                prescriptionText.approved
+                            }
+                            value={
+                                formatNumber(
+                                    prescriptionStats.approved
+                                )
+                            }
+                            className="delivered"
+                        />
+
+
+                        <PipelineCard
+                            icon={
+                                <XCircle />
+                            }
+                            label={
+                                prescriptionText.rejected
+                            }
+                            value={
+                                formatNumber(
+                                    prescriptionStats.rejected
+                                )
+                            }
+                            className="ready"
                         />
 
                     </div>

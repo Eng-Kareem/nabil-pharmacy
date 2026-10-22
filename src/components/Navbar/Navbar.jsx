@@ -1,5 +1,6 @@
 import {
     Boxes,
+    FileText,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -131,6 +132,12 @@ function Navbar() {
                 prescription:
                     "رفع الروشتة",
 
+                prescriptions:
+                    "الروشتات",
+
+                myPrescriptions:
+                    "روشتاتي",
+
                 english:
                     "English",
 
@@ -196,6 +203,12 @@ function Navbar() {
 
                 prescription:
                     "Upload Prescription",
+
+                prescriptions:
+                    "Prescriptions",
+
+                myPrescriptions:
+                    "My Prescriptions",
 
                 english:
                     "English",
@@ -417,7 +430,8 @@ function Navbar() {
             () => {
 
                 return String(
-                    displayName || "NP"
+                    displayName ||
+                    "NP"
                 )
                     .trim()
                     .split(/\s+/)
@@ -457,23 +471,6 @@ function Navbar() {
     ========================================================
     ADMIN EXPERIENCE
     ========================================================
-
-    IMPORTANT FIX:
-
-    Admin navbar remains visible when an admin opens:
-
-    /admin
-    /admin/products
-    /admin/inventory
-    /admin/orders
-    /account
-
-    So opening the profile does NOT visually switch the
-    administrator into customer mode.
-
-    If the administrator presses "View Website", they go
-    to "/" and intentionally see the normal public navbar.
-    ========================================================
     */
 
     const onAdminPage =
@@ -493,7 +490,9 @@ function Navbar() {
     const useAdminNavbar =
         !authLoading &&
         !roleLoading &&
-        Boolean(user) &&
+        Boolean(
+            user
+        ) &&
         isAdmin &&
         (
             onAdminPage ||
@@ -664,6 +663,7 @@ function Navbar() {
 
                     <nav className="navbar-links navbar-admin-links">
 
+
                         <Link
                             to="/admin"
                             className={
@@ -753,6 +753,29 @@ function Navbar() {
 
                         </Link>
 
+
+                        <Link
+                            to="/admin/prescriptions"
+                            className={
+                                location.pathname
+                                    .startsWith(
+                                        "/admin/prescriptions"
+                                    )
+                                    ? "active"
+                                    : ""
+                            }
+                        >
+
+                            <FileText
+                                size={17}
+                            />
+
+                            {
+                                text.prescriptions
+                            }
+
+                        </Link>
+
                     </nav>
 
 
@@ -760,8 +783,6 @@ function Navbar() {
 
                     <div className="navbar-actions navbar-admin-actions">
 
-
-                        {/* LANGUAGE */}
 
                         <button
                             type="button"
@@ -787,8 +808,6 @@ function Navbar() {
                         </button>
 
 
-                        {/* VIEW PUBLIC WEBSITE */}
-
                         <Link
                             to="/"
                             className="navbar-view-site"
@@ -805,8 +824,6 @@ function Navbar() {
                         </Link>
 
 
-                        {/* ADMIN PROFILE */}
-
                         <Link
                             to="/account"
                             className="navbar-profile-button"
@@ -822,8 +839,6 @@ function Navbar() {
 
                         </Link>
 
-
-                        {/* SIGN OUT */}
 
                         <button
                             type="button"
@@ -843,8 +858,6 @@ function Navbar() {
 
                         </button>
 
-
-                        {/* MOBILE MENU BUTTON */}
 
                         <button
                             type="button"
@@ -885,9 +898,7 @@ function Navbar() {
                 </div>
 
 
-                {/* =========================================
-                    ADMIN MOBILE MENU
-                ========================================= */}
+                {/* ADMIN MOBILE MENU */}
 
                 {
                     menuOpen && (
@@ -928,9 +939,7 @@ function Navbar() {
                             </Link>
 
 
-                            <Link
-                                to="/admin"
-                            >
+                            <Link to="/admin">
 
                                 <LayoutDashboard
                                     size={18}
@@ -943,9 +952,7 @@ function Navbar() {
                             </Link>
 
 
-                            <Link
-                                to="/admin/products"
-                            >
+                            <Link to="/admin/products">
 
                                 <Package
                                     size={18}
@@ -958,9 +965,7 @@ function Navbar() {
                             </Link>
 
 
-                            <Link
-                                to="/admin/inventory"
-                            >
+                            <Link to="/admin/inventory">
 
                                 <Boxes
                                     size={18}
@@ -973,9 +978,7 @@ function Navbar() {
                             </Link>
 
 
-                            <Link
-                                to="/admin/orders"
-                            >
+                            <Link to="/admin/orders">
 
                                 <ShoppingBag
                                     size={18}
@@ -988,9 +991,20 @@ function Navbar() {
                             </Link>
 
 
-                            <Link
-                                to="/"
-                            >
+                            <Link to="/admin/prescriptions">
+
+                                <FileText
+                                    size={18}
+                                />
+
+                                {
+                                    text.prescriptions
+                                }
+
+                            </Link>
+
+
+                            <Link to="/">
 
                                 <Store
                                     size={18}
@@ -1035,12 +1049,6 @@ function Navbar() {
     /*
     ========================================================
     CUSTOMER / PUBLIC NAVBAR
-    ========================================================
-
-    Admins will also see this navbar after intentionally
-    clicking "View Website".
-
-    Their database role DOES NOT change.
     ========================================================
     */
 
@@ -1101,9 +1109,7 @@ function Navbar() {
 
                 <nav className="navbar-links">
 
-                    <Link
-                        to="/"
-                    >
+                    <Link to="/">
 
                         {
                             text.home
@@ -1112,9 +1118,7 @@ function Navbar() {
                     </Link>
 
 
-                    <Link
-                        to="/products"
-                    >
+                    <Link to="/products">
 
                         {
                             text.products
@@ -1123,9 +1127,7 @@ function Navbar() {
                     </Link>
 
 
-                    <a
-                        href="/#services"
-                    >
+                    <a href="/#services">
 
                         {
                             text.services
@@ -1134,9 +1136,7 @@ function Navbar() {
                     </a>
 
 
-                    <a
-                        href="/#story"
-                    >
+                    <a href="/#story">
 
                         {
                             text.story
@@ -1145,9 +1145,7 @@ function Navbar() {
                     </a>
 
 
-                    <a
-                        href="/#contact"
-                    >
+                    <a href="/#contact">
 
                         {
                             text.contact
@@ -1237,6 +1235,38 @@ function Navbar() {
                     }
 
 
+                    {/* MY PRESCRIPTIONS */}
+
+                    {
+                        user && (
+
+                            <Link
+                                to="/account/prescriptions"
+                                className="navbar-account"
+                                title={
+                                    text.myPrescriptions
+                                }
+                            >
+
+                                <FileText
+                                    size={18}
+                                />
+
+
+                                <span>
+
+                                    {
+                                        text.myPrescriptions
+                                    }
+
+                                </span>
+
+                            </Link>
+
+                        )
+                    }
+
+
                     {/* CART */}
 
                     <Link
@@ -1270,7 +1300,7 @@ function Navbar() {
                     </Link>
 
 
-                    {/* PRESCRIPTION */}
+                    {/* UPLOAD PRESCRIPTION */}
 
                     <Link
                         to="/prescription"
@@ -1288,7 +1318,7 @@ function Navbar() {
                     </Link>
 
 
-                    {/* MOBILE MENU BUTTON */}
+                    {/* MOBILE MENU */}
 
                     <button
                         type="button"
@@ -1329,9 +1359,7 @@ function Navbar() {
             </div>
 
 
-            {/* =========================================
-                PUBLIC MOBILE MENU
-            ========================================= */}
+            {/* PUBLIC MOBILE MENU */}
 
             {
                 menuOpen && (
@@ -1378,9 +1406,7 @@ function Navbar() {
                         }
 
 
-                        <Link
-                            to="/"
-                        >
+                        <Link to="/">
 
                             {
                                 text.home
@@ -1389,9 +1415,7 @@ function Navbar() {
                         </Link>
 
 
-                        <Link
-                            to="/products"
-                        >
+                        <Link to="/products">
 
                             {
                                 text.products
@@ -1400,9 +1424,7 @@ function Navbar() {
                         </Link>
 
 
-                        <a
-                            href="/#services"
-                        >
+                        <a href="/#services">
 
                             {
                                 text.services
@@ -1411,9 +1433,7 @@ function Navbar() {
                         </a>
 
 
-                        <a
-                            href="/#story"
-                        >
+                        <a href="/#story">
 
                             {
                                 text.story
@@ -1422,9 +1442,7 @@ function Navbar() {
                         </a>
 
 
-                        <a
-                            href="/#contact"
-                        >
+                        <a href="/#contact">
 
                             {
                                 text.contact
@@ -1455,9 +1473,28 @@ function Navbar() {
                         }
 
 
-                        <Link
-                            to="/cart"
-                        >
+                        {
+                            user && (
+
+                                <Link
+                                    to="/account/prescriptions"
+                                >
+
+                                    <FileText
+                                        size={17}
+                                    />
+
+                                    {
+                                        text.myPrescriptions
+                                    }
+
+                                </Link>
+
+                            )
+                        }
+
+
+                        <Link to="/cart">
 
                             <ShoppingBag
                                 size={17}

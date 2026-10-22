@@ -40,6 +40,9 @@ import ProductDetails
 import Prescription
     from "./pages/Prescription/Prescription.jsx";
 
+import CustomerPrescriptions
+    from "./pages/CustomerPrescriptions/CustomerPrescriptions.jsx";
+
 import Cart
     from "./pages/Cart/Cart.jsx";
 
@@ -68,13 +71,9 @@ import AdminInventory
 import AdminOrders
     from "./pages/AdminOrders/AdminOrders.jsx";
 
+import AdminPrescriptions
+    from "./pages/AdminPrescriptions/AdminPrescriptions.jsx";
 
-
-/*
-========================================================
-GLOBAL SCROLL TO TOP
-========================================================
-*/
 
 function ScrollToTop() {
 
@@ -145,7 +144,6 @@ function ScrollToTop() {
 }
 
 
-
 function App() {
 
     const [
@@ -163,13 +161,6 @@ function App() {
         false
     );
 
-
-
-    /*
-    ========================================================
-    WEBSITE STARTUP LOADER
-    ========================================================
-    */
 
     useEffect(
         () => {
@@ -218,13 +209,6 @@ function App() {
     );
 
 
-
-    /*
-    ========================================================
-    DISABLE BROWSER SCROLL RESTORATION
-    ========================================================
-    */
-
     useEffect(
         () => {
 
@@ -262,13 +246,6 @@ function App() {
         []
     );
 
-
-
-    /*
-    ========================================================
-    DEVELOPMENT SUPABASE TEST
-    ========================================================
-    */
 
     useEffect(
         () => {
@@ -336,7 +313,6 @@ function App() {
     );
 
 
-
     return (
 
         <>
@@ -369,11 +345,6 @@ function App() {
 
 
                 <Routes>
-
-
-                    {/* =========================================
-                        CUSTOMER
-                    ========================================= */}
 
                     <Route
                         path="/"
@@ -415,20 +386,18 @@ function App() {
                     />
 
 
-                    {/* =========================================
-                        ACCOUNT
-
-                        NOT LOGGED IN:
-                        Login / Register
-
-                        LOGGED IN:
-                        Profile + Interactive ID
-                    ========================================= */}
-
                     <Route
                         path="/account"
                         element={
                             <AccountPage />
+                        }
+                    />
+
+
+                    <Route
+                        path="/account/prescriptions"
+                        element={
+                            <CustomerPrescriptions />
                         }
                     />
 
@@ -449,10 +418,6 @@ function App() {
                     />
 
 
-                    {/* =========================================
-                        ADMIN LOGIN
-                    ========================================= */}
-
                     <Route
                         path="/admin/login"
                         element={
@@ -460,10 +425,6 @@ function App() {
                         }
                     />
 
-
-                    {/* =========================================
-                        ADMIN DASHBOARD
-                    ========================================= */}
 
                     <Route
                         path="/admin"
@@ -479,10 +440,6 @@ function App() {
                     />
 
 
-                    {/* =========================================
-                        ADMIN PRODUCTS
-                    ========================================= */}
-
                     <Route
                         path="/admin/products"
                         element={
@@ -496,10 +453,6 @@ function App() {
                         }
                     />
 
-
-                    {/* =========================================
-                        ADMIN INVENTORY
-                    ========================================= */}
 
                     <Route
                         path="/admin/inventory"
@@ -515,10 +468,6 @@ function App() {
                     />
 
 
-                    {/* =========================================
-                        ADMIN ORDERS
-                    ========================================= */}
-
                     <Route
                         path="/admin/orders"
                         element={
@@ -533,9 +482,19 @@ function App() {
                     />
 
 
-                    {/* =========================================
-                        404
-                    ========================================= */}
+                    <Route
+                        path="/admin/prescriptions"
+                        element={
+
+                            <AdminRoute>
+
+                                <AdminPrescriptions />
+
+                            </AdminRoute>
+
+                        }
+                    />
+
 
                     <Route
                         path="*"
@@ -543,7 +502,6 @@ function App() {
                             <NotFound />
                         }
                     />
-
 
                 </Routes>
 

@@ -1,6 +1,12 @@
 import {
+    FileText,
+    Upload,
     UserRound
 } from "lucide-react";
+
+import {
+    Link
+} from "react-router-dom";
 
 import {
     useAuth
@@ -29,15 +35,6 @@ function AccountPage() {
         isArabic
     } = useLanguage();
 
-
-    /*
-    ========================================================
-    WAIT FOR SUPABASE AUTH
-    ========================================================
-
-    Without this, the login page can briefly appear before
-    Supabase finishes restoring an existing user session.
-    */
 
     if (
         authLoading
@@ -108,30 +105,167 @@ function AccountPage() {
     }
 
 
-    /*
-    ========================================================
-    LOGGED IN
-    ========================================================
-    */
-
     if (
         user
     ) {
 
         return (
 
-            <CustomerProfile />
+            <>
+
+                <div
+                    dir={
+                        isArabic
+                            ? "rtl"
+                            : "ltr"
+                    }
+                    style={{
+                        padding:
+                            "18px max(20px, calc((100vw - 1240px) / 2)) 0",
+
+                        display:
+                            "flex",
+
+                        justifyContent:
+                            "flex-end",
+
+                        gap:
+                            "9px",
+
+                        flexWrap:
+                            "wrap",
+
+                        background:
+                            "#f7f7f8"
+                    }}
+                >
+
+                    <Link
+                        to="/account/prescriptions"
+                        style={{
+                            minHeight:
+                                "43px",
+
+                            padding:
+                                "0 14px",
+
+                            display:
+                                "inline-flex",
+
+                            alignItems:
+                                "center",
+
+                            justifyContent:
+                                "center",
+
+                            gap:
+                                "7px",
+
+                            border:
+                                "1px solid #e1e1e4",
+
+                            borderRadius:
+                                "11px",
+
+                            background:
+                                "#ffffff",
+
+                            color:
+                                "#19191d",
+
+                            fontSize:
+                                "0.68rem",
+
+                            fontWeight:
+                                "900",
+
+                            textDecoration:
+                                "none"
+                        }}
+                    >
+
+                        <FileText
+                            size={17}
+                        />
+
+
+                        {
+                            isArabic
+                                ? "روشتاتي"
+                                : "My Prescriptions"
+                        }
+
+                    </Link>
+
+
+                    <Link
+                        to="/prescription"
+                        style={{
+                            minHeight:
+                                "43px",
+
+                            padding:
+                                "0 14px",
+
+                            display:
+                                "inline-flex",
+
+                            alignItems:
+                                "center",
+
+                            justifyContent:
+                                "center",
+
+                            gap:
+                                "7px",
+
+                            border:
+                                "1px solid #aa1018",
+
+                            borderRadius:
+                                "11px",
+
+                            background:
+                                "#aa1018",
+
+                            color:
+                                "#ffffff",
+
+                            fontSize:
+                                "0.68rem",
+
+                            fontWeight:
+                                "900",
+
+                            textDecoration:
+                                "none"
+                        }}
+                    >
+
+                        <Upload
+                            size={17}
+                        />
+
+
+                        {
+                            isArabic
+                                ? "رفع روشتة"
+                                : "Upload Prescription"
+                        }
+
+                    </Link>
+
+                </div>
+
+
+                <CustomerProfile />
+
+            </>
 
         );
 
     }
 
-
-    /*
-    ========================================================
-    NOT LOGGED IN
-    ========================================================
-    */
 
     return (
 
