@@ -33,104 +33,62 @@ export function AuthProvider({
 
     /*
     ========================================================
-    INITIAL AUTH CHECK
+    INITIAL SESSION
+    ========================================================
+
+    Read the locally persisted Supabase session.
+
+    We do not repeatedly call getUser() from multiple
+    components. Supabase handles token refreshing itself.
     ========================================================
     */
 
-    useEffect(() => {
+    useEffect(
+        () => {
 
-        let mounted = true;
-
-
-        const loadUser =
-            async () => {
-
-                try {
-
-                    const {
-                        data,
-                        error
-                    } =
-                        await supabase
-                            .auth
-                            .getUser();
+            let mounted =
+                true;
 
 
-                    if (error) {
+            const loadSession =
+                async () => {
 
-                        console.warn(
-                            "Auth user check:",
-                            error.message
-                        );
-                    }
+                    try {
 
-
-                    if (
-                        mounted
-                    ) {
-
-                        setUser(
-                            data?.user ||
-                            null
-                        );
-
-                        setAuthLoading(
-                            false
-                        );
-                    }
-
-                } catch (error) {
-
-                    console.error(
-                        "Initial auth error:",
-                        error
-                    );
+                        const {
+                            data,
+                            error
+                        } =
+                            await supabase
+                                .auth
+                                .getSession();
 
 
-                    if (
-                        mounted
-                    ) {
+                        if (
+                            error
+                        ) {
 
-                        setUser(null);
+                            console.warn(
+                                "Session check:",
+                                error.message
+                            );
 
-                        setAuthLoading(false);
-                    }
-                }
-            };
+                        }
 
-
-        loadUser();
-
-
-
-        /*
-        ====================================================
-        LISTEN FOR LOGIN / LOGOUT
-        ====================================================
-        */
-
-        const {
-            data:
-                authListener
-        } =
-            supabase
-                .auth
-                .onAuthStateChange(
-                    (
-                        event,
-                        session
-                    ) => {
 
                         if (
                             !mounted
                         ) {
 
                             return;
+
                         }
 
 
                         setUser(
-                            session?.user ||
+                            data
+                                ?.session
+                                ?.user ||
                             null
                         );
 
@@ -139,33 +97,109 @@ export function AuthProvider({
                             false
                         );
 
+                    } catch (
+                        error
+                    ) {
+
+                        console.error(
+                            "Initial session error:",
+                            error
+                        );
+
 
                         if (
-                            event ===
-                            "SIGNED_IN"
+                            mounted
                         ) {
 
-                            sessionStorage.removeItem(
-                                "nabil-checkout-guest"
+                            setUser(
+                                null
                             );
+
+
+                            setAuthLoading(
+                                false
+                            );
+
                         }
 
                     }
-                );
+
+                };
 
 
-        return () => {
-
-            mounted = false;
+            loadSession();
 
 
-            authListener
-                ?.subscription
-                ?.unsubscribe();
-        };
+            /*
+            ====================================================
+            CENTRAL AUTH LISTENER
+            ====================================================
+            */
 
-    }, []);
+            const {
+                data:
+                    authListener
+            } =
+                supabase
+                    .auth
+                    .onAuthStateChange(
+                        (
+                            event,
+                            session
+                        ) => {
 
+                            if (
+                                !mounted
+                            ) {
+
+                                return;
+
+                            }
+
+
+                            setUser(
+                                session
+                                    ?.user ||
+                                null
+                            );
+
+
+                            setAuthLoading(
+                                false
+                            );
+
+
+                            if (
+                                event ===
+                                "SIGNED_IN"
+                            ) {
+
+                                sessionStorage
+                                    .removeItem(
+                                        "nabil-checkout-guest"
+                                    );
+
+                            }
+
+                        }
+                    );
+
+
+            return () => {
+
+                mounted =
+                    false;
+
+
+                authListener
+                    ?.subscription
+                    ?.unsubscribe();
+
+            };
+
+        },
+        []
+    );
 
 
     /*
@@ -185,15 +219,27 @@ export function AuthProvider({
                     .signOut();
 
 
-            if (error) {
+            if (
+                error
+            ) {
+
                 throw error;
+
             }
 
 
-            setUser(null);
+            setUser(
+                null
+            );
+
         };
 
 
+    /*
+    ========================================================
+    CONTEXT VALUE
+    ========================================================
+    */
 
     const value =
         useMemo(
@@ -204,7 +250,9 @@ export function AuthProvider({
                 authLoading,
 
                 isAuthenticated:
-                    Boolean(user),
+                    Boolean(
+                        user
+                    ),
 
                 signOut
 
@@ -224,13 +272,15 @@ export function AuthProvider({
             }
         >
 
-            {children}
+            {
+                children
+            }
 
         </AuthContext.Provider>
 
     );
-}
 
+}
 
 
 export function useAuth() {
@@ -241,13 +291,17 @@ export function useAuth() {
         );
 
 
-    if (!context) {
+    if (
+        !context
+    ) {
 
         throw new Error(
             "useAuth must be used inside AuthProvider."
         );
+
     }
 
 
     return context;
+
 }

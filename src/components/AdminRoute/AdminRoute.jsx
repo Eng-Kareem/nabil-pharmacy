@@ -11,255 +11,164 @@ import {
     supabase
 } from "../../lib/supabase.js";
 
-import {
-    useLanguage
-} from "../../context/LanguageContext.jsx";
-
 
 function AdminRoute({
     children
 }) {
 
-    const {
-        isArabic
-    } = useLanguage();
-
-
     const [
         loading,
         setLoading
-    ] = useState(
-        true
-    );
+    ] = useState(true);
 
 
     const [
         allowed,
         setAllowed
-    ] = useState(
-        false
-    );
+    ] = useState(false);
 
 
-    useEffect(
-        () => {
+    useEffect(() => {
 
-            let mounted =
-                true;
+        let mounted = true;
 
 
-            const checkAdmin =
-                async () => {
+        const checkAdmin = async () => {
 
-                    try {
+            try {
 
-                        const {
-                            data: {
-                                user
-                            }
-                        } =
-                            await supabase
-                                .auth
-                                .getUser();
+                const {
+                    data: {
+                        user
+                    }
+                } =
+                    await supabase.auth.getUser();
 
 
-                        if (
-                            !user
-                        ) {
+                if (!user) {
 
-                            if (
-                                mounted
-                            ) {
-
-                                setAllowed(
-                                    false
-                                );
-
-                                setLoading(
-                                    false
-                                );
-
-                            }
-
-
-                            return;
-
-                        }
-
-
-                        const {
-                            data:
-                                profile,
-
-                            error
-                        } =
-                            await supabase
-                                .from(
-                                    "profiles"
-                                )
-                                .select(
-                                    "role"
-                                )
-                                .eq(
-                                    "id",
-                                    user.id
-                                )
-                                .single();
-
-
-                        if (
-                            error
-                        ) {
-
-                            throw error;
-
-                        }
-
-
-                        if (
-                            mounted
-                        ) {
-
-                            setAllowed(
-
-                                profile?.role ===
-                                    "admin" ||
-
-                                profile?.role ===
-                                    "super_admin"
-
-                            );
-
-                        }
-
-                    } catch (
-                        error
-                    ) {
-
-                        console.error(
-                            "Admin authorization error:",
-                            error
-                        );
-
-
-                        if (
-                            mounted
-                        ) {
-
-                            setAllowed(
-                                false
-                            );
-
-                        }
-
-                    } finally {
-
-                        if (
-                            mounted
-                        ) {
-
-                            setLoading(
-                                false
-                            );
-
-                        }
-
+                    if (mounted) {
+                        setAllowed(false);
+                        setLoading(false);
                     }
 
-                };
+                    return;
+                }
 
 
-            checkAdmin();
+                const {
+                    data: profile,
+                    error
+                } =
+                    await supabase
+                        .from("profiles")
+                        .select("role")
+                        .eq(
+                            "id",
+                            user.id
+                        )
+                        .single();
 
 
-            const {
-                data:
-                    listener
-            } =
-                supabase
-                    .auth
-                    .onAuthStateChange(
-                        () => {
+                if (error) {
 
-                            checkAdmin();
-
-                        }
+                    console.error(
+                        "Admin check error:",
+                        error
                     );
 
 
-            return () => {
+                    if (mounted) {
+                        setAllowed(false);
+                    }
 
-                mounted =
-                    false;
+                } else {
 
+                    if (mounted) {
 
-                listener
-                    .subscription
-                    .unsubscribe();
+                        setAllowed(
+                            profile?.role ===
+                            "admin"
+                        );
 
-            };
-
-        },
-        []
-    );
-
-
-    if (
-        loading
-    ) {
-
-        return (
-
-            <div
-                style={{
-                    minHeight:
-                        "70vh",
-
-                    display:
-                        "grid",
-
-                    placeItems:
-                        "center",
-
-                    padding:
-                        "20px",
-
-                    fontWeight:
-                        800
-                }}
-            >
-
-                {
-                    isArabic
-                        ? "جاري التحقق من صلاحيات المسؤول..."
-                        : "Checking administrator access..."
+                    }
                 }
 
+            } catch (error) {
+
+                console.error(
+                    "Admin authorization error:",
+                    error
+                );
+
+
+                if (mounted) {
+                    setAllowed(false);
+                }
+
+            } finally {
+
+                if (mounted) {
+                    setLoading(false);
+                }
+            }
+
+        };
+
+
+        checkAdmin();
+
+
+        const {
+            data: listener
+        } =
+            supabase.auth.onAuthStateChange(
+                () => {
+                    checkAdmin();
+                }
+            );
+
+
+        return () => {
+
+            mounted = false;
+
+            listener.subscription.unsubscribe();
+
+        };
+
+    }, []);
+
+
+    if (loading) {
+
+        return (
+            <div
+                style={{
+                    minHeight: "70vh",
+                    display: "grid",
+                    placeItems: "center",
+                    fontWeight: 800
+                }}
+            >
+                Checking administrator access...
             </div>
-
         );
-
     }
 
 
-    if (
-        !allowed
-    ) {
+    if (!allowed) {
 
         return (
-
             <Navigate
                 to="/admin/login"
                 replace
             />
-
         );
-
     }
 
 
     return children;
-
 }
 
 
