@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import {
+    useCallback,
     useEffect,
     useMemo,
     useState
@@ -89,6 +90,18 @@ function Navbar() {
     ] = useState(true);
 
 
+    const [
+        orderNotifications,
+        setOrderNotifications
+    ] = useState(0);
+
+
+    const [
+        prescriptionNotifications,
+        setPrescriptionNotifications
+    ] = useState(0);
+
+
     /*
     ========================================================
     TRANSLATIONS
@@ -98,7 +111,6 @@ function Navbar() {
     const text =
         isArabic
             ? {
-
                 pharmacy:
                     "صيدلية نبيل",
 
@@ -138,6 +150,9 @@ function Navbar() {
                 myPrescriptions:
                     "روشتاتي",
 
+                myOrders:
+                    "طلباتي",
+
                 english:
                     "English",
 
@@ -167,10 +182,8 @@ function Navbar() {
 
                 profile:
                     "الملف الشخصي"
-
             }
             : {
-
                 pharmacy:
                     "Nabil Pharmacy",
 
@@ -210,6 +223,9 @@ function Navbar() {
                 myPrescriptions:
                     "My Prescriptions",
 
+                myOrders:
+                    "My Orders",
+
                 english:
                     "English",
 
@@ -239,13 +255,12 @@ function Navbar() {
 
                 profile:
                     "My Profile"
-
             };
 
 
     /*
     ========================================================
-    LOAD PROFILE + DATABASE ROLE
+    LOAD PROFILE
     ========================================================
     */
 
@@ -270,6 +285,7 @@ function Navbar() {
                             setProfile(
                                 null
                             );
+
 
                             setRoleLoading(
                                 false
@@ -326,7 +342,8 @@ function Navbar() {
                         ) {
 
                             setProfile(
-                                data || null
+                                data ||
+                                null
                             );
 
                         }
@@ -387,7 +404,281 @@ function Navbar() {
 
     /*
     ========================================================
-    CLOSE MOBILE MENU AFTER NAVIGATION
+    LOAD UNREAD NOTIFICATIONS
+    ========================================================
+    */
+
+    const loadNotifications =
+        useCallback(
+            async () => {
+
+                if (
+                    !user?.id
+                ) {
+
+                    setOrderNotifications(
+                        0
+                    );
+
+
+                    setPrescriptionNotifications(
+                        0
+                    );
+
+
+                    return;
+
+                }
+
+
+                try {
+
+                    const {
+                        data,
+                        error
+                    } =
+                        await supabase
+                            .from(
+                                "customer_notifications"
+                            )
+                            .select(`
+                                id,
+                                notification_type
+                            `)
+                            .eq(
+                                "user_id",
+                                user.id
+                            )
+                            .eq(
+                                "is_read",
+                                false
+                            );
+
+
+                    if (
+                        error
+                    ) {
+
+                        throw error;
+
+                    }
+
+
+                    const rows =
+                        data ||
+                        [];
+
+
+                    setOrderNotifications(
+                        rows.filter(
+                            item =>
+                                item.notification_type ===
+                                "order_status"
+                        ).length
+                    );
+
+
+                    setPrescriptionNotifications(
+                        rows.filter(
+                            item =>
+                                item.notification_type ===
+                                "prescription_status"
+                        ).length
+                    );
+
+                } catch (
+                    notificationError
+                ) {
+
+                    console.error(
+                        "Navbar notifications error:",
+                        notificationError
+                    );
+
+                }
+
+            },
+            [
+                user?.id
+            ]
+        );
+
+
+    useEffect(
+        () => {
+
+            loadNotifications();
+
+        },
+        [
+            loadNotifications
+        ]
+    );
+
+
+    /*
+    ========================================================
+    NOTIFICATION REALTIME
+    ========================================================
+    */
+
+    useEffect(
+        () => {
+
+            if (
+                !user?.id
+            ) {
+
+                return undefined;
+
+            }
+
+
+            const channel =
+                supabase
+                    .channel(
+                        `navbar-notifications-${user.id}`
+                    )
+                    .on(
+                        "postgres_changes",
+                        {
+                            event:
+                                "*",
+
+                            schema:
+                                "public",
+
+                            table:
+                                "customer_notifications",
+
+                            filter:
+                                `user_id=eq.${user.id}`
+                        },
+                        () => {
+
+                            loadNotifications();
+
+                        }
+                    )
+                    .subscribe();
+
+
+            return () => {
+
+                supabase
+                    .removeChannel(
+                        channel
+                    );
+
+            };
+
+        },
+        [
+            user?.id,
+            loadNotifications
+        ]
+    );
+
+
+    /*
+    ========================================================
+    MARK NOTIFICATIONS READ
+    ========================================================
+    */
+
+    const markNotificationsRead =
+        async (
+            type
+        ) => {
+
+            if (
+                !user?.id
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                type ===
+                "order_status"
+            ) {
+
+                setOrderNotifications(
+                    0
+                );
+
+            }
+
+
+            if (
+                type ===
+                "prescription_status"
+            ) {
+
+                setPrescriptionNotifications(
+                    0
+                );
+
+            }
+
+
+            try {
+
+                const {
+                    error
+                } =
+                    await supabase
+                        .from(
+                            "customer_notifications"
+                        )
+                        .update({
+                            is_read:
+                                true
+                        })
+                        .eq(
+                            "user_id",
+                            user.id
+                        )
+                        .eq(
+                            "notification_type",
+                            type
+                        )
+                        .eq(
+                            "is_read",
+                            false
+                        );
+
+
+                if (
+                    error
+                ) {
+
+                    throw error;
+
+                }
+
+            } catch (
+                markError
+            ) {
+
+                console.error(
+                    "Notification read error:",
+                    markError
+                );
+
+
+                loadNotifications();
+
+            }
+
+        };
+
+
+    /*
+    ========================================================
+    CLOSE MENU AFTER NAVIGATION
     ========================================================
     */
 
@@ -456,7 +747,7 @@ function Navbar() {
 
     /*
     ========================================================
-    ADMIN ROLE
+    ADMIN
     ========================================================
     */
 
@@ -466,12 +757,6 @@ function Navbar() {
         profile?.role ===
             "super_admin";
 
-
-    /*
-    ========================================================
-    ADMIN EXPERIENCE
-    ========================================================
-    */
 
     const onAdminPage =
         location.pathname ===
@@ -502,7 +787,7 @@ function Navbar() {
 
     /*
     ========================================================
-    SIGN OUT
+    LOGOUT
     ========================================================
     */
 
@@ -516,6 +801,16 @@ function Navbar() {
 
                 setProfile(
                     null
+                );
+
+
+                setOrderNotifications(
+                    0
+                );
+
+
+                setPrescriptionNotifications(
+                    0
                 );
 
 
@@ -598,6 +893,78 @@ function Navbar() {
 
     /*
     ========================================================
+    NOTIFICATION BADGE
+    ========================================================
+    */
+
+    const NotificationBadge = ({
+        count
+    }) => {
+
+        if (
+            !count
+        ) {
+
+            return null;
+
+        }
+
+
+        return (
+
+            <span
+                style={{
+                    minWidth:
+                        "19px",
+
+                    height:
+                        "19px",
+
+                    padding:
+                        "0 5px",
+
+                    display:
+                        "inline-grid",
+
+                    placeItems:
+                        "center",
+
+                    borderRadius:
+                        "999px",
+
+                    background:
+                        "#aa1018",
+
+                    color:
+                        "#ffffff",
+
+                    fontSize:
+                        "0.48rem",
+
+                    fontWeight:
+                        "900",
+
+                    lineHeight:
+                        "1"
+                }}
+            >
+
+                {
+                    count >
+                    99
+                        ? "99+"
+                        : count
+                }
+
+            </span>
+
+        );
+
+    };
+
+
+    /*
+    ========================================================
     ADMIN NAVBAR
     ========================================================
     */
@@ -620,8 +987,6 @@ function Navbar() {
                 <div className="container navbar-inner">
 
 
-                    {/* BRAND */}
-
                     <Link
                         to="/admin"
                         className="navbar-brand navbar-admin-brand"
@@ -638,20 +1003,11 @@ function Navbar() {
                         <div>
 
                             <strong>
-
-                                {
-                                    text.pharmacy
-                                }
-
+                                {text.pharmacy}
                             </strong>
 
-
                             <span>
-
-                                {
-                                    text.adminPortal
-                                }
-
+                                {text.adminPortal}
                             </span>
 
                         </div>
@@ -659,10 +1015,7 @@ function Navbar() {
                     </Link>
 
 
-                    {/* ADMIN LINKS */}
-
                     <nav className="navbar-links navbar-admin-links">
-
 
                         <Link
                             to="/admin"
@@ -674,13 +1027,9 @@ function Navbar() {
                             }
                         >
 
-                            <LayoutDashboard
-                                size={17}
-                            />
+                            <LayoutDashboard size={17} />
 
-                            {
-                                text.dashboard
-                            }
+                            {text.dashboard}
 
                         </Link>
 
@@ -688,22 +1037,17 @@ function Navbar() {
                         <Link
                             to="/admin/products"
                             className={
-                                location.pathname
-                                    .startsWith(
-                                        "/admin/products"
-                                    )
+                                location.pathname.startsWith(
+                                    "/admin/products"
+                                )
                                     ? "active"
                                     : ""
                             }
                         >
 
-                            <Package
-                                size={17}
-                            />
+                            <Package size={17} />
 
-                            {
-                                text.products
-                            }
+                            {text.products}
 
                         </Link>
 
@@ -711,22 +1055,17 @@ function Navbar() {
                         <Link
                             to="/admin/inventory"
                             className={
-                                location.pathname
-                                    .startsWith(
-                                        "/admin/inventory"
-                                    )
+                                location.pathname.startsWith(
+                                    "/admin/inventory"
+                                )
                                     ? "active"
                                     : ""
                             }
                         >
 
-                            <Boxes
-                                size={17}
-                            />
+                            <Boxes size={17} />
 
-                            {
-                                text.inventory
-                            }
+                            {text.inventory}
 
                         </Link>
 
@@ -734,22 +1073,17 @@ function Navbar() {
                         <Link
                             to="/admin/orders"
                             className={
-                                location.pathname
-                                    .startsWith(
-                                        "/admin/orders"
-                                    )
+                                location.pathname.startsWith(
+                                    "/admin/orders"
+                                )
                                     ? "active"
                                     : ""
                             }
                         >
 
-                            <ShoppingBag
-                                size={17}
-                            />
+                            <ShoppingBag size={17} />
 
-                            {
-                                text.orders
-                            }
+                            {text.orders}
 
                         </Link>
 
@@ -757,32 +1091,24 @@ function Navbar() {
                         <Link
                             to="/admin/prescriptions"
                             className={
-                                location.pathname
-                                    .startsWith(
-                                        "/admin/prescriptions"
-                                    )
+                                location.pathname.startsWith(
+                                    "/admin/prescriptions"
+                                )
                                     ? "active"
                                     : ""
                             }
                         >
 
-                            <FileText
-                                size={17}
-                            />
+                            <FileText size={17} />
 
-                            {
-                                text.prescriptions
-                            }
+                            {text.prescriptions}
 
                         </Link>
 
                     </nav>
 
 
-                    {/* ADMIN ACTIONS */}
-
                     <div className="navbar-actions navbar-admin-actions">
-
 
                         <button
                             type="button"
@@ -793,11 +1119,8 @@ function Navbar() {
                         >
 
                             <span className="navbar-language-symbol">
-
                                 A
-
                             </span>
-
 
                             {
                                 isArabic
@@ -813,13 +1136,9 @@ function Navbar() {
                             className="navbar-view-site"
                         >
 
-                            <Store
-                                size={17}
-                            />
+                            <Store size={17} />
 
-                            {
-                                text.viewWebsite
-                            }
+                            {text.viewWebsite}
 
                         </Link>
 
@@ -848,13 +1167,9 @@ function Navbar() {
                             }
                         >
 
-                            <LogOut
-                                size={17}
-                            />
+                            <LogOut size={17} />
 
-                            {
-                                text.signOut
-                            }
+                            {text.signOut}
 
                         </button>
 
@@ -875,20 +1190,8 @@ function Navbar() {
 
                             {
                                 menuOpen
-                                    ? (
-
-                                        <X
-                                            size={22}
-                                        />
-
-                                    )
-                                    : (
-
-                                        <Menu
-                                            size={22}
-                                        />
-
-                                    )
+                                    ? <X size={22} />
+                                    : <Menu size={22} />
                             }
 
                         </button>
@@ -897,8 +1200,6 @@ function Navbar() {
 
                 </div>
 
-
-                {/* ADMIN MOBILE MENU */}
 
                 {
                     menuOpen && (
@@ -910,28 +1211,17 @@ function Navbar() {
                                 className="navbar-mobile-profile"
                             >
 
-                                <ProfileAvatar
-                                    small
-                                />
+                                <ProfileAvatar small />
 
 
                                 <div>
 
                                     <strong>
-
-                                        {
-                                            displayName
-                                        }
-
+                                        {displayName}
                                     </strong>
 
-
                                     <span>
-
-                                        {
-                                            text.profile
-                                        }
-
+                                        {text.profile}
                                     </span>
 
                                 </div>
@@ -941,78 +1231,54 @@ function Navbar() {
 
                             <Link to="/admin">
 
-                                <LayoutDashboard
-                                    size={18}
-                                />
+                                <LayoutDashboard size={18} />
 
-                                {
-                                    text.dashboard
-                                }
+                                {text.dashboard}
 
                             </Link>
 
 
                             <Link to="/admin/products">
 
-                                <Package
-                                    size={18}
-                                />
+                                <Package size={18} />
 
-                                {
-                                    text.products
-                                }
+                                {text.products}
 
                             </Link>
 
 
                             <Link to="/admin/inventory">
 
-                                <Boxes
-                                    size={18}
-                                />
+                                <Boxes size={18} />
 
-                                {
-                                    text.inventory
-                                }
+                                {text.inventory}
 
                             </Link>
 
 
                             <Link to="/admin/orders">
 
-                                <ShoppingBag
-                                    size={18}
-                                />
+                                <ShoppingBag size={18} />
 
-                                {
-                                    text.orders
-                                }
+                                {text.orders}
 
                             </Link>
 
 
                             <Link to="/admin/prescriptions">
 
-                                <FileText
-                                    size={18}
-                                />
+                                <FileText size={18} />
 
-                                {
-                                    text.prescriptions
-                                }
+                                {text.prescriptions}
 
                             </Link>
 
 
                             <Link to="/">
 
-                                <Store
-                                    size={18}
-                                />
+                                <Store size={18} />
 
-                                {
-                                    text.viewWebsite
-                                }
+                                {text.viewWebsite}
 
                             </Link>
 
@@ -1024,13 +1290,9 @@ function Navbar() {
                                 }
                             >
 
-                                <LogOut
-                                    size={18}
-                                />
+                                <LogOut size={18} />
 
-                                {
-                                    text.signOut
-                                }
+                                {text.signOut}
 
                             </button>
 
@@ -1048,7 +1310,7 @@ function Navbar() {
 
     /*
     ========================================================
-    CUSTOMER / PUBLIC NAVBAR
+    CUSTOMER NAVBAR
     ========================================================
     */
 
@@ -1066,8 +1328,6 @@ function Navbar() {
             <div className="container navbar-inner">
 
 
-                {/* BRAND */}
-
                 <Link
                     to="/"
                     className="navbar-brand"
@@ -1084,20 +1344,11 @@ function Navbar() {
                     <div>
 
                         <strong>
-
-                            {
-                                text.pharmacy
-                            }
-
+                            {text.pharmacy}
                         </strong>
 
-
                         <span>
-
-                            {
-                                text.since
-                            }
-
+                            {text.since}
                         </span>
 
                     </div>
@@ -1105,63 +1356,33 @@ function Navbar() {
                 </Link>
 
 
-                {/* PUBLIC LINKS */}
-
                 <nav className="navbar-links">
 
                     <Link to="/">
-
-                        {
-                            text.home
-                        }
-
+                        {text.home}
                     </Link>
-
 
                     <Link to="/products">
-
-                        {
-                            text.products
-                        }
-
+                        {text.products}
                     </Link>
 
-
                     <a href="/#services">
-
-                        {
-                            text.services
-                        }
-
+                        {text.services}
                     </a>
-
 
                     <a href="/#story">
-
-                        {
-                            text.story
-                        }
-
+                        {text.story}
                     </a>
 
-
                     <a href="/#contact">
-
-                        {
-                            text.contact
-                        }
-
+                        {text.contact}
                     </a>
 
                 </nav>
 
 
-                {/* PUBLIC ACTIONS */}
-
                 <div className="navbar-actions">
 
-
-                    {/* LANGUAGE */}
 
                     <button
                         type="button"
@@ -1172,9 +1393,7 @@ function Navbar() {
                     >
 
                         <span className="navbar-language-symbol">
-
                             A
-
                         </span>
 
 
@@ -1186,8 +1405,6 @@ function Navbar() {
 
                     </button>
 
-
-                    {/* ACCOUNT */}
 
                     {
                         user
@@ -1216,17 +1433,10 @@ function Navbar() {
                                     className="navbar-account"
                                 >
 
-                                    <UserRound
-                                        size={18}
-                                    />
-
+                                    <UserRound size={18} />
 
                                     <span>
-
-                                        {
-                                            text.login
-                                        }
-
+                                        {text.login}
                                     </span>
 
                                 </Link>
@@ -1235,7 +1445,40 @@ function Navbar() {
                     }
 
 
-                    {/* MY PRESCRIPTIONS */}
+                    {
+                        user && (
+
+                            <Link
+                                to="/account/orders"
+                                className="navbar-account"
+                                title={
+                                    text.myOrders
+                                }
+                                onClick={() =>
+                                    markNotificationsRead(
+                                        "order_status"
+                                    )
+                                }
+                            >
+
+                                <ShoppingBag size={18} />
+
+                                <span>
+                                    {text.myOrders}
+                                </span>
+
+
+                                <NotificationBadge
+                                    count={
+                                        orderNotifications
+                                    }
+                                />
+
+                            </Link>
+
+                        )
+                    }
+
 
                     {
                         user && (
@@ -1246,28 +1489,31 @@ function Navbar() {
                                 title={
                                     text.myPrescriptions
                                 }
+                                onClick={() =>
+                                    markNotificationsRead(
+                                        "prescription_status"
+                                    )
+                                }
                             >
 
-                                <FileText
-                                    size={18}
-                                />
-
+                                <FileText size={18} />
 
                                 <span>
-
-                                    {
-                                        text.myPrescriptions
-                                    }
-
+                                    {text.myPrescriptions}
                                 </span>
+
+
+                                <NotificationBadge
+                                    count={
+                                        prescriptionNotifications
+                                    }
+                                />
 
                             </Link>
 
                         )
                     }
 
-
-                    {/* CART */}
 
                     <Link
                         to="/cart"
@@ -1277,9 +1523,7 @@ function Navbar() {
                         }
                     >
 
-                        <ShoppingBag
-                            size={19}
-                        />
+                        <ShoppingBag size={19} />
 
 
                         {
@@ -1287,11 +1531,7 @@ function Navbar() {
                             0 && (
 
                                 <span>
-
-                                    {
-                                        cartCount
-                                    }
-
+                                    {cartCount}
                                 </span>
 
                             )
@@ -1300,25 +1540,17 @@ function Navbar() {
                     </Link>
 
 
-                    {/* UPLOAD PRESCRIPTION */}
-
                     <Link
                         to="/prescription"
                         className="navbar-prescription"
                     >
 
-                        <Upload
-                            size={17}
-                        />
+                        <Upload size={17} />
 
-                        {
-                            text.prescription
-                        }
+                        {text.prescription}
 
                     </Link>
 
-
-                    {/* MOBILE MENU */}
 
                     <button
                         type="button"
@@ -1336,20 +1568,8 @@ function Navbar() {
 
                         {
                             menuOpen
-                                ? (
-
-                                    <X
-                                        size={22}
-                                    />
-
-                                )
-                                : (
-
-                                    <Menu
-                                        size={22}
-                                    />
-
-                                )
+                                ? <X size={22} />
+                                : <Menu size={22} />
                         }
 
                     </button>
@@ -1358,8 +1578,6 @@ function Navbar() {
 
             </div>
 
-
-            {/* PUBLIC MOBILE MENU */}
 
             {
                 menuOpen && (
@@ -1374,28 +1592,17 @@ function Navbar() {
                                     className="navbar-mobile-profile"
                                 >
 
-                                    <ProfileAvatar
-                                        small
-                                    />
+                                    <ProfileAvatar small />
 
 
                                     <div>
 
                                         <strong>
-
-                                            {
-                                                displayName
-                                            }
-
+                                            {displayName}
                                         </strong>
 
-
                                         <span>
-
-                                            {
-                                                text.profile
-                                            }
-
+                                            {text.profile}
                                         </span>
 
                                     </div>
@@ -1407,65 +1614,66 @@ function Navbar() {
 
 
                         <Link to="/">
-
-                            {
-                                text.home
-                            }
-
+                            {text.home}
                         </Link>
 
 
                         <Link to="/products">
-
-                            {
-                                text.products
-                            }
-
+                            {text.products}
                         </Link>
 
 
                         <a href="/#services">
-
-                            {
-                                text.services
-                            }
-
+                            {text.services}
                         </a>
 
 
                         <a href="/#story">
-
-                            {
-                                text.story
-                            }
-
+                            {text.story}
                         </a>
 
 
                         <a href="/#contact">
-
-                            {
-                                text.contact
-                            }
-
+                            {text.contact}
                         </a>
 
 
                         {
                             !user && (
 
+                                <Link to="/account">
+
+                                    <UserRound size={17} />
+
+                                    {text.login}
+
+                                </Link>
+
+                            )
+                        }
+
+
+                        {
+                            user && (
+
                                 <Link
-                                    to="/account"
-                                    className="navbar-mobile-account"
+                                    to="/account/orders"
+                                    onClick={() =>
+                                        markNotificationsRead(
+                                            "order_status"
+                                        )
+                                    }
                                 >
 
-                                    <UserRound
-                                        size={17}
-                                    />
+                                    <ShoppingBag size={17} />
 
-                                    {
-                                        text.login
-                                    }
+                                    {text.myOrders}
+
+                                    <NotificationBadge
+                                        count={
+                                            orderNotifications
+                                        }
+                                    />
 
                                 </Link>
 
@@ -1478,15 +1686,22 @@ function Navbar() {
 
                                 <Link
                                     to="/account/prescriptions"
+                                    onClick={() =>
+                                        markNotificationsRead(
+                                            "prescription_status"
+                                        )
+                                    }
                                 >
 
-                                    <FileText
-                                        size={17}
-                                    />
+                                    <FileText size={17} />
 
-                                    {
-                                        text.myPrescriptions
-                                    }
+                                    {text.myPrescriptions}
+
+                                    <NotificationBadge
+                                        count={
+                                            prescriptionNotifications
+                                        }
+                                    />
 
                                 </Link>
 
@@ -1496,14 +1711,9 @@ function Navbar() {
 
                         <Link to="/cart">
 
-                            <ShoppingBag
-                                size={17}
-                            />
+                            <ShoppingBag size={17} />
 
-                            {
-                                text.cart
-                            }
-
+                            {text.cart}
 
                             {
                                 cartCount >
@@ -1520,13 +1730,9 @@ function Navbar() {
                             className="navbar-mobile-prescription"
                         >
 
-                            <Upload
-                                size={17}
-                            />
+                            <Upload size={17} />
 
-                            {
-                                text.prescription
-                            }
+                            {text.prescription}
 
                         </Link>
 

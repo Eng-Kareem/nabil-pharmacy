@@ -1,5 +1,6 @@
 import {
     FileText,
+    ShoppingBag,
     Upload,
     UserRound
 } from "lucide-react";
@@ -139,6 +140,64 @@ function AccountPage() {
                             "#f7f7f8"
                     }}
                 >
+
+                    <Link
+                        to="/account/orders"
+                        style={{
+                            minHeight:
+                                "43px",
+
+                            padding:
+                                "0 14px",
+
+                            display:
+                                "inline-flex",
+
+                            alignItems:
+                                "center",
+
+                            justifyContent:
+                                "center",
+
+                            gap:
+                                "7px",
+
+                            border:
+                                "1px solid #e1e1e4",
+
+                            borderRadius:
+                                "11px",
+
+                            background:
+                                "#ffffff",
+
+                            color:
+                                "#19191d",
+
+                            fontSize:
+                                "0.68rem",
+
+                            fontWeight:
+                                "900",
+
+                            textDecoration:
+                                "none"
+                        }}
+                    >
+
+                        <ShoppingBag
+                            size={17}
+                        />
+
+
+                        {
+                            isArabic
+                                ? "طلباتي"
+                                : "My Orders"
+                        }
+
+                    </Link>
+
 
                     <Link
                         to="/account/prescriptions"

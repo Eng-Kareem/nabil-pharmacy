@@ -43,6 +43,9 @@ import Prescription
 import CustomerPrescriptions
     from "./pages/CustomerPrescriptions/CustomerPrescriptions.jsx";
 
+import CustomerOrders
+    from "./pages/CustomerOrders/CustomerOrders.jsx";
+
 import Cart
     from "./pages/Cart/Cart.jsx";
 
@@ -92,10 +95,8 @@ function ScrollToTop() {
                 0
             );
 
-
             document.documentElement.scrollTop =
                 0;
-
 
             document.body.scrollTop =
                 0;
@@ -109,14 +110,6 @@ function ScrollToTop() {
                             0,
                             0
                         );
-
-
-                        document.documentElement.scrollTop =
-                            0;
-
-
-                        document.body.scrollTop =
-                            0;
 
                     }
                 );
@@ -196,7 +189,6 @@ function App() {
                 window.clearTimeout(
                     fadeTimer
                 );
-
 
                 window.clearTimeout(
                     removeTimer
@@ -390,6 +382,14 @@ function App() {
                         path="/account"
                         element={
                             <AccountPage />
+                        }
+                    />
+
+
+                    <Route
+                        path="/account/orders"
+                        element={
+                            <CustomerOrders />
                         }
                     />
 
